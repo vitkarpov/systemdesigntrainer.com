@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "dev": "npx concurrently \"cd backend && npm run start:dev\" \"cd ui && npm run dev\"",
+    "build": "cd ui && npm run build && mkdir -p ../backend/public && cp -r dist/* ../backend/public/ && cd ../backend && npm run build",
+    "test": "concurrently \"cd backend && npm test\" \"cd ui && npm run test\"",
+    "lint": "concurrently \"cd backend && npm run lint\" \"cd ui && npm run lint\"",
+    "clean": "rimraf backend/dist ui/dist backend/public"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0",
+    "rimraf": "^3.0.2"
+  }
+}
