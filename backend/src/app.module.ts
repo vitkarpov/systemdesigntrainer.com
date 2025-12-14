@@ -13,7 +13,6 @@ import { InterviewModule } from './interview/interview.module';
     InterviewModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
-      exclude: ['/api*'],
       serveStaticOptions: {
         index: false,
       },
