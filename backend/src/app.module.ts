@@ -4,9 +4,11 @@ import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SpaController } from './spa.controller';
+import { DatabaseModule } from './db/db.module';
 
 @Module({
   imports: [
+    DatabaseModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
       exclude: ['/api*'],
