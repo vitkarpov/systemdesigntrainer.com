@@ -5,10 +5,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SpaController } from './spa.controller';
 import { DatabaseModule } from './db/db.module';
+import { InterviewModule } from './interview/interview.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    InterviewModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
       exclude: ['/api*'],
