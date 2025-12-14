@@ -1,58 +1,110 @@
-# React - NestJS - Full Stack Monorepo
+# System Design Interview Simulator
 
-A modern full-stack application built with **NestJS** backend and **React + Vite** frontend, organized as a simple yet powerful monorepo.
+**Practice real system design interviews under pressure — before the real one.**
 
-## 🏗️ Project Structure
+A B2C SaaS platform that helps mid-to-senior software engineers prepare for system design interviews at top tech companies by simulating realistic 45-minute interview sessions with AI-powered interviewers.
 
+## 🎯 The Problem
+
+Most engineers fail system design interviews not because they lack technical knowledge, but because they:
+- Panic under time pressure
+- Don't know what to say at minute 15, 30, or 45
+- Skip requirements gathering and jump straight to implementation
+- Can't structure their answers effectively
+- Get no actionable feedback from mock interviews
+
+## 💡 The Solution
+
+A realistic interview simulator that:
+- **Applies Real Pressure**: 45-minute timed sessions with an AI interviewer that interrupts, challenges, and pushes you
+- **Tracks What Matters**: Monitors if you covered requirements, discussed trade-offs, mentioned scale, and structured your approach
+- **Gives Actionable Feedback**: Tells you exactly where you lost points and what to improve next time
+- **Builds Confidence**: Practice 5-10 interviews before your real one, not just 1-2 expensive mock sessions
+
+## 🎯 Target Users
+
+**Mid → Senior Software Engineers** (5-8 years experience)
+- Currently earning £60-90k, targeting £100-160k roles
+- Preparing for FAANG/Big Tech interviews
+- Strong technically but struggle with system design interviews
+- Located in EU/UK or relocating to US
+- Already spending money on courses, coaches, and mock interviews
+
+## ✨ Core Features
+
+### MVP (Week 1-6)
+- **45-Minute Interview Simulation**: Fixed format covering all interview phases
+- **AI Interviewer**: Asks questions, applies pressure, interrupts at key moments
+- **Simple Whiteboard**: Basic diagram editor for boxes, arrows, and labels
+- **Signal Tracking**: Monitors requirements gathering, scale discussion, trade-offs
+- **Structured Feedback**: Actionable report on what went wrong and how to improve
+- **Timer & Pressure**: Visual timer with phase transitions at 15/30/40 minutes
+
+### Interview Flow
+1. **Problem Statement** (0-5 min)
+2. **Requirements & Constraints** (5-15 min)
+3. **High-Level Design** (15-25 min)
+4. **Deep Dive** (25-40 min)
+5. **Bottlenecks & Trade-offs** (40-45 min)
+6. **Wrap-up & Feedback**
+
+## 🏗️ Architecture
+
+### Design Philosophy
+- **State-Driven**: Interview state stored in backend, not in LLM
+- **Flow > Intelligence**: Rigid interview flow with simple heuristics beats smart AI with no structure
+- **Predictable & Debuggable**: Signals tracked by rules, not AI interpretation
+- **One Case to Start**: Single well-designed case (URL shortener) to validate concept
+
+### Tech Stack
+
+**Backend (NestJS)**
+- Interview Orchestrator: Manages phases and timing
+- Prompt Engine: Generates context-aware AI prompts
+- State Store: Tracks signals and red flags
+- Feedback Generator: Produces structured reports
+
+**Frontend (React + Vite)**
+- Interview UI: Chat-based interview interface
+- Whiteboard: Canvas-based diagram editor
+- Timer: Visual countdown with phase indicators
+- Feedback Display: Report viewer
+
+**AI Layer**
+- LLM: Interviewer persona (question generation, tone)
+- Stateless: No memory, context provided by backend
+
+**Database**
+- InterviewSession: session state, transcript, signals
+- User: authentication and billing
+- FeedbackReport: generated feedback
+
+### State Model
+
+The core of the system is the `InterviewSession` state:
+
+```typescript
+InterviewSession {
+  id: string
+  startedAt: number
+  currentPhase: "problem" | "requirements" | "high_level" | "deep_dive" | "bottlenecks" | "wrap_up"
+  phaseStartedAt: number
+  transcript: Array<{role, text, timestamp}>
+  signals: {
+    askedFunctionalReqs: boolean
+    askedNonFunctionalReqs: boolean
+    mentionedScale: boolean
+    proposedApi: boolean
+    discussedTradeoffs: boolean
+  }
+  redFlags: {
+    wentTooDeepEarly: boolean
+    skippedRequirements: boolean
+  }
+}
 ```
-root/
-├── backend/          # NestJS API server
-├── ui/              # React + Vite frontend
-├── shared/          # Shared types and utilities
-│   └── types/
-├── package.json     # Root workspace configuration
-└── README.md        # This file
-```
 
-## ✨ The Simple Monorepo Advantage
-
-This project uses a **unified monorepo approach** that brings several key benefits:
-
-### 🎯 Simplicity Benefits
-- **Single Repository**: Everything in one place - no need to clone multiple repos
-- **Unified Git History**: Track changes across frontend and backend together
-- **Simplified Dependencies**: Shared tooling and configurations
-- **Easy Cross-Project Refactoring**: Change APIs and frontend code simultaneously
-
-### 🚀 Development Benefits
-- **Type Safety Across Stack**: Share TypeScript types between frontend and backend
-- **Atomic Commits**: Deploy related frontend and backend changes together
-- **Consistent Tooling**: Same linting, formatting, and testing setup
-- **Single Environment Setup**: One `.env` file, one setup process
-
-### 📦 Deployment Benefits
-- **Coordinated Releases**: Deploy frontend and backend together
-- **Simplified CI/CD**: Single pipeline for the entire application
-- **Shared Build Cache**: Faster builds with shared dependencies
-- **Easy Rollbacks**: Roll back entire features, not just parts
-
-## 🛠️ Technology Stack
-
-### Backend (NestJS)
-- **Framework**: NestJS - Enterprise-grade Node.js framework
-- **Language**: TypeScript
-- **Architecture**: Modular, decorator-based
-- **Features**: Built-in validation, guards, interceptors
-
-### Frontend (React + Vite)
-- **Framework**: React 19
-- **Build Tool**: Vite - Lightning fast development
-- **Language**: TypeScript
-- **Features**: Hot module replacement, optimized builds
-
-### Shared
-- **Types**: Shared TypeScript interfaces and types
-- **Utilities**: Common functions and constants
+**Key Principle**: Signals are tracked by heuristics (keyword matching, timing rules), not AI interpretation. This makes the system predictable and debuggable.
 
 ## 🚀 Getting Started
 
@@ -62,274 +114,118 @@ This project uses a **unified monorepo approach** that brings several key benefi
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/saidheerajv/repo
-   cd repo
-   ```
-
-2. **Install dependencies**
-   ```bash
-   # Install root dependencies
-   npm install
-   
-   # Install backend dependencies
-   cd backend
-   npm install
-   cd ..
-   
-   # Install frontend dependencies
-   cd ui
-   npm install
-   cd ..
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   # Copy environment template
-   cp .env.example .env
-   
-   # Edit the .env file with your configuration
-   ```
-
-## 🔧 Development Workflow
-
-### Starting the Development Servers
-
-**Option 1: Run both servers simultaneously**
 ```bash
-# From root directory
+# Install dependencies for all packages
+npm install
+cd backend && npm install
+cd ../ui && npm install
+```
+
+### Development
+
+**Run both servers:**
+```bash
 npm run dev
 ```
 
-**Option 2: Run servers individually**
+**Or run individually:**
 ```bash
-# Terminal 1 - Backend (runs on http://localhost:3000)
-cd backend
-npm run start:dev
+# Terminal 1 - Backend (http://localhost:3000)
+cd backend && npm run start:dev
 
-# Terminal 2 - Frontend (runs on http://localhost:5173)
-cd ui
-npm run dev
+# Terminal 2 - Frontend (http://localhost:5173)
+cd ui && npm run dev
 ```
 
-### Development Features
+### Project Structure
 
-- **🔥 Hot Reload**: Both frontend and backend support hot reloading
-- **🔍 Type Checking**: Real-time TypeScript checking across the stack
-- **🐛 Debugging**: VS Code debug configurations included
-- **📝 API Documentation**: Swagger UI available at `/api/docs`
+```
+sd-sim-2/
+├── backend/              # NestJS API server
+│   ├── src/
+│   │   ├── interview/    # Interview orchestrator
+│   │   ├── ai/          # LLM integration
+│   │   └── feedback/    # Feedback generation
+├── ui/                  # React + Vite frontend
+│   ├── src/
+│   │   ├── components/  # UI components
+│   │   ├── pages/       # Interview, feedback pages
+│   │   └── hooks/       # Custom hooks
+├── shared/              # Shared TypeScript types
+│   └── types/
+└── README.md
+```
 
-### Working with Shared Types
+## 🛠️ Development Workflow
 
-1. **Define types in** `shared/types/`
-2. **Import in backend**: `import { UserType } from '../shared/types'`
-3. **Import in frontend**: `import { UserType } from '../shared/types'`
+### Week 1: Foundation & Core Flow
+- [ ] Interview phase enum and state model
+- [ ] Interview orchestrator logic
+- [ ] Prompt engine v1
+- [ ] Basic whiteboard (boxes, arrows, text)
+- [ ] One complete interview case (URL shortener)
+- [ ] End-to-end flow without crashes
+
+### Week 2: AI Interviewer & Pressure
+- [ ] Time-based phase transitions
+- [ ] Signal tracking heuristics
+- [ ] AI interruption logic
+- [ ] Pressure moments at key timestamps
+
+### Week 3: Feedback Generation
+- [ ] Signal analysis
+- [ ] Red flag detection
+- [ ] Structured feedback report
+- [ ] Communication scoring
+
+### Week 4-6: Auth, Payments, Polish
+- [ ] Email + magic link auth
+- [ ] Stripe integration
+- [ ] Landing page
+- [ ] Onboarding flow
+- [ ] First user testing
 
 ### Code Quality
 
 ```bash
-# Lint entire project
+# Type checking
+npm run type-check
+
+# Linting
 npm run lint
 
-# Format code
-npm run format
-
-# Run tests
-npm run test
-
-# Type check
-npm run type-check
-```
-
-## 🏗️ Build Process
-
-### Development Build
-```bash
-# Build backend
-cd backend
-npm run build
-
-# Build frontend
-cd ui
-npm run build
-```
-
-### Production Build
-```bash
-# Build everything
-npm run build:prod
-```
-
-This creates optimized builds:
-- **Backend**: Compiled JavaScript in `backend/dist/`
-- **Frontend**: Static files in `ui/dist/`
-
-## 🚀 Deployment
-
-### Deployment Options
-
-#### 1. **Single Server Deployment**
-Deploy both frontend and backend to the same server:
-
-```bash
-# Build production assets
-npm run build:prod
-
-# Backend serves frontend static files
-# Frontend files served from backend/public/
-```
-
-#### 2. **Separate Deployment**
-Deploy frontend and backend to different services:
-
-**Backend** (Heroku, Railway, DigitalOcean App Platform):
-```bash
-cd backend
-npm run build
-npm run start:prod
-```
-
-**Frontend** (Vercel, Netlify, Cloudflare Pages):
-```bash
-cd ui
-npm run build
-# Deploy dist/ folder
-```
-
-#### 3. **Docker Deployment**
-```dockerfile
-# Multi-stage build for both services
-FROM node:18-alpine as builder
-# ... build both frontend and backend
-
-FROM node:18-alpine as production
-# ... serve optimized application
-```
-
-#### 4. **Cloud Platforms**
-
-**Vercel** (Full Stack):
-- Automatically detects and deploys both frontend and API routes
-
-**Railway**:
-- Single deployment with both services
-
-**AWS/GCP/Azure**:
-- Container-based deployment with both services
-
-### Environment Configuration
-
-Create environment-specific configuration:
-
-```bash
-# Development
-.env.development
-
-# Production
-.env.production
-
 # Testing
-.env.test
+npm run test
 ```
 
-### CI/CD Pipeline Example
+## 📊 Success Metrics (MVP)
 
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy
-on:
-  push:
-    branches: [main]
+- ≥30% of users complete 2+ interviews
+- ≥10% convert to paid
+- Users report: "This felt real"
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      
-      - name: Install dependencies
-        run: |
-          npm ci
-          cd backend && npm ci
-          cd ../ui && npm ci
-      
-      - name: Run tests
-        run: npm run test
-      
-      - name: Build
-        run: npm run build:prod
-      
-      - name: Deploy
-        run: npm run deploy
-```
+## 💰 Business Model
 
-## 📱 API Integration
+- **Free**: 1 interview
+- **Pro**: $39-59/month (unlimited interviews)
+- **Pay-per-interview**: $15/interview
 
-The frontend and backend are designed to work seamlessly:
-
-- **Type-safe API calls**: Shared interfaces ensure type safety
-- **Consistent error handling**: Unified error response format
-- **Authentication**: JWT tokens shared between services
-- **Real-time features**: WebSocket support for live updates
-
-## 🔧 Configuration
-
-### Package Scripts
-
-**Root level** (`package.json`):
-```json
-{
-  "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && npm run start:dev",
-    "dev:frontend": "cd ui && npm run dev",
-    "build": "npm run build:backend && npm run build:frontend",
-    "build:backend": "cd backend && npm run build",
-    "build:frontend": "cd ui && npm run build"
-  }
-}
-```
-
-### VS Code Settings
-
-Included workspace settings for optimal development experience:
-- **Unified linting**: ESLint configuration for both projects
-- **Debugging**: Launch configurations for both services
-- **Extensions**: Recommended extensions for the stack
-
-## 📚 Documentation
-
-- **API Documentation**: Available at `http://localhost:3000/api/docs` (Swagger)
-- **Component Library**: Storybook available at `http://localhost:6006`
-- **Type Documentation**: Generated from TypeScript interfaces
+Target: 100-300 signups, 10-30 paying users in first 30 days
 
 ## 🤝 Contributing
 
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make changes**: Ensure both frontend and backend work together
-4. **Test thoroughly**: Run all tests and type checks
-5. **Commit changes**: `git commit -m 'Add amazing feature'`
-6. **Push to branch**: `git push origin feature/amazing-feature`
-7. **Open a Pull Request**
+This is an early-stage project. For now, development is focused on reaching MVP.
 
 ### Development Guidelines
-
-- **Type Safety**: Always use TypeScript interfaces
-- **Testing**: Write tests for both frontend and backend
-- **Documentation**: Update README and API docs
-- **Consistency**: Follow established code style
-- **Security**: Never commit sensitive data
+- **Type Safety**: Always use TypeScript
+- **Flow First**: Prioritize rigid interview flow over AI intelligence
+- **Simple Heuristics**: Use keyword matching and timing rules, not AI interpretation
+- **One Thing Well**: Focus on one interview case, one flow, one ICP
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ---
 
-**Built with ❤️ using NestJS, React, and the power of monorepo simplicity**
+**Built for engineers who know the concepts but need to master the interview format.**
