@@ -20,7 +20,7 @@ export interface AiResponse {
 @Injectable()
 export class AiService {
   private client: Anthropic;
-  private readonly model = 'claude-3-5-sonnet-20241022';
+  private readonly model = 'claude-haiku-4-5';
 
   constructor() {
     const apiKey = process.env.ANTHROPIC_API_KEY;
