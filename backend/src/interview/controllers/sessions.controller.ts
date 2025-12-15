@@ -12,9 +12,11 @@ import {
 import { InterviewSessionService } from '../services/interview-session.service';
 import { TranscriptService } from '../services/transcript.service';
 import { PhaseService } from '../services/phase.service';
+import { AiService } from '../../ai/services/ai.service';
+import { PromptService } from '../../ai/services/prompt.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
 import { AddMessageDto } from '../dto/add-message.dto';
-import { InterviewPhase } from '../types/session.types';
+import { InterviewPhase, MessageRole } from '../types/session.types';
 
 @Controller('api/sessions')
 export class SessionsController {
@@ -22,6 +24,8 @@ export class SessionsController {
     private sessionService: InterviewSessionService,
     private transcriptService: TranscriptService,
     private phaseService: PhaseService,
+    private aiService: AiService,
+    private promptService: PromptService,
   ) {}
 
   /**
@@ -172,6 +176,76 @@ export class SessionsController {
     return {
       success: true,
       data: { message },
+    };
+  }
+
+  /**
+   * POST /api/sessions/:id/ai-response
+   * Get AI interviewer response for a candidate message
+   * This endpoint:
+   * 1. Saves the candidate's message to the transcript
+   * 2. Builds context from session state and recent messages
+   * 3. Gets AI response from Claude
+   * 4. Saves the AI response to the transcript
+   * 5. Returns both messages
+   */
+  @Post(':id/ai-response')
+  @HttpCode(HttpStatus.CREATED)
+  async getAiResponse(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: { text: string },
+  ) {
+    const session = await this.sessionService.getSession(id);
+    const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
+
+    // 1. Save candidate's message
+    const candidateMessage = await this.transcriptService.addMessage({
+      sessionId: id,
+      role: MessageRole.CANDIDATE,
+      text: dto.text,
+      phase: session.currentPhase as InterviewPhase,
+      secondsElapsed: elapsedSeconds,
+    });
+
+    // 2. Get recent conversation history (last 10 messages)
+    const recentMessages = await this.transcriptService.getRecentMessages(
+      id,
+      10,
+    );
+
+    // 3. Build prompt context
+    const promptContext = await this.promptService.buildPromptContext(
+      session,
+      recentMessages,
+      dto.text,
+    );
+
+    // 4. Get AI response
+    const aiResponse = await this.aiService.generateResponse({
+      systemPrompt: promptContext.systemPrompt,
+      userMessage: promptContext.userMessage,
+      temperature: 0.7,
+      maxTokens: 1024,
+    });
+
+    // 5. Save AI response to transcript
+    const updatedElapsedSeconds =
+      this.sessionService.getElapsedSeconds(session);
+    const interviewerMessage = await this.transcriptService.addMessage({
+      sessionId: id,
+      role: MessageRole.INTERVIEWER,
+      text: aiResponse.text,
+      phase: session.currentPhase as InterviewPhase,
+      secondsElapsed: updatedElapsedSeconds,
+    });
+
+    return {
+      success: true,
+      data: {
+        candidateMessage,
+        interviewerMessage,
+        usage: aiResponse.usage,
+      },
     };
   }
 }

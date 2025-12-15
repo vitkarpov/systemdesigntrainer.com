@@ -43,24 +43,25 @@
 
 ---
 
-## Week 2: AI Interviewer & Pressure 🔄 NEXT UP
+## Week 2: AI Interviewer & Pressure 🔄 IN PROGRESS
 
-### 1. AI Integration (Priority: HIGH)
-- [ ] Install Anthropic SDK (`@anthropic-ai/sdk`)
-- [ ] Create `AiModule` and `AiService`
-- [ ] Set up API key in `.env`
-- [ ] Create `POST /api/sessions/:id/ai-response` endpoint
-- [ ] Basic LLM call working
+### 1. AI Integration (Priority: HIGH) ✅ COMPLETE
+- [x] Install Anthropic SDK (`@anthropic-ai/sdk`)
+- [x] Create `AiModule` and `AiService`
+- [x] Set up API key in `.env`
+- [x] Create `POST /api/sessions/:id/ai-response` endpoint
+- [x] Basic LLM call working
+- [x] Added to `test-api.sh` script
 
-### 2. Prompt Engine (Priority: HIGH)
-- [ ] Create `PromptService` for context building
-- [ ] Build prompt context from:
-  - [ ] Current phase metadata
-  - [ ] Session elapsed time
-  - [ ] Recent transcript (last 5-10 messages)
-  - [ ] Interview case details
-- [ ] Phase-specific system prompts
-- [ ] Interviewer persona and tone
+### 2. Prompt Engine (Priority: HIGH) ✅ COMPLETE
+- [x] Create `PromptService` for context building
+- [x] Build prompt context from:
+  - [x] Current phase metadata
+  - [x] Session elapsed time
+  - [x] Recent transcript (last 10 messages)
+  - [x] Interview case details
+- [x] Phase-specific system prompts
+- [x] Interviewer persona and tone
 
 ### 3. Signal Tracking Heuristics (Priority: MEDIUM)
 - [ ] Create `SignalService`
@@ -168,29 +169,29 @@
 
 ## 🎯 Immediate Next Task (~1 hour)
 
-**AI Integration Foundation**
+**Signal Tracking Implementation**
 
-1. **AI Service Setup (30 min)**
-   - Install Anthropic SDK
-   - Create `AiService` in `src/ai/ai.service.ts`
-   - Set up API key in `.env`
-   - Basic endpoint: `POST /api/sessions/:id/ai-response`
+1. **Create SignalService (30 min)**
+   - Create `src/interview/services/signal.service.ts`
+   - Implement keyword detection for key signals
+   - Store detected signals in `interview_signals` table
+   - Track timing and context of signal detection
 
-2. **Simple Prompt Engine (30 min)**
-   - Create `PromptService` in `src/ai/prompt.service.ts`
-   - Build context from: session state + recent transcript + current phase
-   - Generate interviewer response based on phase
-   - Test with a simple interview flow
+2. **Integrate with AI Response (30 min)**
+   - Hook signal detection into `/api/sessions/:id/ai-response` endpoint
+   - Automatically detect signals in candidate messages
+   - Add `GET /api/sessions/:id/signals` endpoint
+   - Test signal detection with mock interviews
 
-**Deliverable:** Working endpoint where candidate sends a message and gets an AI interviewer response that's aware of the current interview phase.
+**Deliverable:** Automatic signal detection during interviews that tracks when candidates mention requirements, scale, trade-offs, etc.
 
 ---
 
 ## 📊 Progress Summary
 
 - **Week 1:** ✅ 100% Complete (Foundation + REST API)
-- **Week 2:** ⏳ 0% Complete (AI + Signals)
+- **Week 2:** ✅ 33% Complete (AI Integration + Prompt Engine done; Signals, Red Flags, Time-based features remaining)
 - **Week 3:** ⏳ 0% Complete (Feedback)
 - **Week 4-6:** ⏳ 0% Complete (Auth + Payments + Polish)
 
-**Overall MVP Progress:** ~16% (1 out of 6 weeks)
+**Overall MVP Progress:** ~22% (1.3 out of 6 weeks)

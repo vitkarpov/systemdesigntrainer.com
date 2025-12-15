@@ -45,3 +45,14 @@ export interface SessionState {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Transcript message interface
+export interface TranscriptMessage {
+  id: number;
+  sessionId: number;
+  role: string;
+  text: string;
+  phase: string;
+  secondsElapsed: number;
+  createdAt: Date;
+}

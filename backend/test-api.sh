@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Testing Interview State Machine API"
+echo "Testing Interview State Machine API (with AI Integration)"
 echo ""
 
 # Test 0: Create a new session
@@ -74,4 +74,25 @@ echo ""
 echo "7. Getting updated session state..."
 curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID"
 
+echo ""
+
+# Test 8: Send candidate message and get AI response
+echo "8. Testing AI integration - Candidate asks about requirements..."
+curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/ai-response" \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"What are the key functional and non-functional requirements I should focus on?"}'
+
+echo ""
+echo ""
+
+# Test 9: Another AI interaction
+echo "9. Candidate discusses scale..."
+curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/ai-response" \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"I am thinking we need to handle around 1 million URLs and maybe 10000 requests per second. Does that sound reasonable?"}'
+
+echo ""
+echo ""
+
+echo "✓ All tests complete (including AI integration)!"
 echo ""
