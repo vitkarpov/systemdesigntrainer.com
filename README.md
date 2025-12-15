@@ -156,34 +156,18 @@ sd-sim-2/
 └── README.md
 ```
 
-## 🛠️ Development Workflow
+## 🛠️ Development Progress
 
-### Week 1: Foundation & Core Flow
-- [ ] Interview phase enum and state model
-- [ ] Interview orchestrator logic
-- [ ] Prompt engine v1
-- [ ] Basic whiteboard (boxes, arrows, text)
-- [ ] One complete interview case (URL shortener)
-- [ ] End-to-end flow without crashes
+**Current Status:** Week 1 Complete ✅ → Week 2 Starting 🔄
 
-### Week 2: AI Interviewer & Pressure
-- [ ] Time-based phase transitions
-- [ ] Signal tracking heuristics
-- [ ] AI interruption logic
-- [ ] Pressure moments at key timestamps
+- **Week 1:** Foundation & Core Flow (REST API, State Machine, Database) - ✅ COMPLETE
+- **Week 2:** AI Interviewer & Signal Tracking - 🔄 NEXT
+- **Week 3:** Feedback Generation
+- **Week 4-6:** Auth, Payments, Polish
 
-### Week 3: Feedback Generation
-- [ ] Signal analysis
-- [ ] Red flag detection
-- [ ] Structured feedback report
-- [ ] Communication scoring
+**See [TASKS.md](TASKS.md) for detailed progress tracking and next steps.**
 
-### Week 4-6: Auth, Payments, Polish
-- [ ] Email + magic link auth
-- [ ] Stripe integration
-- [ ] Landing page
-- [ ] Onboarding flow
-- [ ] First user testing
+**Test the API:** Run `./backend/test-api.sh` to see the working endpoints.
 
 ### Code Quality
 
