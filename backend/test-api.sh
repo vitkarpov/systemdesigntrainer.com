@@ -94,5 +94,12 @@ curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/ai-response" \
 echo ""
 echo ""
 
-echo "✓ All tests complete (including AI integration)!"
+# Test 10: Get detected signals
+echo "10. Getting detected signals..."
+curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID/signals"
+
+echo ""
+echo ""
+
+echo "✓ All tests complete (including AI integration and signal tracking)!"
 echo ""

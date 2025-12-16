@@ -12,6 +12,7 @@ import {
 import { InterviewSessionService } from '../services/interview-session.service';
 import { TranscriptService } from '../services/transcript.service';
 import { PhaseService } from '../services/phase.service';
+import { SignalService } from '../services/signal.service';
 import { AiService } from '../../ai/services/ai.service';
 import { PromptService } from '../../ai/services/prompt.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
@@ -24,6 +25,7 @@ export class SessionsController {
     private sessionService: InterviewSessionService,
     private transcriptService: TranscriptService,
     private phaseService: PhaseService,
+    private signalService: SignalService,
     private aiService: AiService,
     private promptService: PromptService,
   ) {}
@@ -184,10 +186,11 @@ export class SessionsController {
    * Get AI interviewer response for a candidate message
    * This endpoint:
    * 1. Saves the candidate's message to the transcript
-   * 2. Builds context from session state and recent messages
-   * 3. Gets AI response from Claude
-   * 4. Saves the AI response to the transcript
-   * 5. Returns both messages
+   * 2. Detects signals in the candidate's message
+   * 3. Builds context from session state and recent messages
+   * 4. Gets AI response from Claude
+   * 5. Saves the AI response to the transcript
+   * 6. Returns both messages and detected signals
    */
   @Post(':id/ai-response')
   @HttpCode(HttpStatus.CREATED)
@@ -207,20 +210,29 @@ export class SessionsController {
       secondsElapsed: elapsedSeconds,
     });
 
-    // 2. Get recent conversation history (last 10 messages)
+    // 2. Detect signals in candidate's message
+    const detectedSignals = await this.signalService.detectAndRecordSignals({
+      sessionId: id,
+      text: dto.text,
+      phase: session.currentPhase as InterviewPhase,
+      secondsElapsed: elapsedSeconds,
+      messageId: candidateMessage.id,
+    });
+
+    // 3. Get recent conversation history (last 10 messages)
     const recentMessages = await this.transcriptService.getRecentMessages(
       id,
       10,
     );
 
-    // 3. Build prompt context
+    // 4. Build prompt context
     const promptContext = await this.promptService.buildPromptContext(
       session,
       recentMessages,
       dto.text,
     );
 
-    // 4. Get AI response
+    // 5. Get AI response
     const aiResponse = await this.aiService.generateResponse({
       systemPrompt: promptContext.systemPrompt,
       userMessage: promptContext.userMessage,
@@ -228,7 +240,7 @@ export class SessionsController {
       maxTokens: 1024,
     });
 
-    // 5. Save AI response to transcript
+    // 6. Save AI response to transcript
     const updatedElapsedSeconds =
       this.sessionService.getElapsedSeconds(session);
     const interviewerMessage = await this.transcriptService.addMessage({
@@ -244,7 +256,29 @@ export class SessionsController {
       data: {
         candidateMessage,
         interviewerMessage,
+        detectedSignals,
         usage: aiResponse.usage,
+      },
+    };
+  }
+
+  /**
+   * GET /api/sessions/:id/signals
+   * Get all detected signals for a session
+   */
+  @Get(':id/signals')
+  async getSignals(@Param('id', ParseIntPipe) id: number) {
+    const signals = await this.signalService.getSessionSignals(id);
+    const missingSignals = await this.signalService.getMissingSignals(id);
+    const coverage = await this.signalService.getSignalCoverage(id);
+
+    return {
+      success: true,
+      data: {
+        signals,
+        missingSignals,
+        coverage,
+        count: signals.length,
       },
     };
   }
