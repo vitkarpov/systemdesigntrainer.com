@@ -101,5 +101,28 @@ curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID/signals"
 echo ""
 echo ""
 
-echo "✓ All tests complete (including AI integration and signal tracking)!"
+# Test 11: Get detected red flags
+echo "11. Getting detected red flags..."
+curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID/red-flags"
+
+echo ""
+echo ""
+
+# Test 12: Send message with implementation details (should trigger red flag)
+echo "12. Testing red flag detection - Implementation details in early phase..."
+curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/ai-response" \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"I would implement this with a class URLShortener that has a function generateShortUrl() which uses a for loop to iterate through characters..."}'
+
+echo ""
+echo ""
+
+# Test 13: Check red flags again
+echo "13. Getting red flags after implementation details..."
+curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID/red-flags"
+
+echo ""
+echo ""
+
+echo "✓ All tests complete (including AI integration, signal tracking, and red flag detection)!"
 echo ""

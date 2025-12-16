@@ -1,8 +1,8 @@
 # Development Tasks & Progress
 
-**Last Updated:** 2025-12-15
+**Last Updated:** 2025-12-16
 
-## 📍 Current Status: Week 1 Complete → Week 2 Starting
+## 📍 Current Status: Week 2 - Signal Tracking & Red Flags Complete
 
 ---
 
@@ -63,27 +63,34 @@
 - [x] Phase-specific system prompts
 - [x] Interviewer persona and tone
 
-### 3. Signal Tracking Heuristics (Priority: MEDIUM)
-- [ ] Create `SignalService`
-- [ ] Implement keyword detection for signals:
-  - [ ] `asked_functional_reqs` - "requirements", "features", "users need"
-  - [ ] `asked_non_functional_reqs` - "scale", "performance", "availability"
-  - [ ] `mentioned_scale` - "million users", "requests per second"
-  - [ ] `proposed_api` - "API", "endpoint", "REST", "GraphQL"
-  - [ ] `discussed_tradeoffs` - "trade-off", "vs", "alternatively"
-- [ ] Store detected signals in `interview_signals` table
-- [ ] Track when signals detected (phase, elapsed time, message ID)
-- [ ] `GET /api/sessions/:id/signals` endpoint
+### 3. Signal Tracking Heuristics (Priority: MEDIUM) ✅ COMPLETE
+- [x] Create `SignalService`
+- [x] Implement keyword detection for signals:
+  - [x] `asked_functional_reqs` - "requirements", "features", "users need"
+  - [x] `asked_non_functional_reqs` - "scale", "performance", "availability"
+  - [x] `mentioned_scale` - "million users", "requests per second"
+  - [x] `proposed_api` - "API", "endpoint", "REST", "GraphQL"
+  - [x] `discussed_tradeoffs` - "trade-off", "vs", "alternatively"
+  - [x] Plus 6 more signals: `clarified_constraints`, `drew_high_level_diagram`, `discussed_data_model`, `addressed_bottlenecks`, `structured_approach`, `asked_clarifying_questions`
+- [x] Store detected signals in `interview_signals` table
+- [x] Track when signals detected (phase, elapsed time, message ID)
+- [x] `GET /api/sessions/:id/signals` endpoint
+- [x] Integrated signal detection into AI response flow
+- [x] Added to `test-api.sh` script
 
-### 4. Red Flag Detection (Priority: MEDIUM)
-- [ ] Create `RedFlagService`
-- [ ] Implement detection logic:
-  - [ ] `went_too_deep_early` - implementation details in requirements phase
-  - [ ] `skipped_requirements` - no requirement signals by minute 15
-  - [ ] `no_scale_mention` - no scale discussion by minute 20
-  - [ ] `poor_time_management` - still in problem phase at minute 10
-- [ ] Store red flags in `interview_red_flags` table
-- [ ] `GET /api/sessions/:id/red-flags` endpoint
+### 4. Red Flag Detection (Priority: MEDIUM) ✅ COMPLETE
+- [x] Create `RedFlagService`
+- [x] Implement detection logic:
+  - [x] `went_too_deep_early` - implementation details in requirements phase (keyword detection)
+  - [x] `skipped_requirements` - no requirement signals by minute 15
+  - [x] `no_scale_mention` - no scale discussion by minute 20
+  - [x] `poor_time_management` - still in problem phase at minute 10
+  - [x] Plus `misunderstood_problem` placeholder for future use
+- [x] Store red flags in `interview_red_flags` table
+- [x] `GET /api/sessions/:id/red-flags` endpoint
+- [x] Integrated red flag checks into AI response flow
+- [x] Integrated red flag checks into phase transitions
+- [x] Added to `test-api.sh` script
 
 ### 5. Time-Based Features (Priority: LOW)
 - [ ] Auto-advance phases at key timestamps (optional)
@@ -92,10 +99,10 @@
 - [ ] Phase duration recommendations
 
 ### 6. Integration & Testing
-- [ ] Update `test-api.sh` with AI endpoints
-- [ ] Test complete interview flow with AI
-- [ ] Verify signals are detected correctly
-- [ ] Verify red flags are triggered
+- [x] Update `test-api.sh` with AI endpoints
+- [x] Test complete interview flow with AI
+- [x] Verify signals are detected correctly
+- [x] Verify red flags are triggered
 
 ---
 
@@ -167,31 +174,33 @@
 
 ---
 
-## 🎯 Immediate Next Task (~1 hour)
+## 🎯 Immediate Next Task (~1-2 hours)
 
-**Signal Tracking Implementation**
+**Feedback Generation - Score Calculation**
 
-1. **Create SignalService (30 min)**
-   - Create `src/interview/services/signal.service.ts`
-   - Implement keyword detection for key signals
-   - Store detected signals in `interview_signals` table
-   - Track timing and context of signal detection
+1. **Create FeedbackService (45 min)**
+   - Create `src/feedback/services/feedback.service.ts`
+   - Implement score calculation based on signals and red flags
+   - Calculate 6 scores: overall, requirements, design, communication, time_management, depth
+   - Scoring logic: signals add points, red flags subtract points
 
-2. **Integrate with AI Response (30 min)**
-   - Hook signal detection into `/api/sessions/:id/ai-response` endpoint
-   - Automatically detect signals in candidate messages
-   - Add `GET /api/sessions/:id/signals` endpoint
-   - Test signal detection with mock interviews
+2. **Generate Feedback Report (45 min)**
+   - Generate structured feedback based on session analysis
+   - Create feedback items (strengths, weaknesses, suggestions)
+   - Store feedback in `feedback_reports`, `feedback_items`, `feedback_next_steps` tables
+   - Add `POST /api/sessions/:id/feedback` endpoint
+   - Add `GET /api/sessions/:id/feedback` endpoint
+   - Test feedback generation with completed interviews
 
-**Deliverable:** Automatic signal detection during interviews that tracks when candidates mention requirements, scale, trade-offs, etc.
+**Deliverable:** Automatic feedback generation with actionable insights and scores after interview completion.
 
 ---
 
 ## 📊 Progress Summary
 
 - **Week 1:** ✅ 100% Complete (Foundation + REST API)
-- **Week 2:** ✅ 33% Complete (AI Integration + Prompt Engine done; Signals, Red Flags, Time-based features remaining)
+- **Week 2:** ✅ 67% Complete (AI Integration + Prompt Engine + Signal Tracking + Red Flags done; Time-based features optional)
 - **Week 3:** ⏳ 0% Complete (Feedback)
 - **Week 4-6:** ⏳ 0% Complete (Auth + Payments + Polish)
 
-**Overall MVP Progress:** ~22% (1.3 out of 6 weeks)
+**Overall MVP Progress:** ~28% (1.67 out of 6 weeks)

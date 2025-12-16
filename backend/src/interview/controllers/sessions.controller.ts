@@ -13,6 +13,7 @@ import { InterviewSessionService } from '../services/interview-session.service';
 import { TranscriptService } from '../services/transcript.service';
 import { PhaseService } from '../services/phase.service';
 import { SignalService } from '../services/signal.service';
+import { RedFlagService } from '../services/red-flag.service';
 import { AiService } from '../../ai/services/ai.service';
 import { PromptService } from '../../ai/services/prompt.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
@@ -26,6 +27,7 @@ export class SessionsController {
     private transcriptService: TranscriptService,
     private phaseService: PhaseService,
     private signalService: SignalService,
+    private redFlagService: RedFlagService,
     private aiService: AiService,
     private promptService: PromptService,
   ) {}
@@ -139,10 +141,20 @@ export class SessionsController {
 
   /**
    * PATCH /api/sessions/:id/phase
-   * Advance to next phase
+   * Advance to next phase and check for red flags
    */
   @Patch(':id/phase')
   async advancePhase(@Param('id', ParseIntPipe) id: number) {
+    const session = await this.sessionService.getSession(id);
+    const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
+
+    // Check for red flags before advancing
+    const detectedRedFlags = await this.redFlagService.checkRedFlags({
+      sessionId: id,
+      currentPhase: session.currentPhase as InterviewPhase,
+      secondsElapsed: elapsedSeconds,
+    });
+
     const result = await this.sessionService.advancePhase(id);
 
     return {
@@ -150,7 +162,10 @@ export class SessionsController {
       message: result.isCompleted
         ? 'Session completed'
         : `Advanced to ${result.currentPhase}`,
-      data: result,
+      data: {
+        ...result,
+        detectedRedFlags,
+      },
     };
   }
 
@@ -187,10 +202,11 @@ export class SessionsController {
    * This endpoint:
    * 1. Saves the candidate's message to the transcript
    * 2. Detects signals in the candidate's message
-   * 3. Builds context from session state and recent messages
-   * 4. Gets AI response from Claude
-   * 5. Saves the AI response to the transcript
-   * 6. Returns both messages and detected signals
+   * 3. Checks for red flags
+   * 4. Builds context from session state and recent messages
+   * 5. Gets AI response from Claude
+   * 6. Saves the AI response to the transcript
+   * 7. Returns both messages, detected signals, and red flags
    */
   @Post(':id/ai-response')
   @HttpCode(HttpStatus.CREATED)
@@ -219,20 +235,28 @@ export class SessionsController {
       messageId: candidateMessage.id,
     });
 
-    // 3. Get recent conversation history (last 10 messages)
+    // 3. Check for red flags
+    const detectedRedFlags = await this.redFlagService.checkRedFlags({
+      sessionId: id,
+      currentPhase: session.currentPhase as InterviewPhase,
+      secondsElapsed: elapsedSeconds,
+      messageText: dto.text,
+    });
+
+    // 4. Get recent conversation history (last 10 messages)
     const recentMessages = await this.transcriptService.getRecentMessages(
       id,
       10,
     );
 
-    // 4. Build prompt context
+    // 5. Build prompt context
     const promptContext = await this.promptService.buildPromptContext(
       session,
       recentMessages,
       dto.text,
     );
 
-    // 5. Get AI response
+    // 6. Get AI response
     const aiResponse = await this.aiService.generateResponse({
       systemPrompt: promptContext.systemPrompt,
       userMessage: promptContext.userMessage,
@@ -240,7 +264,7 @@ export class SessionsController {
       maxTokens: 1024,
     });
 
-    // 6. Save AI response to transcript
+    // 7. Save AI response to transcript
     const updatedElapsedSeconds =
       this.sessionService.getElapsedSeconds(session);
     const interviewerMessage = await this.transcriptService.addMessage({
@@ -257,6 +281,7 @@ export class SessionsController {
         candidateMessage,
         interviewerMessage,
         detectedSignals,
+        detectedRedFlags,
         usage: aiResponse.usage,
       },
     };
@@ -279,6 +304,26 @@ export class SessionsController {
         missingSignals,
         coverage,
         count: signals.length,
+      },
+    };
+  }
+
+  /**
+   * GET /api/sessions/:id/red-flags
+   * Get all detected red flags for a session
+   */
+  @Get(':id/red-flags')
+  async getRedFlags(@Param('id', ParseIntPipe) id: number) {
+    const redFlags = await this.redFlagService.getSessionRedFlags(id);
+    const count = await this.redFlagService.getRedFlagCount(id);
+    const hasRedFlags = await this.redFlagService.hasRedFlags(id);
+
+    return {
+      success: true,
+      data: {
+        redFlags,
+        count,
+        hasRedFlags,
       },
     };
   }
