@@ -69,11 +69,15 @@ Stores user account information and subscription status.
 CREATE TABLE users (
   id                      BIGSERIAL PRIMARY KEY,
 
-  -- Authentication
+  -- Authentication (WorkOS + GitHub OAuth)
+  workos_user_id          VARCHAR(255) UNIQUE NOT NULL,  -- WorkOS user ID
+  github_id               VARCHAR(255) UNIQUE,           -- GitHub user ID
+  github_username         VARCHAR(255),                  -- GitHub username
   email                   VARCHAR(255) NOT NULL UNIQUE,
 
-  -- Profile (optional for MVP)
-  name                    VARCHAR(255),
+  -- Profile
+  name                    VARCHAR(255),                  -- Display name from GitHub
+  avatar_url              TEXT,                          -- GitHub profile picture
   target_level            VARCHAR(20) CHECK (target_level IN ('mid', 'senior', 'staff')),
 
   -- Subscription
@@ -92,6 +96,8 @@ CREATE TABLE users (
   last_login_at           TIMESTAMP
 );
 
+CREATE INDEX idx_users_workos_user_id ON users(workos_user_id);
+CREATE INDEX idx_users_github_id ON users(github_id);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_subscription_status ON users(subscription_status);
 ```
