@@ -1,8 +1,8 @@
 # Development Tasks & Progress
 
-**Last Updated:** 2025-12-16
+**Last Updated:** 2025-12-17
 
-## 📍 Current Status: Week 2 - Signal Tracking & Red Flags Complete
+## 📍 Current Status: Week 3 - Feedback Generation Complete
 
 ---
 
@@ -106,33 +106,36 @@
 
 ---
 
-## Week 3: Feedback Generation
+## Week 3: Feedback Generation ✅ COMPLETE
 
-### Feedback Analysis
-- [ ] Create `FeedbackService`
-- [ ] Analyze detected signals
-- [ ] Analyze red flags
-- [ ] Calculate scores (0-100):
-  - [ ] Overall score
-  - [ ] Requirements score
-  - [ ] Design score
-  - [ ] Communication score
-  - [ ] Time management score
-  - [ ] Depth score
+### Feedback Analysis ✅ COMPLETE
+- [x] Create `FeedbackService`
+- [x] Analyze detected signals
+- [x] Analyze red flags
+- [x] Calculate scores (0-100):
+  - [x] Overall score (weighted average of all scores)
+  - [x] Requirements score (based on requirement signals)
+  - [x] Design score (based on design signals and diagrams)
+  - [x] Communication score (based on structured approach and clarity)
+  - [x] Time management score (based on phase timing)
+  - [x] Depth score (based on scale discussion and bottlenecks)
 
-### Feedback Report Generation
-- [ ] Generate structured feedback report
-- [ ] Create feedback items (strengths, weaknesses, suggestions)
-- [ ] Generate actionable next steps
-- [ ] Store in `feedback_reports` table
-- [ ] `POST /api/sessions/:id/feedback` endpoint
-- [ ] `GET /api/sessions/:id/feedback` endpoint
+### Feedback Report Generation ✅ COMPLETE
+- [x] Generate structured feedback report
+- [x] Create feedback items (strengths, weaknesses, suggestions)
+- [x] Generate actionable next steps
+- [x] Store in `feedback_reports`, `feedback_items`, `feedback_next_steps` tables
+- [x] `POST /api/sessions/:id/feedback` endpoint
+- [x] `GET /api/sessions/:id/feedback` endpoint
+- [x] Added to `test-api.sh` script
 
-### Communication Scoring
-- [ ] Analyze message clarity
-- [ ] Count clarifying questions
-- [ ] Assess structured thinking
-- [ ] Evaluate explanation quality
+### Scoring Logic Implemented
+- [x] Requirements: +15 for functional reqs, +15 for non-functional, +10 for constraints, -30 for skipping
+- [x] Design: +15 for diagrams, +15 for data model, +10 for API, +10 for bottlenecks
+- [x] Communication: +15 for structure, +15 for tradeoffs, +10 for questions
+- [x] Time Management: Base 70, -40 for poor management, +10 for completion
+- [x] Depth: +15 for scale, +15 for bottlenecks, +10 for tradeoffs, +10 for data model
+- [x] Overall: Weighted average (requirements 25%, design 25%, communication 20%, time 15%, depth 15%)
 
 ---
 
@@ -174,33 +177,40 @@
 
 ---
 
-## 🎯 Immediate Next Task (~1-2 hours)
+## 🎯 Immediate Next Task
 
-**Feedback Generation - Score Calculation**
+**Frontend Development - Interview UI**
 
-1. **Create FeedbackService (45 min)**
-   - Create `src/feedback/services/feedback.service.ts`
-   - Implement score calculation based on signals and red flags
-   - Calculate 6 scores: overall, requirements, design, communication, time_management, depth
-   - Scoring logic: signals add points, red flags subtract points
+Now that the backend is complete with feedback generation, the next priority is building the React frontend:
 
-2. **Generate Feedback Report (45 min)**
-   - Generate structured feedback based on session analysis
-   - Create feedback items (strengths, weaknesses, suggestions)
-   - Store feedback in `feedback_reports`, `feedback_items`, `feedback_next_steps` tables
-   - Add `POST /api/sessions/:id/feedback` endpoint
-   - Add `GET /api/sessions/:id/feedback` endpoint
-   - Test feedback generation with completed interviews
+1. **Interview Chat Interface**
+   - Create interview page component
+   - Build chat UI for candidate-interviewer interaction
+   - Display messages with timestamps and roles
+   - Connect to backend API endpoints
 
-**Deliverable:** Automatic feedback generation with actionable insights and scores after interview completion.
+2. **Timer & Phase Display**
+   - Visual countdown timer
+   - Phase progress indicator
+   - Phase transition UI
+
+3. **Feedback Display**
+   - Feedback report viewer
+   - Score visualization
+   - Strengths/weaknesses display
+   - Next steps recommendations
+
+**Deliverable:** Working frontend that allows users to conduct practice interviews and view feedback.
 
 ---
 
 ## 📊 Progress Summary
 
 - **Week 1:** ✅ 100% Complete (Foundation + REST API)
-- **Week 2:** ✅ 67% Complete (AI Integration + Prompt Engine + Signal Tracking + Red Flags done; Time-based features optional)
-- **Week 3:** ⏳ 0% Complete (Feedback)
-- **Week 4-6:** ⏳ 0% Complete (Auth + Payments + Polish)
+- **Week 2:** ✅ 100% Complete (AI Integration + Prompt Engine + Signal Tracking + Red Flags; Time-based features deferred)
+- **Week 3:** ✅ 100% Complete (Feedback Generation with scoring and recommendations)
+- **Week 4-6:** ⏳ 0% Complete (Frontend + Auth + Payments + Polish)
 
-**Overall MVP Progress:** ~28% (1.67 out of 6 weeks)
+**Overall MVP Progress:** ~50% (3 out of 6 weeks)
+
+**Backend API Status:** All 15 endpoints working and tested with `test-api.sh`
