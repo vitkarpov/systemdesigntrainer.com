@@ -4,6 +4,7 @@ import { PhaseService } from './services/phase.service';
 import { TranscriptService } from './services/transcript.service';
 import { SignalService } from './services/signal.service';
 import { RedFlagService } from './services/red-flag.service';
+import { FeedbackService } from './services/feedback.service';
 import { SessionsController } from './controllers/sessions.controller';
 import { DatabaseModule } from '../db/db.module';
 import { AiModule } from '../ai/ai.module';
@@ -17,6 +18,7 @@ import { AiModule } from '../ai/ai.module';
     TranscriptService,
     SignalService,
     RedFlagService,
+    FeedbackService,
   ],
   exports: [
     InterviewSessionService,
@@ -24,6 +26,7 @@ import { AiModule } from '../ai/ai.module';
     TranscriptService,
     SignalService,
     RedFlagService,
+    FeedbackService,
   ],
 })
 export class InterviewModule {}

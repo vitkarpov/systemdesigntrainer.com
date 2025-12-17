@@ -124,5 +124,20 @@ curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID/red-flags"
 echo ""
 echo ""
 
-echo "✓ All tests complete (including AI integration, signal tracking, and red flag detection)!"
+# Test 14: Generate feedback report
+echo "14. Generating feedback report..."
+curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/feedback" \
+  -H 'Content-Type: application/json'
+
+echo ""
+echo ""
+
+# Test 15: Get feedback report
+echo "15. Getting feedback report..."
+curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID/feedback"
+
+echo ""
+echo ""
+
+echo "✓ All tests complete (including AI integration, signal tracking, red flag detection, and feedback generation)!"
 echo ""

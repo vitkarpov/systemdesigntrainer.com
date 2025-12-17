@@ -14,6 +14,7 @@ import { TranscriptService } from '../services/transcript.service';
 import { PhaseService } from '../services/phase.service';
 import { SignalService } from '../services/signal.service';
 import { RedFlagService } from '../services/red-flag.service';
+import { FeedbackService } from '../services/feedback.service';
 import { AiService } from '../../ai/services/ai.service';
 import { PromptService } from '../../ai/services/prompt.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
@@ -28,6 +29,7 @@ export class SessionsController {
     private phaseService: PhaseService,
     private signalService: SignalService,
     private redFlagService: RedFlagService,
+    private feedbackService: FeedbackService,
     private aiService: AiService,
     private promptService: PromptService,
   ) {}
@@ -325,6 +327,42 @@ export class SessionsController {
         count,
         hasRedFlags,
       },
+    };
+  }
+
+  /**
+   * POST /api/sessions/:id/feedback
+   * Generate feedback report for a completed session
+   * This endpoint:
+   * 1. Calculates scores based on detected signals and red flags
+   * 2. Generates strengths, weaknesses, and suggestions
+   * 3. Creates actionable next steps
+   * 4. Stores everything in the database
+   * 5. Returns the complete feedback report
+   */
+  @Post(':id/feedback')
+  @HttpCode(HttpStatus.CREATED)
+  async generateFeedback(@Param('id', ParseIntPipe) id: number) {
+    const feedback = await this.feedbackService.generateFeedback(id);
+
+    return {
+      success: true,
+      message: 'Feedback generated successfully',
+      data: feedback,
+    };
+  }
+
+  /**
+   * GET /api/sessions/:id/feedback
+   * Get existing feedback report for a session
+   */
+  @Get(':id/feedback')
+  async getFeedback(@Param('id', ParseIntPipe) id: number) {
+    const feedback = await this.feedbackService.getFeedback(id);
+
+    return {
+      success: true,
+      data: feedback,
     };
   }
 }
