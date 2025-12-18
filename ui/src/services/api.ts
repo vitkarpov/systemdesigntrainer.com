@@ -7,6 +7,20 @@ const api = axios.create({
   },
 });
 
+// Add interceptor to include auth token from localStorage
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 export interface Session {
   id: number;
   status: "not_started" | "in_progress" | "completed";
@@ -82,7 +96,7 @@ export interface FeedbackReport {
 }
 
 // Session endpoints
-export const createSession = async (caseId: number = 1): Promise<Session> => {
+export const createSession = async (caseId: number): Promise<Session> => {
   const response = await api.post("/sessions", { interviewCaseId: caseId });
   return response.data;
 };
