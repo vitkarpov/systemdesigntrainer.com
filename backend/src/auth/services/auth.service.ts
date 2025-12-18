@@ -20,10 +20,8 @@ export class AuthService {
   constructor(private userService: UserService) {
     const apiKey = process.env.WORKOS_API_KEY;
     this.clientId = process.env.WORKOS_CLIENT_ID;
-    this.jwtSecret =
-      process.env.JWT_SECRET;
-    this.redirectUri =
-      process.env.WORKOS_REDIRECT_URI;
+    this.jwtSecret = process.env.JWT_SECRET;
+    this.redirectUri = process.env.WORKOS_REDIRECT_URI;
 
     if (!this.jwtSecret) {
       throw new Error('JWT_SECRET is not set');

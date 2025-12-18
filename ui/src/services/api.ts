@@ -10,7 +10,7 @@ const api = axios.create({
 // Add interceptor to include auth token from localStorage
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -18,7 +18,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 export interface Case {
@@ -186,6 +186,26 @@ export const getFeedback = async (
 ): Promise<FeedbackReport> => {
   const response = await api.get(`/sessions/${sessionId}/feedback`);
   return response.data;
+};
+
+// Auth endpoints
+export interface User {
+  id: number;
+  email: string;
+  name: string;
+  avatarUrl: string;
+  interviewsCompleted: number;
+  interviewsRemaining: number;
+  subscriptionStatus: string;
+}
+
+export const getUser = async (): Promise<User> => {
+  const response = await api.get("/auth/user");
+  return response.data;
+};
+
+export const logout = (): void => {
+  localStorage.removeItem("accessToken");
 };
 
 export default api;

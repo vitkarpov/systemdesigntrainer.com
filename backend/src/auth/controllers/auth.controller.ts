@@ -90,7 +90,9 @@ export class AuthController {
   @Post('dev/test-token')
   async generateTestToken() {
     if (process.env.NODE_ENV === 'production') {
-      throw new UnauthorizedException('This endpoint is only available in development');
+      throw new UnauthorizedException(
+        'This endpoint is only available in development',
+      );
     }
 
     const testUser = await this.userService.findByEmail('test@example.com');
@@ -103,7 +105,8 @@ export class AuthController {
         email: testUser.email,
         name: testUser.name,
       },
-      message: 'Test token generated. Use this token in Authorization header as: Bearer <token>',
+      message:
+        'Test token generated. Use this token in Authorization header as: Bearer <token>',
     };
   }
 }
