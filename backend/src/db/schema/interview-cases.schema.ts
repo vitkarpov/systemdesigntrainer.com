@@ -1,4 +1,13 @@
-import { pgTable, serial, varchar, text, integer, boolean, timestamp, unique } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  serial,
+  varchar,
+  text,
+  integer,
+  boolean,
+  timestamp,
+  unique,
+} from 'drizzle-orm/pg-core';
 
 export const interviewCases = pgTable('interview_cases', {
   id: serial('id').primaryKey(),
@@ -23,23 +32,26 @@ export const interviewCases = pgTable('interview_cases', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
-export const interviewCaseExpectations = pgTable('interview_case_expectations', {
-  id: serial('id').primaryKey(),
-  caseId: integer('case_id')
-    .notNull()
-    .references(() => interviewCases.id, { onDelete: 'cascade' }),
+export const interviewCaseExpectations = pgTable(
+  'interview_case_expectations',
+  {
+    id: serial('id').primaryKey(),
+    caseId: integer('case_id')
+      .notNull()
+      .references(() => interviewCases.id, { onDelete: 'cascade' }),
 
-  // Type of expectation
-  expectationType: varchar('expectation_type', { length: 50 }).notNull(),
+    // Type of expectation
+    expectationType: varchar('expectation_type', { length: 50 }).notNull(),
 
-  // The actual expectation
-  description: text('description').notNull(),
+    // The actual expectation
+    description: text('description').notNull(),
 
-  // For ordering/grouping
-  displayOrder: integer('display_order').notNull().default(0),
+    // For ordering/grouping
+    displayOrder: integer('display_order').notNull().default(0),
 
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-});
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+);
 
 export const interviewCaseTags = pgTable(
   'interview_case_tags',
@@ -59,7 +71,9 @@ export const interviewCaseTags = pgTable(
 
 export type InterviewCase = typeof interviewCases.$inferSelect;
 export type NewInterviewCase = typeof interviewCases.$inferInsert;
-export type InterviewCaseExpectation = typeof interviewCaseExpectations.$inferSelect;
-export type NewInterviewCaseExpectation = typeof interviewCaseExpectations.$inferInsert;
+export type InterviewCaseExpectation =
+  typeof interviewCaseExpectations.$inferSelect;
+export type NewInterviewCaseExpectation =
+  typeof interviewCaseExpectations.$inferInsert;
 export type InterviewCaseTag = typeof interviewCaseTags.$inferSelect;
 export type NewInterviewCaseTag = typeof interviewCaseTags.$inferInsert;

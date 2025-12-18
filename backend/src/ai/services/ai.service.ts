@@ -26,9 +26,7 @@ export class AiService {
     const apiKey = process.env.ANTHROPIC_API_KEY;
 
     if (!apiKey) {
-      throw new Error(
-        'ANTHROPIC_API_KEY is not set in environment variables',
-      );
+      throw new Error('ANTHROPIC_API_KEY is not set in environment variables');
     }
 
     this.client = new Anthropic({

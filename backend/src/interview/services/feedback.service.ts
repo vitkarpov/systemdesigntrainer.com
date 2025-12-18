@@ -72,12 +72,18 @@ export class FeedbackService {
 
     // Calculate requirements score (0-100)
     let requirementsScore = 50; // Base score
-    if (signalNames.has(SignalName.ASKED_FUNCTIONAL_REQS)) requirementsScore += 15;
-    if (signalNames.has(SignalName.ASKED_NON_FUNCTIONAL_REQS)) requirementsScore += 15;
-    if (signalNames.has(SignalName.CLARIFIED_CONSTRAINTS)) requirementsScore += 10;
-    if (signalNames.has(SignalName.ASKED_CLARIFYING_QUESTIONS)) requirementsScore += 10;
-    if (redFlagNames.has(RedFlagName.SKIPPED_REQUIREMENTS)) requirementsScore -= 30;
-    if (redFlagNames.has(RedFlagName.MISUNDERSTOOD_PROBLEM)) requirementsScore -= 20;
+    if (signalNames.has(SignalName.ASKED_FUNCTIONAL_REQS))
+      requirementsScore += 15;
+    if (signalNames.has(SignalName.ASKED_NON_FUNCTIONAL_REQS))
+      requirementsScore += 15;
+    if (signalNames.has(SignalName.CLARIFIED_CONSTRAINTS))
+      requirementsScore += 10;
+    if (signalNames.has(SignalName.ASKED_CLARIFYING_QUESTIONS))
+      requirementsScore += 10;
+    if (redFlagNames.has(RedFlagName.SKIPPED_REQUIREMENTS))
+      requirementsScore -= 30;
+    if (redFlagNames.has(RedFlagName.MISUNDERSTOOD_PROBLEM))
+      requirementsScore -= 20;
     requirementsScore = Math.max(0, Math.min(100, requirementsScore));
 
     // Calculate design score (0-100)
@@ -91,17 +97,22 @@ export class FeedbackService {
 
     // Calculate communication score (0-100)
     let communicationScore = 50; // Base score
-    if (signalNames.has(SignalName.STRUCTURED_APPROACH)) communicationScore += 15;
-    if (signalNames.has(SignalName.DISCUSSED_TRADEOFFS)) communicationScore += 15;
-    if (signalNames.has(SignalName.ASKED_CLARIFYING_QUESTIONS)) communicationScore += 10;
+    if (signalNames.has(SignalName.STRUCTURED_APPROACH))
+      communicationScore += 15;
+    if (signalNames.has(SignalName.DISCUSSED_TRADEOFFS))
+      communicationScore += 15;
+    if (signalNames.has(SignalName.ASKED_CLARIFYING_QUESTIONS))
+      communicationScore += 10;
     const messageCount = signals.length; // More signals = more communication
     communicationScore += Math.min(10, messageCount);
-    if (redFlagNames.has(RedFlagName.WENT_TOO_DEEP_EARLY)) communicationScore -= 15;
+    if (redFlagNames.has(RedFlagName.WENT_TOO_DEEP_EARLY))
+      communicationScore -= 15;
     communicationScore = Math.max(0, Math.min(100, communicationScore));
 
     // Calculate time management score (0-100)
     let timeManagementScore = 70; // Base score (assume decent by default)
-    if (redFlagNames.has(RedFlagName.POOR_TIME_MANAGEMENT)) timeManagementScore -= 40;
+    if (redFlagNames.has(RedFlagName.POOR_TIME_MANAGEMENT))
+      timeManagementScore -= 40;
     // Bonus for completing interview
     if (session.status === 'completed') timeManagementScore += 10;
     timeManagementScore = Math.max(0, Math.min(100, timeManagementScore));
@@ -152,11 +163,14 @@ export class FeedbackService {
     let order = 0;
 
     // Strengths
-    if (signalNames.has(SignalName.ASKED_FUNCTIONAL_REQS) &&
-        signalNames.has(SignalName.ASKED_NON_FUNCTIONAL_REQS)) {
+    if (
+      signalNames.has(SignalName.ASKED_FUNCTIONAL_REQS) &&
+      signalNames.has(SignalName.ASKED_NON_FUNCTIONAL_REQS)
+    ) {
       items.push({
         type: 'strength',
-        description: 'Great job gathering both functional and non-functional requirements upfront.',
+        description:
+          'Great job gathering both functional and non-functional requirements upfront.',
         displayOrder: order++,
       });
     }
@@ -164,7 +178,8 @@ export class FeedbackService {
     if (signalNames.has(SignalName.STRUCTURED_APPROACH)) {
       items.push({
         type: 'strength',
-        description: 'You demonstrated a structured approach to solving the problem.',
+        description:
+          'You demonstrated a structured approach to solving the problem.',
         displayOrder: order++,
       });
     }
@@ -172,7 +187,8 @@ export class FeedbackService {
     if (signalNames.has(SignalName.DISCUSSED_TRADEOFFS)) {
       items.push({
         type: 'strength',
-        description: 'Excellent analysis of trade-offs between different design choices.',
+        description:
+          'Excellent analysis of trade-offs between different design choices.',
         displayOrder: order++,
       });
     }
@@ -180,7 +196,8 @@ export class FeedbackService {
     if (signalNames.has(SignalName.MENTIONED_SCALE)) {
       items.push({
         type: 'strength',
-        description: 'You considered scalability and discussed concrete numbers.',
+        description:
+          'You considered scalability and discussed concrete numbers.',
         displayOrder: order++,
       });
     }
@@ -189,7 +206,8 @@ export class FeedbackService {
     if (redFlagNames.has(RedFlagName.SKIPPED_REQUIREMENTS)) {
       items.push({
         type: 'weakness',
-        description: 'You jumped into the solution without gathering requirements first. Always start with clarifying questions.',
+        description:
+          'You jumped into the solution without gathering requirements first. Always start with clarifying questions.',
         displayOrder: order++,
       });
     }
@@ -197,7 +215,8 @@ export class FeedbackService {
     if (redFlagNames.has(RedFlagName.WENT_TOO_DEEP_EARLY)) {
       items.push({
         type: 'weakness',
-        description: 'You dove into implementation details too early. Focus on high-level design first.',
+        description:
+          'You dove into implementation details too early. Focus on high-level design first.',
         displayOrder: order++,
       });
     }
@@ -205,7 +224,8 @@ export class FeedbackService {
     if (redFlagNames.has(RedFlagName.NO_SCALE_MENTION)) {
       items.push({
         type: 'weakness',
-        description: 'You didn\'t discuss scale or provide concrete numbers for traffic estimates.',
+        description:
+          "You didn't discuss scale or provide concrete numbers for traffic estimates.",
         displayOrder: order++,
       });
     }
@@ -213,7 +233,8 @@ export class FeedbackService {
     if (redFlagNames.has(RedFlagName.POOR_TIME_MANAGEMENT)) {
       items.push({
         type: 'weakness',
-        description: 'Time management needs improvement. Practice moving through phases more efficiently.',
+        description:
+          'Time management needs improvement. Practice moving through phases more efficiently.',
         displayOrder: order++,
       });
     }
@@ -221,7 +242,8 @@ export class FeedbackService {
     if (!signalNames.has(SignalName.ADDRESSED_BOTTLENECKS)) {
       items.push({
         type: 'weakness',
-        description: 'You didn\'t identify or address potential bottlenecks in your design.',
+        description:
+          "You didn't identify or address potential bottlenecks in your design.",
         displayOrder: order++,
       });
     }
@@ -230,7 +252,8 @@ export class FeedbackService {
     if (scores.requirements < 70) {
       items.push({
         type: 'suggestion',
-        description: 'Practice asking clarifying questions at the start of every interview. Aim for 5-7 questions covering functional requirements, non-functional requirements, and constraints.',
+        description:
+          'Practice asking clarifying questions at the start of every interview. Aim for 5-7 questions covering functional requirements, non-functional requirements, and constraints.',
         displayOrder: order++,
       });
     }
@@ -238,7 +261,8 @@ export class FeedbackService {
     if (scores.design < 70) {
       items.push({
         type: 'suggestion',
-        description: 'Work on drawing clear high-level architecture diagrams. Practice sketching components, data flow, and APIs.',
+        description:
+          'Work on drawing clear high-level architecture diagrams. Practice sketching components, data flow, and APIs.',
         displayOrder: order++,
       });
     }
@@ -246,7 +270,8 @@ export class FeedbackService {
     if (scores.communication < 70) {
       items.push({
         type: 'suggestion',
-        description: 'Improve your communication by using a structured approach: requirements → high-level design → deep dive → bottlenecks.',
+        description:
+          'Improve your communication by using a structured approach: requirements → high-level design → deep dive → bottlenecks.',
         displayOrder: order++,
       });
     }
@@ -254,7 +279,8 @@ export class FeedbackService {
     if (!signalNames.has(SignalName.DISCUSSED_TRADEOFFS)) {
       items.push({
         type: 'suggestion',
-        description: 'Always discuss trade-offs when comparing design options. Explain the pros and cons of each approach.',
+        description:
+          'Always discuss trade-offs when comparing design options. Explain the pros and cons of each approach.',
         displayOrder: order++,
       });
     }
@@ -282,44 +308,56 @@ export class FeedbackService {
 
     const weakestArea = sortedScores[0][0];
 
-    if (weakestArea === 'requirements' || redFlagNames.has(RedFlagName.SKIPPED_REQUIREMENTS)) {
+    if (
+      weakestArea === 'requirements' ||
+      redFlagNames.has(RedFlagName.SKIPPED_REQUIREMENTS)
+    ) {
       nextSteps.push({
-        description: 'Practice gathering requirements: Spend 5 minutes at the start of each practice interview asking clarifying questions.',
+        description:
+          'Practice gathering requirements: Spend 5 minutes at the start of each practice interview asking clarifying questions.',
         displayOrder: order++,
       });
     }
 
     if (weakestArea === 'design') {
       nextSteps.push({
-        description: 'Study common system design patterns: Load balancers, caching layers, database sharding, and message queues.',
+        description:
+          'Study common system design patterns: Load balancers, caching layers, database sharding, and message queues.',
         displayOrder: order++,
       });
     }
 
     if (weakestArea === 'communication' || !scores.communication) {
       nextSteps.push({
-        description: 'Work on structured communication: Practice explaining your thought process step-by-step.',
+        description:
+          'Work on structured communication: Practice explaining your thought process step-by-step.',
         displayOrder: order++,
       });
     }
 
-    if (weakestArea === 'timeManagement' || redFlagNames.has(RedFlagName.POOR_TIME_MANAGEMENT)) {
+    if (
+      weakestArea === 'timeManagement' ||
+      redFlagNames.has(RedFlagName.POOR_TIME_MANAGEMENT)
+    ) {
       nextSteps.push({
-        description: 'Improve time management: Set a timer and practice phase transitions at 5, 15, 25, and 40-minute marks.',
+        description:
+          'Improve time management: Set a timer and practice phase transitions at 5, 15, 25, and 40-minute marks.',
         displayOrder: order++,
       });
     }
 
     if (weakestArea === 'depth') {
       nextSteps.push({
-        description: 'Go deeper on scalability: Practice calculating back-of-the-envelope estimates and discussing bottlenecks.',
+        description:
+          'Go deeper on scalability: Practice calculating back-of-the-envelope estimates and discussing bottlenecks.',
         displayOrder: order++,
       });
     }
 
     // Always recommend another practice
     nextSteps.push({
-      description: 'Do another practice interview within 48 hours to reinforce what you learned.',
+      description:
+        'Do another practice interview within 48 hours to reinforce what you learned.',
       displayOrder: order++,
     });
 
@@ -333,9 +371,9 @@ export class FeedbackService {
     const overall = scores.overall;
 
     if (overall >= 85) {
-      return 'Excellent performance! You demonstrated strong system design skills across all areas. You\'re well-prepared for real interviews.';
+      return "Excellent performance! You demonstrated strong system design skills across all areas. You're well-prepared for real interviews.";
     } else if (overall >= 70) {
-      return 'Good performance overall. You covered most key areas but there\'s room for improvement in a few specific areas highlighted below.';
+      return "Good performance overall. You covered most key areas but there's room for improvement in a few specific areas highlighted below.";
     } else if (overall >= 55) {
       return 'Decent attempt with some good moments, but several important areas need work. Focus on the weaknesses identified below.';
     } else {
@@ -423,15 +461,19 @@ export class FeedbackService {
 
     return {
       report,
-      items: itemRecords.map((r) => r[0]).map((r) => ({
-        type: r.itemType as 'strength' | 'weakness' | 'suggestion',
-        description: r.description,
-        displayOrder: r.displayOrder,
-      })),
-      nextSteps: nextStepRecords.map((r) => r[0]).map((r) => ({
-        description: r.description,
-        displayOrder: r.displayOrder,
-      })),
+      items: itemRecords
+        .map((r) => r[0])
+        .map((r) => ({
+          type: r.itemType as 'strength' | 'weakness' | 'suggestion',
+          description: r.description,
+          displayOrder: r.displayOrder,
+        })),
+      nextSteps: nextStepRecords
+        .map((r) => r[0])
+        .map((r) => ({
+          description: r.description,
+          displayOrder: r.displayOrder,
+        })),
     };
   }
 

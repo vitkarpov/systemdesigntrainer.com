@@ -1,4 +1,11 @@
-import { pgTable, serial, integer, varchar, text, timestamp } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  serial,
+  integer,
+  varchar,
+  text,
+  timestamp,
+} from 'drizzle-orm/pg-core';
 import { interviewSessions } from './interview-sessions.schema';
 
 export const diagramSnapshots = pgTable('diagram_snapshots', {

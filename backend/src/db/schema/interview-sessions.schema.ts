@@ -1,4 +1,12 @@
-import { pgTable, serial, integer, varchar, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  serial,
+  integer,
+  varchar,
+  text,
+  timestamp,
+  unique,
+} from 'drizzle-orm/pg-core';
 import { users } from './users.schema';
 import { interviewCases } from './interview-cases.schema';
 
@@ -19,11 +27,15 @@ export const interviewSessions = pgTable('interview_sessions', {
   completedAt: timestamp('completed_at'),
 
   // Current state
-  currentPhase: varchar('current_phase', { length: 20 }).notNull().default('problem'),
+  currentPhase: varchar('current_phase', { length: 20 })
+    .notNull()
+    .default('problem'),
   phaseStartedAt: timestamp('phase_started_at').notNull().defaultNow(),
 
   // Metadata
-  companyStyle: varchar('company_style', { length: 20 }).notNull().default('faang'),
+  companyStyle: varchar('company_style', { length: 20 })
+    .notNull()
+    .default('faang'),
   level: varchar('level', { length: 20 }).notNull().default('mid'),
 
   // Timestamps
@@ -66,7 +78,9 @@ export const interviewSignals = pgTable(
     phase: varchar('phase', { length: 20 }).notNull(),
 
     // Which message triggered it?
-    triggeredByMessageId: integer('triggered_by_message_id').references(() => transcriptMessages.id),
+    triggeredByMessageId: integer('triggered_by_message_id').references(
+      () => transcriptMessages.id,
+    ),
   },
   (table) => ({
     uniqueSessionSignal: unique().on(table.sessionId, table.signalName),

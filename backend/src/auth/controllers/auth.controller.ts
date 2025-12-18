@@ -36,7 +36,7 @@ export class AuthController {
     }
 
     try {
-      const { user, accessToken } = await this.authService.handleCallback(code);
+      const { accessToken } = await this.authService.handleCallback(code);
 
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       const redirectUrl = `${frontendUrl}/auth/callback?token=${accessToken}&state=${state || ''}`;

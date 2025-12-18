@@ -173,10 +173,7 @@ export class RedFlagService {
       .where(
         and(
           eq(interviewSignals.sessionId, sessionId),
-          eq(
-            interviewSignals.signalName,
-            SignalName.ASKED_NON_FUNCTIONAL_REQS,
-          ),
+          eq(interviewSignals.signalName, SignalName.ASKED_NON_FUNCTIONAL_REQS),
         ),
       )
       .limit(1);

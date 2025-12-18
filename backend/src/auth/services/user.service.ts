@@ -39,10 +39,7 @@ export class UserService {
   }
 
   async createUser(userData: NewUser): Promise<User> {
-    const result = await this.db
-      .insert(users)
-      .values(userData)
-      .returning();
+    const result = await this.db.insert(users).values(userData).returning();
     return result[0];
   }
 
@@ -80,9 +77,10 @@ export class UserService {
     if (existingUser) {
       return this.updateUser(existingUser.id, {
         email: workosUser.email,
-        name: workosUser.firstName && workosUser.lastName
-          ? `${workosUser.firstName} ${workosUser.lastName}`
-          : workosUser.firstName || existingUser.name,
+        name:
+          workosUser.firstName && workosUser.lastName
+            ? `${workosUser.firstName} ${workosUser.lastName}`
+            : workosUser.firstName || existingUser.name,
         avatarUrl: workosUser.profilePictureUrl || existingUser.avatarUrl,
       });
     }
@@ -90,9 +88,10 @@ export class UserService {
     return this.createUser({
       workosUserId: workosUser.id,
       email: workosUser.email,
-      name: workosUser.firstName && workosUser.lastName
-        ? `${workosUser.firstName} ${workosUser.lastName}`
-        : workosUser.firstName || null,
+      name:
+        workosUser.firstName && workosUser.lastName
+          ? `${workosUser.firstName} ${workosUser.lastName}`
+          : workosUser.firstName || null,
       avatarUrl: workosUser.profilePictureUrl || null,
       subscriptionStatus: 'free',
       interviewsCompleted: 0,

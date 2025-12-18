@@ -1,5 +1,9 @@
 import { db } from './db';
-import { interviewCases, interviewCaseExpectations, interviewCaseTags } from './schema';
+import {
+  interviewCases,
+  interviewCaseExpectations,
+  interviewCaseTags,
+} from './schema';
 
 async function seed() {
   console.log('Seeding database...');
@@ -10,7 +14,8 @@ async function seed() {
     .values({
       title: 'Design a URL Shortener',
       slug: 'url-shortener',
-      description: 'Design a scalable URL shortening service like bit.ly or TinyURL',
+      description:
+        'Design a scalable URL shortening service like bit.ly or TinyURL',
       difficulty: 'medium',
       problemStatement: `Design a URL shortening service that allows users to:
 - Submit long URLs and receive short, unique codes
@@ -36,19 +41,22 @@ Focus on system design aspects including:
     {
       caseId: urlShortenerCase.id,
       expectationType: 'requirements',
-      description: 'Clarify functional requirements (URL generation, redirection, analytics)',
+      description:
+        'Clarify functional requirements (URL generation, redirection, analytics)',
       displayOrder: 1,
     },
     {
       caseId: urlShortenerCase.id,
       expectationType: 'requirements',
-      description: 'Clarify non-functional requirements (latency, scale, availability)',
+      description:
+        'Clarify non-functional requirements (latency, scale, availability)',
       displayOrder: 2,
     },
     {
       caseId: urlShortenerCase.id,
       expectationType: 'capacity',
-      description: 'Estimate read/write ratio (typically 100:1 for URL shorteners)',
+      description:
+        'Estimate read/write ratio (typically 100:1 for URL shorteners)',
       displayOrder: 3,
     },
     {
@@ -60,7 +68,8 @@ Focus on system design aspects including:
     {
       caseId: urlShortenerCase.id,
       expectationType: 'api',
-      description: 'Define REST API endpoints (POST /shorten, GET /{shortCode})',
+      description:
+        'Define REST API endpoints (POST /shorten, GET /{shortCode})',
       displayOrder: 5,
     },
     {
@@ -72,13 +81,15 @@ Focus on system design aspects including:
     {
       caseId: urlShortenerCase.id,
       expectationType: 'high_level',
-      description: 'Propose component architecture (API servers, database, cache)',
+      description:
+        'Propose component architecture (API servers, database, cache)',
       displayOrder: 7,
     },
     {
       caseId: urlShortenerCase.id,
       expectationType: 'deep_dive',
-      description: 'Explain short code generation strategy (base62 encoding, hashing)',
+      description:
+        'Explain short code generation strategy (base62 encoding, hashing)',
       displayOrder: 8,
     },
     {

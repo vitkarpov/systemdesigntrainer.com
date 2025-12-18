@@ -20,11 +20,25 @@ export class AuthService {
   constructor(private userService: UserService) {
     const apiKey = process.env.WORKOS_API_KEY;
     this.clientId = process.env.WORKOS_CLIENT_ID;
-    this.jwtSecret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-    this.redirectUri = process.env.WORKOS_REDIRECT_URI || 'http://localhost:3000/api/auth/callback';
+    this.jwtSecret =
+      process.env.JWT_SECRET;
+    this.redirectUri =
+      process.env.WORKOS_REDIRECT_URI;
 
-    if (!apiKey || !this.clientId) {
-      throw new Error('WORKOS_API_KEY and WORKOS_CLIENT_ID must be set');
+    if (!this.jwtSecret) {
+      throw new Error('JWT_SECRET is not set');
+    }
+
+    if (!this.redirectUri) {
+      throw new Error('WORKOS_REDIRECT_URI is not set');
+    }
+
+    if (!apiKey) {
+      throw new Error('WORKOS_API_KEY is not set');
+    }
+
+    if (!this.clientId) {
+      throw new Error('WORKOS_CLIENT_ID is not set');
     }
 
     this.workos = new WorkOS(apiKey);
@@ -41,12 +55,15 @@ export class AuthService {
     return authorizationUrl;
   }
 
-  async handleCallback(code: string): Promise<{ user: User; accessToken: string }> {
+  async handleCallback(
+    code: string,
+  ): Promise<{ user: User; accessToken: string }> {
     try {
-      const { user: workosUser } = await this.workos.userManagement.authenticateWithCode({
-        clientId: this.clientId,
-        code,
-      });
+      const { user: workosUser } =
+        await this.workos.userManagement.authenticateWithCode({
+          clientId: this.clientId,
+          code,
+        });
 
       const user = await this.userService.upsertFromWorkos({
         id: workosUser.id,

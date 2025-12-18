@@ -40,7 +40,10 @@ export class SessionsController {
   /**
    * Helper method to verify user owns the session
    */
-  private async verifySessionOwnership(sessionId: number, userId: number): Promise<void> {
+  private async verifySessionOwnership(
+    sessionId: number,
+    userId: number,
+  ): Promise<void> {
     const session = await this.sessionService.getSession(sessionId);
     if (session.userId !== userId) {
       throw new ForbiddenException('You do not have access to this session');
