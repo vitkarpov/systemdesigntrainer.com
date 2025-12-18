@@ -1,5 +1,6 @@
 import { db } from './db';
 import {
+  users,
   interviewCases,
   interviewCaseExpectations,
   interviewCaseTags,
@@ -7,6 +8,23 @@ import {
 
 async function seed() {
   console.log('Seeding database...');
+
+  // Create test user for development
+  const [testUser] = await db
+    .insert(users)
+    .values({
+      workosUserId: 'test_user_dev',
+      email: 'test@example.com',
+      name: 'Test User',
+      avatarUrl: null,
+      subscriptionStatus: 'free',
+      interviewsCompleted: 0,
+      interviewsRemaining: 1,
+    })
+    .onConflictDoNothing()
+    .returning();
+
+  console.log(`Created test user: ${testUser?.email || 'test@example.com (already exists)'}`);
 
   // Create URL Shortener interview case
   const [urlShortenerCase] = await db

@@ -9,13 +9,17 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from '../services/auth.service';
+import { UserService } from '../services/user.service';
 import { Public } from '../decorators/public.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { User } from '../../db/schema/users.schema';
 
 @Controller('api/auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private userService: UserService,
+  ) {}
 
   @Public()
   @Get('login')
@@ -75,6 +79,31 @@ export class AuthController {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * DEV ONLY: Generate a test token for API testing
+   * This endpoint should be disabled in production
+   */
+  @Public()
+  @Post('dev/test-token')
+  async generateTestToken() {
+    if (process.env.NODE_ENV === 'production') {
+      throw new UnauthorizedException('This endpoint is only available in development');
+    }
+
+    const testUser = await this.userService.findByEmail('test@example.com');
+    const token = this.authService.generateAccessToken(testUser);
+
+    return {
+      accessToken: token,
+      user: {
+        id: testUser.id,
+        email: testUser.email,
+        name: testUser.name,
+      },
+      message: 'Test token generated. Use this token in Authorization header as: Bearer <token>',
     };
   }
 }
