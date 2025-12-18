@@ -7,7 +7,15 @@ import {
 } from './schema';
 
 async function seed() {
-  console.log('Seeding database...');
+  console.log('Cleaning up database...');
+
+  // Delete existing data in correct order (respecting foreign key constraints)
+  await db.delete(interviewCaseTags);
+  await db.delete(interviewCaseExpectations);
+  await db.delete(interviewCases);
+  await db.delete(users);
+
+  console.log('Database cleaned. Seeding database...');
 
   // Create test user for development
   const [testUser] = await db
@@ -21,11 +29,9 @@ async function seed() {
       interviewsCompleted: 0,
       interviewsRemaining: 1,
     })
-    .onConflictDoNothing()
     .returning();
 
-  console.log(`Created test user: ${testUser?.email || 'test@example.com (already exists)'}`);
-
+  console.log(`Created test user: ${testUser.email}`);
   // Create URL Shortener interview case
   const [urlShortenerCase] = await db
     .insert(interviewCases)
