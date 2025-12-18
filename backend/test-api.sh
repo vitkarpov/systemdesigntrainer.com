@@ -20,12 +20,27 @@ fi
 echo "✓ Got access token: ${ACCESS_TOKEN:0:20}..."
 echo ""
 
+# Get available cases and extract first case ID
+echo "0.1 Fetching available cases..."
+CASES_RESPONSE=$(curl -s -X GET http://localhost:3000/api/cases \
+  -H "Authorization: Bearer $ACCESS_TOKEN")
+
+CASE_ID=$(echo "$CASES_RESPONSE" | grep -o '"id":[0-9]*' | head -1 | grep -o '[0-9]*')
+
+if [ -z "$CASE_ID" ]; then
+  echo "❌ No cases found. Make sure the database is seeded (npm run db:seed)"
+  exit 1
+fi
+
+echo "✓ Using case ID: $CASE_ID"
+echo ""
+
 # Test 1: Create a new session (with authentication)
 echo "1. Creating new session..."
 SESSION_RESPONSE=$(curl -s -X POST http://localhost:3000/api/sessions \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -d '{"caseId":1,"companyStyle":"faang","level":"mid"}')
+  -d "{\"caseId\":$CASE_ID,\"companyStyle\":\"faang\",\"level\":\"mid\"}")
 
 echo "$SESSION_RESPONSE"
 
