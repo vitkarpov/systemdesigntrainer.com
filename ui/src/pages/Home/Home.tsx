@@ -1,20 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { createSession, startSession } from '../../services/api';
+import { createSession, startSession, getCases, type Case } from '../../services/api';
 
 export default function Home() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cases, setCases] = useState<Case[]>([]);
+  const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+
+  useEffect(() => {
+    const fetchCases = async () => {
+      try {
+        const fetchedCases = await getCases();
+        setCases(fetchedCases);
+        // Set the first case as default if available
+        if (fetchedCases.length > 0) {
+          setSelectedCase(fetchedCases[0]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch cases:', err);
+        setError('Failed to load interview cases. Please refresh the page.');
+      }
+    };
+
+    fetchCases();
+  }, []);
 
   const handleStartInterview = async () => {
+    if (!selectedCase) {
+      setError('Please select an interview case.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      const session = await createSession(1);
+      const session = await createSession(selectedCase.id);
       await startSession(session.id);
       navigate(`/interview/${session.id}`);
     } catch (err) {
@@ -36,13 +61,16 @@ export default function Home() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
-            <div className="bg-muted rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Current Case: URL Shortener</h3>
-              <p className="text-sm text-muted-foreground">
-                Design a URL shortening service like bit.ly or TinyURL. Consider scalability,
-                reliability, and key system design principles.
-              </p>
-            </div>
+            {selectedCase && (
+              <div className="bg-muted rounded-lg p-4">
+                <h3 className="font-semibold mb-2">
+                  Current Case: {selectedCase.title}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {selectedCase.description}
+                </p>
+              </div>
+            )}
 
             <div className="bg-muted rounded-lg p-4">
               <h3 className="font-semibold mb-2">Interview Format:</h3>

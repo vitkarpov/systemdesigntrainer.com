@@ -21,6 +21,13 @@ api.interceptors.request.use(
   }
 );
 
+export interface Case {
+  id: number;
+  title: string;
+  description: string;
+  difficulty: string;
+}
+
 export interface Session {
   id: number;
   status: "not_started" | "in_progress" | "completed";
@@ -94,6 +101,12 @@ export interface FeedbackReport {
   nextSteps: FeedbackNextStep[];
   createdAt: string;
 }
+
+// Case endpoints
+export const getCases = async (): Promise<Case[]> => {
+  const response = await api.get("/cases");
+  return response.data;
+};
 
 // Session endpoints
 export const createSession = async (caseId: number): Promise<Session> => {
