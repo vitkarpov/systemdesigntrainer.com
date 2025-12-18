@@ -4,10 +4,12 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
-import { createSession, startSession, getCases, getUser, logout, type Case, type User } from '../../services/api';
+import { createSession, startSession, getCases, getUser, type Case, type User } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function Home() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cases, setCases] = useState<Case[]>([]);
@@ -60,7 +62,6 @@ export default function Home() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
   };
 
   const getUserInitials = () => {

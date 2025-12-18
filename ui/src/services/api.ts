@@ -204,8 +204,4 @@ export const getUser = async (): Promise<User> => {
   return response.data;
 };
 
-export const logout = (): void => {
-  localStorage.removeItem("accessToken");
-};
-
 export default api;
