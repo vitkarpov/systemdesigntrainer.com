@@ -110,8 +110,8 @@ export const getCases = async (): Promise<Case[]> => {
 
 // Session endpoints
 export const createSession = async (caseId: number): Promise<Session> => {
-  const response = await api.post("/sessions", { interviewCaseId: caseId });
-  return response.data;
+  const response = await api.post("/sessions", { caseId });
+  return response.data.data.session;
 };
 
 export const startSession = async (sessionId: number): Promise<Session> => {
