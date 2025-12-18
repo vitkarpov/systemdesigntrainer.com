@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InterviewSessionService } from '../services/interview-session.service';
 import { TranscriptService } from '../services/transcript.service';
@@ -20,6 +21,8 @@ import { PromptService } from '../../ai/services/prompt.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
 import { AddMessageDto } from '../dto/add-message.dto';
 import { InterviewPhase, MessageRole } from '../types/session.types';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { User } from '../../db/schema/users.schema';
 
 @Controller('api/sessions')
 export class SessionsController {
@@ -35,13 +38,29 @@ export class SessionsController {
   ) {}
 
   /**
+   * Helper method to verify user owns the session
+   */
+  private async verifySessionOwnership(sessionId: number, userId: number): Promise<void> {
+    const session = await this.sessionService.getSession(sessionId);
+    if (session.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this session');
+    }
+  }
+
+  /**
    * POST /api/sessions
    * Create a new interview session
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async createSession(@Body() dto: CreateSessionDto) {
-    const session = await this.sessionService.createSession(dto);
+  async createSession(
+    @CurrentUser() user: User,
+    @Body() dto: CreateSessionDto,
+  ) {
+    const session = await this.sessionService.createSession({
+      ...dto,
+      userId: user.id,
+    });
 
     return {
       success: true,
@@ -62,7 +81,11 @@ export class SessionsController {
    * Get full transcript for a session
    */
   @Get(':id/transcript')
-  async getTranscript(@Param('id', ParseIntPipe) id: number) {
+  async getTranscript(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.verifySessionOwnership(id, user.id);
     const messages = await this.transcriptService.getSessionTranscript(id);
 
     return {
@@ -79,7 +102,11 @@ export class SessionsController {
    * Get all phases with metadata
    */
   @Get(':id/phases')
-  async getPhases(@Param('id', ParseIntPipe) id: number) {
+  async getPhases(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.verifySessionOwnership(id, user.id);
     const session = await this.sessionService.getSession(id);
     const allPhases = this.phaseService.getAllPhases();
 
@@ -104,7 +131,11 @@ export class SessionsController {
    * Get session details
    */
   @Get(':id')
-  async getSession(@Param('id', ParseIntPipe) id: number) {
+  async getSession(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.verifySessionOwnership(id, user.id);
     const session = await this.sessionService.getSession(id);
     const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
     const phaseElapsed = this.sessionService.getPhaseElapsedSeconds(session);
@@ -131,7 +162,11 @@ export class SessionsController {
    */
   @Post(':id/start')
   @HttpCode(HttpStatus.OK)
-  async startSession(@Param('id', ParseIntPipe) id: number) {
+  async startSession(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.verifySessionOwnership(id, user.id);
     const session = await this.sessionService.startSession(id);
 
     return {
@@ -146,7 +181,11 @@ export class SessionsController {
    * Advance to next phase and check for red flags
    */
   @Patch(':id/phase')
-  async advancePhase(@Param('id', ParseIntPipe) id: number) {
+  async advancePhase(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.verifySessionOwnership(id, user.id);
     const session = await this.sessionService.getSession(id);
     const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
 
@@ -178,9 +217,11 @@ export class SessionsController {
   @Post(':id/messages')
   @HttpCode(HttpStatus.CREATED)
   async addMessage(
+    @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: AddMessageDto,
   ) {
+    await this.verifySessionOwnership(id, user.id);
     const session = await this.sessionService.getSession(id);
     const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
 
@@ -213,9 +254,11 @@ export class SessionsController {
   @Post(':id/ai-response')
   @HttpCode(HttpStatus.CREATED)
   async getAiResponse(
+    @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: { text: string },
   ) {
+    await this.verifySessionOwnership(id, user.id);
     const session = await this.sessionService.getSession(id);
     const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
 
@@ -294,7 +337,11 @@ export class SessionsController {
    * Get all detected signals for a session
    */
   @Get(':id/signals')
-  async getSignals(@Param('id', ParseIntPipe) id: number) {
+  async getSignals(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.verifySessionOwnership(id, user.id);
     const signals = await this.signalService.getSessionSignals(id);
     const missingSignals = await this.signalService.getMissingSignals(id);
     const coverage = await this.signalService.getSignalCoverage(id);
@@ -315,7 +362,11 @@ export class SessionsController {
    * Get all detected red flags for a session
    */
   @Get(':id/red-flags')
-  async getRedFlags(@Param('id', ParseIntPipe) id: number) {
+  async getRedFlags(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.verifySessionOwnership(id, user.id);
     const redFlags = await this.redFlagService.getSessionRedFlags(id);
     const count = await this.redFlagService.getRedFlagCount(id);
     const hasRedFlags = await this.redFlagService.hasRedFlags(id);
@@ -342,7 +393,11 @@ export class SessionsController {
    */
   @Post(':id/feedback')
   @HttpCode(HttpStatus.CREATED)
-  async generateFeedback(@Param('id', ParseIntPipe) id: number) {
+  async generateFeedback(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.verifySessionOwnership(id, user.id);
     const feedback = await this.feedbackService.generateFeedback(id);
 
     return {
@@ -357,7 +412,11 @@ export class SessionsController {
    * Get existing feedback report for a session
    */
   @Get(':id/feedback')
-  async getFeedback(@Param('id', ParseIntPipe) id: number) {
+  async getFeedback(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.verifySessionOwnership(id, user.id);
     const feedback = await this.feedbackService.getFeedback(id);
 
     return {

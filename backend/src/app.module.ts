@@ -6,10 +6,12 @@ import { AppService } from './app.service';
 import { SpaController } from './spa.controller';
 import { DatabaseModule } from './db/db.module';
 import { InterviewModule } from './interview/interview.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    AuthModule,
     InterviewModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),

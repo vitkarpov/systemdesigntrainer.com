@@ -2,13 +2,41 @@ import { Routes, Route } from 'react-router-dom';
 import Home from './pages/Home/Home';
 import Interview from './pages/Interview/Interview';
 import Feedback from './pages/Feedback/Feedback';
+import Login from './pages/Auth/Login';
+import Callback from './pages/Auth/Callback';
+import AuthError from './pages/Auth/Error';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/interview/:sessionId" element={<Interview />} />
-      <Route path="/feedback/:sessionId" element={<Feedback />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/auth/callback" element={<Callback />} />
+      <Route path="/auth/error" element={<AuthError />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/interview/:sessionId"
+        element={
+          <ProtectedRoute>
+            <Interview />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/feedback/:sessionId"
+        element={
+          <ProtectedRoute>
+            <Feedback />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
