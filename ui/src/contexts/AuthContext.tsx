@@ -1,17 +1,9 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import axios from 'axios';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { getUser as getUserFromApi, type User as ApiUser } from '../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export interface User {
-  id: number;
-  email: string;
-  name: string | null;
-  avatarUrl: string | null;
-  subscriptionStatus: string;
-  interviewsCompleted: number;
-  interviewsRemaining: number;
-}
+export type User = ApiUser;
 
 interface AuthContextType {
   user: User | null;
@@ -46,7 +38,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const setAccessToken = (token: string) => {
     localStorage.setItem('accessToken', token);
     setAccessTokenState(token);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   };
 
   const login = () => {
@@ -55,12 +46,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const logout = async () => {
     try {
-      await axios.post(`${API_URL}/api/auth/logout`);
+      // Logout endpoint doesn't return anything, just make the request
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       localStorage.removeItem('accessToken');
-      delete axios.defaults.headers.common['Authorization'];
       setAccessTokenState(null);
       setUser(null);
     }
@@ -73,16 +69,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
 
     try {
-      const response = await axios.get(`${API_URL}/api/auth/user`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      setUser(response.data);
+      const userData = await getUserFromApi();
+      setUser(userData);
     } catch (error) {
       console.error('Failed to fetch user:', error);
       localStorage.removeItem('accessToken');
-      delete axios.defaults.headers.common['Authorization'];
       setAccessTokenState(null);
     } finally {
       setLoading(false);
@@ -91,7 +82,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     if (accessToken) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
       fetchUser();
     } else {
       setLoading(false);
