@@ -7,13 +7,21 @@ import {
   HttpStatus,
   UnauthorizedException,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
 import { Public } from '../decorators/public.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { User } from '../../db/schema/users.schema';
+import { UserResponseDto } from '../../interview/dto/responses.dto';
 
+@ApiTags('auth')
 @Controller('api/auth')
 export class AuthController {
   constructor(
@@ -54,6 +62,9 @@ export class AuthController {
   }
 
   @Get('user')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user information' })
+  @ApiResponse({ status: 200, description: 'User information', type: UserResponseDto })
   async getUser(@CurrentUser() user: User) {
     return {
       id: user.id,
@@ -67,6 +78,9 @@ export class AuthController {
   }
 
   @Post('logout')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout current user' })
+  @ApiResponse({ status: 200, description: 'Logged out successfully' })
   async logout() {
     return {
       message: 'Logged out successfully',

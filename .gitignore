@@ -132,3 +132,5 @@ desktop.ini
 .vercel/
 .netlify/
 .firebase/
+
+*.gen.ts

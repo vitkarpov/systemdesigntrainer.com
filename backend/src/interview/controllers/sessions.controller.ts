@@ -10,6 +10,13 @@ import {
   HttpStatus,
   ForbiddenException,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import { InterviewSessionService } from '../services/interview-session.service';
 import { TranscriptService } from '../services/transcript.service';
 import { PhaseService } from '../services/phase.service';
@@ -20,10 +27,27 @@ import { AiService } from '../../ai/services/ai.service';
 import { PromptService } from '../../ai/services/prompt.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
 import { AddMessageDto } from '../dto/add-message.dto';
+import {
+  CreateSessionResponseDto,
+  GetSessionResponseDto,
+  StartSessionResponseDto,
+  GetTranscriptResponseDto,
+  AiResponseDto,
+  GetSignalsResponseDto,
+  GetRedFlagsResponseDto,
+  GetPhasesResponseDto,
+  AdvancePhaseResponseDto,
+  AddMessageResponseDto,
+  AiRequestDto,
+  GenerateFeedbackResponseDto,
+  GetFeedbackResponseDto,
+} from '../dto/responses.dto';
 import { InterviewPhase, MessageRole } from '../types/session.types';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../db/schema/users.schema';
 
+@ApiTags('sessions')
+@ApiBearerAuth()
 @Controller('api/sessions')
 export class SessionsController {
   constructor(
@@ -56,6 +80,12 @@ export class SessionsController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a new interview session' })
+  @ApiResponse({
+    status: 201,
+    description: 'Session created successfully',
+    type: CreateSessionResponseDto,
+  })
   async createSession(
     @CurrentUser() user: User,
     @Body() dto: CreateSessionDto,
@@ -84,6 +114,9 @@ export class SessionsController {
    * Get full transcript for a session
    */
   @Get(':id/transcript')
+  @ApiOperation({ summary: 'Get session transcript' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({ status: 200, description: 'Transcript retrieved', type: GetTranscriptResponseDto })
   async getTranscript(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -105,6 +138,9 @@ export class SessionsController {
    * Get all phases with metadata
    */
   @Get(':id/phases')
+  @ApiOperation({ summary: 'Get all phases with metadata' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({ status: 200, description: 'Phases retrieved', type: GetPhasesResponseDto })
   async getPhases(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -134,6 +170,9 @@ export class SessionsController {
    * Get session details
    */
   @Get(':id')
+  @ApiOperation({ summary: 'Get session details' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({ status: 200, description: 'Session details retrieved', type: GetSessionResponseDto })
   async getSession(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -165,6 +204,9 @@ export class SessionsController {
    */
   @Post(':id/start')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Start an interview session' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({ status: 200, description: 'Session started', type: StartSessionResponseDto })
   async startSession(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -184,6 +226,9 @@ export class SessionsController {
    * Advance to next phase and check for red flags
    */
   @Patch(':id/phase')
+  @ApiOperation({ summary: 'Advance to next phase' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({ status: 200, description: 'Phase advanced', type: AdvancePhaseResponseDto })
   async advancePhase(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -219,6 +264,9 @@ export class SessionsController {
    */
   @Post(':id/messages')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Add message to transcript' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({ status: 201, description: 'Message added', type: AddMessageResponseDto })
   async addMessage(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -256,10 +304,17 @@ export class SessionsController {
    */
   @Post(':id/ai-response')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Send message and get AI response' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({
+    status: 201,
+    description: 'AI response generated',
+    type: AiResponseDto,
+  })
   async getAiResponse(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: { text: string },
+    @Body() dto: AiRequestDto,
   ) {
     await this.verifySessionOwnership(id, user.id);
     const session = await this.sessionService.getSession(id);
@@ -340,6 +395,9 @@ export class SessionsController {
    * Get all detected signals for a session
    */
   @Get(':id/signals')
+  @ApiOperation({ summary: 'Get detected signals' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({ status: 200, description: 'Signals retrieved', type: GetSignalsResponseDto })
   async getSignals(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -365,6 +423,9 @@ export class SessionsController {
    * Get all detected red flags for a session
    */
   @Get(':id/red-flags')
+  @ApiOperation({ summary: 'Get detected red flags' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({ status: 200, description: 'Red flags retrieved', type: GetRedFlagsResponseDto })
   async getRedFlags(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -396,6 +457,9 @@ export class SessionsController {
    */
   @Post(':id/feedback')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Generate feedback report' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({ status: 201, description: 'Feedback generated', type: GenerateFeedbackResponseDto })
   async generateFeedback(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -415,6 +479,9 @@ export class SessionsController {
    * Get existing feedback report for a session
    */
   @Get(':id/feedback')
+  @ApiOperation({ summary: 'Get feedback report' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({ status: 200, description: 'Feedback retrieved', type: GetFeedbackResponseDto })
   async getFeedback(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
