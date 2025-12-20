@@ -6,7 +6,7 @@
     "lint": "concurrently \"cd backend && npm run lint\" \"cd ui && npm run lint\"",
     "format": "concurrently \"cd backend && npm run format\" \"cd ui && npm run format\"",
     "clean": "rimraf backend/dist ui/dist backend/public",
-    "types:generate": "cd backend && npm run openapi:generate && cd ../ui && npm run types:generate"
+    "codegen": "cd backend && npm run openapi:generate && cd ../ui && npm run codegen"
   },
   "devDependencies": {
     "concurrently": "^8.0.0",

@@ -1,19 +1,3 @@
-import createClient from "openapi-fetch";
-import type { paths } from "./types.gen";
-
-const client = createClient<paths>({ baseUrl: "/" });
-
-client.use({
-  onRequest({ request }) {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      request.headers.set("Authorization", `Bearer ${token}`);
-    }
-    return request;
-  },
-});
-
-// Custom instance for Orval to use with openapi-fetch
 export const customInstance = async <T>(config: {
   url: string;
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -22,40 +6,48 @@ export const customInstance = async <T>(config: {
   signal?: AbortSignal;
   headers?: any;
 }): Promise<T> => {
-  const method = config.method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete';
-
-  // Build the fetch config
-  const fetchConfig: any = {};
-
-  // Handle path parameters
+  // Build URL with path parameters
+  let url = config.url;
   if (config.params) {
-    fetchConfig.params = { path: config.params };
+    Object.keys(config.params).forEach(key => {
+      url = url.replace(`{${key}}`, String(config.params[key]));
+    });
   }
 
-  // Handle request body
-  if (config.data) {
-    fetchConfig.body = config.data;
+  // Build headers
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...config.headers,
+  };
+
+  // Add auth token if available
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Handle abort signal
-  if (config.signal) {
-    fetchConfig.signal = config.signal;
+  // Build fetch options
+  const fetchOptions: RequestInit = {
+    method: config.method,
+    headers,
+    signal: config.signal,
+  };
+
+  // Add body for POST/PUT/PATCH requests
+  if (config.data && ['POST', 'PUT', 'PATCH'].includes(config.method)) {
+    fetchOptions.body = JSON.stringify(config.data);
   }
 
-  // Handle headers
-  if (config.headers) {
-    fetchConfig.headers = config.headers;
-  }
-
-  // Make the request using openapi-fetch client
-  const response = await (client as any)[method](config.url, fetchConfig);
+  // Make the request
+  const response = await fetch(url, fetchOptions);
 
   // Handle errors
-  if (response.error || !response.data) {
-    throw new Error(response.error?.message || 'API request failed');
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `HTTP error! status: ${response.status}`);
   }
 
-  return response.data as T;
+  // Parse and return JSON response
+  const data = await response.json();
+  return data as T;
 };
-
-export default client;

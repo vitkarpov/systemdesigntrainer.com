@@ -9,19 +9,15 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint .",
     "preview": "vite preview",
-    "types:generate": "openapi-typescript src/api/openapi.json -o src/api/types.gen.ts",
-    "hooks:generate": "orval --config orval.config.ts",
-    "codegen": "npm run types:generate && npm run hooks:generate"
+    "codegen": "orval --config orval.config.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.12",
     "@tanstack/react-query-devtools": "^5.91.1",
     "@workos-inc/authkit-react": "^0.14.0",
-    "axios": "^1.12.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.561.0",
-    "openapi-fetch": "^0.15.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.11.0",
@@ -40,7 +36,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.4.0",
-    "openapi-typescript": "^7.10.1",
     "orval": "^7.13.2",
     "postcss": "^8.5.6",
     "prettier": "^3.0.0",
