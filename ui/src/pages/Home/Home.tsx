@@ -2,28 +2,19 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
-import { createSession, startSession, getCases, getUser, type Case, type User } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
+import { UserMenu } from '../../components/UserMenu';
+import { createSession, startSession, getCases, type Case } from '../../services/api';
 
 export default function Home() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cases, setCases] = useState<Case[]>([]);
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
-  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCases = async () => {
       try {
-        // Fetch user data
-        const userData = await getUser();
-        setUser(userData);
-
-        // Fetch cases
         const fetchedCases = await getCases();
         setCases(fetchedCases);
         // Set the first case as default if available
@@ -31,12 +22,12 @@ export default function Home() {
           setSelectedCase(fetchedCases[0]);
         }
       } catch (err) {
-        console.error('Failed to fetch data:', err);
-        setError('Failed to load data. Please refresh the page.');
+        console.error('Failed to fetch cases:', err);
+        setError('Failed to load cases. Please refresh the page.');
       }
     };
 
-    fetchData();
+    fetchCases();
   }, []);
 
   const handleStartInterview = async () => {
@@ -60,39 +51,12 @@ export default function Home() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-  };
-
-  const getUserInitials = () => {
-    if (!user) return 'U';
-    const names = user.name.split(' ');
-    if (names.length >= 2) {
-      return `${names[0][0]}${names[1][0]}`.toUpperCase();
-    }
-    return names[0][0].toUpperCase();
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between px-4">
           <h1 className="text-lg font-semibold">SD Interview Simulator</h1>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background focus:ring-ring rounded-full">
-                <Avatar className="cursor-pointer">
-                  <AvatarImage src={user?.avatarUrl} alt={user?.name || user?.email || 'User'} />
-                  <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                </Avatar>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleLogout}>
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserMenu />
         </div>
       </header>
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-3.5rem)]">
