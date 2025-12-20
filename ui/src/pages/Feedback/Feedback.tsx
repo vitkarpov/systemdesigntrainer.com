@@ -1,35 +1,25 @@
-import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
-import { getFeedback, type FeedbackReport } from '../../services/api';
+import { useSessionsControllerGetFeedback } from '../../api/hooks.gen';
 
 export default function Feedback() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const [feedback, setFeedback] = useState<FeedbackReport | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!sessionId) return;
+  const sessionIdNum = Number(sessionId);
+  const {
+    data: feedbackData,
+    isLoading,
+    error,
+  } = useSessionsControllerGetFeedback(sessionIdNum, {
+    query: {
+      enabled: !!sessionId && !isNaN(sessionIdNum),
+    },
+  });
 
-    const loadFeedback = async () => {
-      try {
-        setIsLoading(true);
-        const feedbackData = await getFeedback(Number(sessionId));
-        setFeedback(feedbackData);
-      } catch (err) {
-        console.error('Failed to load feedback:', err);
-        setError('Failed to load feedback');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadFeedback();
-  }, [sessionId]);
+  const feedback = feedbackData?.data;
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600 dark:text-green-400';
@@ -56,7 +46,7 @@ export default function Feedback() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="p-6">
-          <p className="text-destructive">{error || 'Feedback not found'}</p>
+          <p className="text-destructive">{error ? 'Failed to load feedback' : 'Feedback not found'}</p>
           <Button onClick={() => navigate('/')} className="mt-4">
             Back to Home
           </Button>
@@ -78,7 +68,6 @@ export default function Feedback() {
         <Card>
           <CardHeader>
             <CardTitle>Overall Performance</CardTitle>
-            <CardDescription>{feedback.summary}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
@@ -130,7 +119,7 @@ export default function Feedback() {
         </Card>
 
         {/* Strengths */}
-        {feedback.feedbackItems.filter(item => item.category === 'strength').length > 0 && (
+        {feedback.items && feedback.items.filter(item => item.itemType === 'strength').length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -138,8 +127,8 @@ export default function Feedback() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {feedback.feedbackItems
-                .filter(item => item.category === 'strength')
+              {feedback.items
+                .filter(item => item.itemType === 'strength')
                 .map((item, idx) => (
                   <div key={idx} className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
                     <h4 className="font-semibold mb-1">{item.title}</h4>
@@ -151,7 +140,7 @@ export default function Feedback() {
         )}
 
         {/* Weaknesses */}
-        {feedback.feedbackItems.filter(item => item.category === 'weakness').length > 0 && (
+        {feedback.items && feedback.items.filter(item => item.itemType === 'weakness').length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -159,8 +148,8 @@ export default function Feedback() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {feedback.feedbackItems
-                .filter(item => item.category === 'weakness')
+              {feedback.items
+                .filter(item => item.itemType === 'weakness')
                 .map((item, idx) => (
                   <div key={idx} className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg">
                     <h4 className="font-semibold mb-1">{item.title}</h4>
@@ -172,7 +161,7 @@ export default function Feedback() {
         )}
 
         {/* Suggestions */}
-        {feedback.feedbackItems.filter(item => item.category === 'suggestion').length > 0 && (
+        {feedback.items && feedback.items.filter(item => item.itemType === 'suggestion').length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -180,8 +169,8 @@ export default function Feedback() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {feedback.feedbackItems
-                .filter(item => item.category === 'suggestion')
+              {feedback.items
+                .filter(item => item.itemType === 'suggestion')
                 .map((item, idx) => (
                   <div key={idx} className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
                     <h4 className="font-semibold mb-1">{item.title}</h4>
@@ -193,7 +182,7 @@ export default function Feedback() {
         )}
 
         {/* Next Steps */}
-        {feedback.nextSteps.length > 0 && (
+        {feedback.nextSteps && feedback.nextSteps.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Next Steps</CardTitle>
@@ -205,19 +194,18 @@ export default function Feedback() {
                   <div>
                     <Badge
                       variant={
-                        step.priority === 'high'
+                        step.priority >= 3
                           ? 'destructive'
-                          : step.priority === 'medium'
+                          : step.priority >= 2
                           ? 'default'
                           : 'secondary'
                       }
                     >
-                      {step.priority}
+                      {step.priority >= 3 ? 'high' : step.priority >= 2 ? 'medium' : 'low'}
                     </Badge>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold mb-1">{step.title}</h4>
-                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                    <p className="text-sm text-muted-foreground">{step.stepText}</p>
                   </div>
                 </div>
               ))}

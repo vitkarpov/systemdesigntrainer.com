@@ -1,59 +1,61 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import {
-  getSession,
-  getTranscript,
-  addMessage,
-  getAiResponse,
-  advancePhase,
-  generateFeedback,
-  type Session,
-  type TranscriptMessage,
-} from '../../services/api';
+  useSessionsControllerGetSession,
+  useSessionsControllerGetTranscript,
+  useSessionsControllerAddMessage,
+  useSessionsControllerGetAiResponse,
+  useSessionsControllerAdvancePhase,
+  useSessionsControllerGenerateFeedback,
+  getSessionsControllerGetSessionQueryKey,
+  getSessionsControllerGetTranscriptQueryKey,
+} from '../../api/hooks.gen';
 import { formatElapsedTime } from '../../lib/utils';
 
 export default function Interview() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const [session, setSession] = useState<Session | null>(null);
-  const [messages, setMessages] = useState<TranscriptMessage[]>([]);
+  const queryClient = useQueryClient();
   const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
 
-  useEffect(() => {
-    if (!sessionId) return;
+  const sessionIdNum = Number(sessionId);
 
-    const loadSessionData = async () => {
-      try {
-        setIsLoading(true);
-        const [sessionData, transcriptData] = await Promise.all([
-          getSession(Number(sessionId)),
-          getTranscript(Number(sessionId)),
-        ]);
-        setSession(sessionData);
-        setMessages(transcriptData);
-        setElapsedTime(sessionData.elapsedTime);
-      } catch (err) {
-        console.error('Failed to load session:', err);
-        setError('Failed to load interview session');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const { data: session, isLoading: isLoadingSession } = useSessionsControllerGetSession(sessionIdNum, {
+    query: {
+      enabled: !!sessionId && !isNaN(sessionIdNum),
+      refetchInterval: 1000,
+    },
+  });
 
-    loadSessionData();
-  }, [sessionId]);
+  const { data: transcriptData, isLoading: isLoadingMessages } = useSessionsControllerGetTranscript(sessionIdNum, {
+    query: {
+      enabled: !!sessionId && !isNaN(sessionIdNum),
+    },
+  });
+
+  const messages = transcriptData?.data.messages || [];
+
+  const addMessageMutation = useSessionsControllerAddMessage();
+  const getAiResponseMutation = useSessionsControllerGetAiResponse();
+  const advancePhaseMutation = useSessionsControllerAdvancePhase();
+  const generateFeedbackMutation = useSessionsControllerGenerateFeedback();
 
   useEffect(() => {
-    if (!session || session.status !== 'in_progress') return;
+    if (session) {
+      setElapsedTime(session.data.elapsedSeconds);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (!session || session.data.session.status !== 'in_progress') return;
 
     const timer = setInterval(() => {
       setElapsedTime((prev) => prev + 1);
@@ -67,32 +69,43 @@ export default function Interview() {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || !sessionId || isSending) return;
+    if (!inputValue.trim() || !sessionId || addMessageMutation.isPending || getAiResponseMutation.isPending) return;
 
     const messageContent = inputValue.trim();
     setInputValue('');
-    setIsSending(true);
     setError(null);
 
     try {
-      const candidateMessage = await addMessage(
-        Number(sessionId),
-        'candidate',
-        messageContent
-      );
-      setMessages((prev) => [...prev, candidateMessage]);
+      await addMessageMutation.mutateAsync({
+        id: sessionIdNum,
+        data: {
+          role: 'candidate',
+          text: messageContent,
+        },
+      });
 
-      const aiResponse = await getAiResponse(Number(sessionId));
-      const transcriptData = await getTranscript(Number(sessionId));
-      setMessages(transcriptData);
+      await queryClient.invalidateQueries({
+        queryKey: getSessionsControllerGetTranscriptQueryKey(sessionIdNum),
+      });
 
-      const sessionData = await getSession(Number(sessionId));
-      setSession(sessionData);
+      await getAiResponseMutation.mutateAsync({
+        id: sessionIdNum,
+        data: {
+          text: '',
+        },
+      });
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: getSessionsControllerGetTranscriptQueryKey(sessionIdNum),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getSessionsControllerGetSessionQueryKey(sessionIdNum),
+        }),
+      ]);
     } catch (err) {
       console.error('Failed to send message:', err);
       setError('Failed to send message. Please try again.');
-    } finally {
-      setIsSending(false);
     }
   };
 
@@ -100,8 +113,12 @@ export default function Interview() {
     if (!sessionId) return;
 
     try {
-      const updatedSession = await advancePhase(Number(sessionId));
-      setSession(updatedSession);
+      await advancePhaseMutation.mutateAsync({
+        id: sessionIdNum,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: getSessionsControllerGetSessionQueryKey(sessionIdNum),
+      });
     } catch (err) {
       console.error('Failed to advance phase:', err);
       setError('Failed to advance phase');
@@ -112,14 +129,13 @@ export default function Interview() {
     if (!sessionId) return;
 
     try {
-      setIsLoading(true);
-      await generateFeedback(Number(sessionId));
+      await generateFeedbackMutation.mutateAsync({
+        id: sessionIdNum,
+      });
       navigate(`/feedback/${sessionId}`);
     } catch (err) {
       console.error('Failed to generate feedback:', err);
       setError('Failed to generate feedback');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -129,6 +145,9 @@ export default function Interview() {
       handleSendMessage();
     }
   };
+
+  const isLoading = isLoadingSession || isLoadingMessages;
+  const isSending = addMessageMutation.isPending || getAiResponseMutation.isPending;
 
   if (isLoading) {
     return (
@@ -153,20 +172,20 @@ export default function Interview() {
       {/* Header */}
       <div className="border-b px-6 py-4 flex items-center justify-between bg-card">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-semibold">{session?.interviewCase.title}</h1>
-          <Badge variant="secondary">{session?.currentPhase.replace('_', ' ')}</Badge>
+          <h1 className="text-xl font-semibold">{session?.data.session.interviewCase?.title}</h1>
+          <Badge variant="secondary">{session?.data.session.currentPhase.replace('_', ' ')}</Badge>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-sm text-muted-foreground">
             Time: {formatElapsedTime(elapsedTime)}
           </div>
-          {session?.currentPhase !== 'wrap_up' && (
-            <Button variant="outline" size="sm" onClick={handleAdvancePhase}>
+          {session?.data.session.currentPhase !== 'wrap_up' && (
+            <Button variant="outline" size="sm" onClick={handleAdvancePhase} disabled={advancePhaseMutation.isPending}>
               Next Phase
             </Button>
           )}
-          <Button variant="destructive" size="sm" onClick={handleEndInterview}>
-            End Interview
+          <Button variant="destructive" size="sm" onClick={handleEndInterview} disabled={generateFeedbackMutation.isPending}>
+            {generateFeedbackMutation.isPending ? 'Ending...' : 'End Interview'}
           </Button>
         </div>
       </div>
@@ -189,9 +208,9 @@ export default function Interview() {
             >
               <div className="text-xs opacity-70 mb-1">
                 {message.role === 'candidate' ? 'You' : 'Interviewer'} •{' '}
-                {formatElapsedTime(message.elapsedTime)}
+                {formatElapsedTime(message.secondsElapsed)}
               </div>
-              <div className="whitespace-pre-wrap">{message.content}</div>
+              <div className="whitespace-pre-wrap">{message.text}</div>
             </div>
           </div>
         ))}

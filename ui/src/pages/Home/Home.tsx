@@ -3,32 +3,33 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { UserMenu } from '../../components/UserMenu';
-import { createSession, startSession, getCases, type Case } from '../../services/api';
+import {
+  useCasesControllerGetAllCases,
+  useSessionsControllerCreateSession,
+  useSessionsControllerStartSession,
+  type InterviewCaseDto,
+} from '../../api/hooks.gen';
 
 export default function Home() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cases, setCases] = useState<Case[]>([]);
-  const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+  const [selectedCase, setSelectedCase] = useState<InterviewCaseDto | null>(null);
+
+  const { data: cases = [], isLoading: isLoadingCases, error: casesError } = useCasesControllerGetAllCases();
+  const createSessionMutation = useSessionsControllerCreateSession();
+  const startSessionMutation = useSessionsControllerStartSession();
 
   useEffect(() => {
-    const fetchCases = async () => {
-      try {
-        const fetchedCases = await getCases();
-        setCases(fetchedCases);
-        // Set the first case as default if available
-        if (fetchedCases.length > 0) {
-          setSelectedCase(fetchedCases[0]);
-        }
-      } catch (err) {
-        console.error('Failed to fetch cases:', err);
-        setError('Failed to load cases. Please refresh the page.');
-      }
-    };
+    if (cases.length > 0 && !selectedCase) {
+      setSelectedCase(cases[0]);
+    }
+  }, [cases, selectedCase]);
 
-    fetchCases();
-  }, []);
+  useEffect(() => {
+    if (casesError) {
+      setError('Failed to load cases. Please refresh the page.');
+    }
+  }, [casesError]);
 
   const handleStartInterview = async () => {
     if (!selectedCase) {
@@ -36,18 +37,25 @@ export default function Home() {
       return;
     }
 
-    setIsLoading(true);
     setError(null);
 
     try {
-      const session = await createSession(selectedCase.id);
-      await startSession(session.id);
-      navigate(`/interview/${session.id}`);
+      const sessionResponse = await createSessionMutation.mutateAsync({
+        data: {
+          caseId: selectedCase.id,
+          companyStyle: 'generic',
+          level: 'mid',
+        },
+      });
+
+      await startSessionMutation.mutateAsync({
+        id: sessionResponse.data.session.id,
+      });
+
+      navigate(`/interview/${sessionResponse.data.session.id}`);
     } catch (err) {
       console.error('Failed to start interview:', err);
       setError('Failed to start interview. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -99,11 +107,13 @@ export default function Home() {
 
             <Button
               onClick={handleStartInterview}
-              disabled={isLoading}
+              disabled={isLoadingCases || createSessionMutation.isPending || startSessionMutation.isPending}
               size="lg"
               className="w-full text-lg h-12"
             >
-              {isLoading ? 'Starting Interview...' : 'Start Interview'}
+              {createSessionMutation.isPending || startSessionMutation.isPending
+                ? 'Starting Interview...'
+                : 'Start Interview'}
             </Button>
           </CardContent>
         </Card>

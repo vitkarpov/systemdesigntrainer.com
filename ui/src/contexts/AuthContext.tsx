@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { getUser as getUserFromApi, type User as ApiUser } from '../services/api';
+import { useAuthControllerGetUser, useAuthControllerLogout, type UserResponseDto } from '../api/hooks.gen';
+import { useQueryClient } from '@tanstack/react-query';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export type User = ApiUser;
+export type User = UserResponseDto;
 
 interface AuthContextType {
   user: User | null;
@@ -29,11 +30,29 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [accessToken, setAccessTokenState] = useState<string | null>(
     localStorage.getItem('accessToken')
   );
+
+  const { data: user, isLoading, error } = useAuthControllerGetUser({
+    query: {
+      enabled: !!accessToken,
+      retry: false,
+    },
+  });
+
+  const logoutMutation = useAuthControllerLogout();
+
+  const loading = isLoading;
+
+  useEffect(() => {
+    if (error && accessToken) {
+      console.error('Failed to fetch user:', error);
+      localStorage.removeItem('accessToken');
+      setAccessTokenState(null);
+    }
+  }, [error, accessToken]);
 
   const setAccessToken = (token: string) => {
     localStorage.setItem('accessToken', token);
@@ -46,50 +65,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const logout = async () => {
     try {
-      // Logout endpoint doesn't return anything, just make the request
-      await fetch(`${API_URL}/api/auth/logout`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+      await logoutMutation.mutateAsync();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       localStorage.removeItem('accessToken');
       setAccessTokenState(null);
-      setUser(null);
+      queryClient.clear();
     }
   };
-
-  const fetchUser = async () => {
-    if (!accessToken) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const userData = await getUserFromApi();
-      setUser(userData);
-    } catch (error) {
-      console.error('Failed to fetch user:', error);
-      localStorage.removeItem('accessToken');
-      setAccessTokenState(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (accessToken) {
-      fetchUser();
-    } else {
-      setLoading(false);
-    }
-  }, [accessToken]);
 
   const value = {
-    user,
+    user: user ?? null,
     loading,
     login,
     logout,

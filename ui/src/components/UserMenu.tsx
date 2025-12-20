@@ -1,25 +1,11 @@
-import { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { getUser, type User } from '../services/api';
+import { useAuthControllerGetUser } from '../api/hooks.gen';
 import { useAuth } from '../contexts/AuthContext';
 
 export function UserMenu() {
   const { logout } = useAuth();
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userData = await getUser();
-        setUser(userData);
-      } catch (err) {
-        console.error('Failed to fetch user:', err);
-      }
-    };
-
-    fetchUser();
-  }, []);
+  const { data: user } = useAuthControllerGetUser();
 
   const handleLogout = () => {
     logout();
