@@ -8,8 +8,7 @@ import { Badge } from '../../components/ui/badge';
 import {
   useSessionsControllerGetSession,
   useSessionsControllerGetTranscript,
-  useSessionsControllerAddMessage,
-  useSessionsControllerGetAiResponse,
+  useSessionsControllerHandleConversation,
   useSessionsControllerAdvancePhase,
   useSessionsControllerGenerateFeedback,
   getSessionsControllerGetSessionQueryKey,
@@ -43,8 +42,7 @@ export default function Interview() {
 
   const messages = transcriptData?.data.messages || [];
 
-  const addMessageMutation = useSessionsControllerAddMessage();
-  const getAiResponseMutation = useSessionsControllerGetAiResponse();
+  const conversationMutation = useSessionsControllerHandleConversation();
   const advancePhaseMutation = useSessionsControllerAdvancePhase();
   const generateFeedbackMutation = useSessionsControllerGenerateFeedback();
 
@@ -69,29 +67,17 @@ export default function Interview() {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || !sessionId || addMessageMutation.isPending || getAiResponseMutation.isPending) return;
+    if (!inputValue.trim() || !sessionId || conversationMutation.isPending) return;
 
     const messageContent = inputValue.trim();
     setInputValue('');
     setError(null);
 
     try {
-      await addMessageMutation.mutateAsync({
+      await conversationMutation.mutateAsync({
         id: sessionIdNum,
         data: {
-          role: 'candidate',
           text: messageContent,
-        },
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: getSessionsControllerGetTranscriptQueryKey(sessionIdNum),
-      });
-
-      await getAiResponseMutation.mutateAsync({
-        id: sessionIdNum,
-        data: {
-          text: '',
         },
       });
 
@@ -147,7 +133,7 @@ export default function Interview() {
   };
 
   const isLoading = isLoadingSession || isLoadingMessages;
-  const isSending = addMessageMutation.isPending || getAiResponseMutation.isPending;
+  const isSending = conversationMutation.isPending;
 
   if (isLoading) {
     return (

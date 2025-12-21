@@ -26,7 +26,6 @@ import { FeedbackService } from '../services/feedback.service';
 import { AiService } from '../../ai/services/ai.service';
 import { PromptService } from '../../ai/services/prompt.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
-import { AddMessageDto } from '../dto/add-message.dto';
 import {
   CreateSessionResponseDto,
   GetSessionResponseDto,
@@ -37,7 +36,6 @@ import {
   GetRedFlagsResponseDto,
   GetPhasesResponseDto,
   AdvancePhaseResponseDto,
-  AddMessageResponseDto,
   AiRequestDto,
   GenerateFeedbackResponseDto,
   GetFeedbackResponseDto,
@@ -258,41 +256,10 @@ export class SessionsController {
     };
   }
 
-  /**
-   * POST /api/sessions/:id/messages
-   * Add a message to the transcript
-   */
-  @Post(':id/messages')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Add message to transcript' })
-  @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({ status: 201, description: 'Message added', type: AddMessageResponseDto })
-  async addMessage(
-    @CurrentUser() user: User,
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: AddMessageDto,
-  ) {
-    await this.verifySessionOwnership(id, user.id);
-    const session = await this.sessionService.getSession(id);
-    const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
-
-    const message = await this.transcriptService.addMessage({
-      sessionId: id,
-      role: dto.role,
-      text: dto.text,
-      phase: session.currentPhase as InterviewPhase,
-      secondsElapsed: elapsedSeconds,
-    });
-
-    return {
-      success: true,
-      data: { message },
-    };
-  }
 
   /**
-   * POST /api/sessions/:id/ai-response
-   * Get AI interviewer response for a candidate message
+   * POST /api/sessions/:id/conversation
+   * Handle a conversation turn with the AI interviewer
    * This endpoint:
    * 1. Saves the candidate's message to the transcript
    * 2. Detects signals in the candidate's message
@@ -302,16 +269,16 @@ export class SessionsController {
    * 6. Saves the AI response to the transcript
    * 7. Returns both messages, detected signals, and red flags
    */
-  @Post(':id/ai-response')
+  @Post(':id/conversation')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Send message and get AI response' })
+  @ApiOperation({ summary: 'Handle conversation turn' })
   @ApiParam({ name: 'id', description: 'Session ID' })
   @ApiResponse({
     status: 201,
-    description: 'AI response generated',
+    description: 'Conversation turn completed',
     type: AiResponseDto,
   })
-  async getAiResponse(
+  async handleConversation(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: AiRequestDto,

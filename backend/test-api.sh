@@ -65,60 +65,40 @@ curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/start" \
 echo ""
 echo ""
 
-# Test 3: Add a message
-echo "3. Adding interviewer message..."
-curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/messages" \
-  -H 'Content-Type: application/json' \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -d '{"role":"interviewer","text":"Hello"}'
-
-echo ""
-echo ""
-
-# Test 4: Add candidate message
-echo "4. Adding candidate message..."
-curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/messages" \
-  -H 'Content-Type: application/json' \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -d '{"role":"candidate","text":"Hi there"}'
-
-echo ""
-echo ""
-
-# Test 5: Get transcript
-echo "5. Getting transcript..."
+# Test 3: Get transcript (initially empty)
+echo "3. Getting transcript..."
 curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID/transcript" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 
 echo ""
 echo ""
 
-# Test 6: Get session state
-echo "6. Getting session state..."
+# Test 4: Get session state
+echo "4. Getting session state..."
 curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 
 echo ""
 echo ""
 
-# Test 7: Advance phase
-echo "7. Advancing to next phase..."
+# Test 5: Advance phase
+echo "5. Advancing to next phase..."
 curl -s -X PATCH "http://localhost:3000/api/sessions/$SESSION_ID/phase" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 
 echo ""
 echo ""
 
-# Test 8: Get updated session state
-echo "8. Getting updated session state..."
+# Test 6: Get updated session state
+echo "6. Getting updated session state..."
 curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 
 echo ""
 
-# Test 9: Send candidate message and get AI response
-echo "9. Testing AI integration - Candidate asks about requirements..."
-curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/ai-response" \
+# Test 7: Send candidate message and get AI response
+echo "7. Testing conversation - Candidate asks about requirements..."
+curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/conversation" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d '{"text":"What are the key functional and non-functional requirements I should focus on?"}'
@@ -126,9 +106,9 @@ curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/ai-response" \
 echo ""
 echo ""
 
-# Test 10: Another AI interaction
-echo "10. Candidate discusses scale..."
-curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/ai-response" \
+# Test 8: Another conversation turn
+echo "8. Candidate discusses scale..."
+curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/conversation" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d '{"text":"I am thinking we need to handle around 1 million URLs and maybe 10000 requests per second. Does that sound reasonable?"}'
@@ -136,25 +116,25 @@ curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/ai-response" \
 echo ""
 echo ""
 
-# Test 11: Get detected signals
-echo "11. Getting detected signals..."
+# Test 9: Get detected signals
+echo "9. Getting detected signals..."
 curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID/signals" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 
 echo ""
 echo ""
 
-# Test 12: Get detected red flags
-echo "12. Getting detected red flags..."
+# Test 10: Get detected red flags
+echo "10. Getting detected red flags..."
 curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID/red-flags" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 
 echo ""
 echo ""
 
-# Test 13: Send message with implementation details (should trigger red flag)
-echo "13. Testing red flag detection - Implementation details in early phase..."
-curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/ai-response" \
+# Test 11: Send message with implementation details (should trigger red flag)
+echo "11. Testing red flag detection - Implementation details in early phase..."
+curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/conversation" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d '{"text":"I would implement this with a class URLShortener that has a function generateShortUrl() which uses a for loop to iterate through characters..."}'
@@ -162,16 +142,16 @@ curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/ai-response" \
 echo ""
 echo ""
 
-# Test 14: Check red flags again
-echo "14. Getting red flags after implementation details..."
+# Test 12: Check red flags again
+echo "12. Getting red flags after implementation details..."
 curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID/red-flags" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 
 echo ""
 echo ""
 
-# Test 15: Generate feedback report
-echo "15. Generating feedback report..."
+# Test 13: Generate feedback report
+echo "13. Generating feedback report..."
 curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/feedback" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer $ACCESS_TOKEN"
@@ -179,13 +159,13 @@ curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/feedback" \
 echo ""
 echo ""
 
-# Test 16: Get feedback report
-echo "16. Getting feedback report..."
+# Test 14: Get feedback report
+echo "14. Getting feedback report..."
 curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID/feedback" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 
 echo ""
 echo ""
 
-echo "✓ All tests complete (including authentication, AI integration, signal tracking, red flag detection, and feedback generation)!"
+echo "✓ All tests complete (including authentication, conversation handling, signal tracking, red flag detection, and feedback generation)!"
 echo ""
