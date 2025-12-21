@@ -81,6 +81,11 @@ export default function Feedback() {
                 <div className="text-muted-foreground">out of 100</div>
               </div>
             </div>
+            {feedback.overallSummary && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                {feedback.overallSummary}
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -119,7 +124,7 @@ export default function Feedback() {
         </Card>
 
         {/* Strengths */}
-        {feedback.items && feedback.items.filter(item => item.itemType === 'strength').length > 0 && (
+        {feedback.items && feedback.items.filter(item => item.type === 'strength').length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -128,10 +133,9 @@ export default function Feedback() {
             </CardHeader>
             <CardContent className="space-y-3">
               {feedback.items
-                .filter(item => item.itemType === 'strength')
+                .filter(item => item.type === 'strength')
                 .map((item, idx) => (
                   <div key={idx} className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-1">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.description}</p>
                   </div>
                 ))}
@@ -140,7 +144,7 @@ export default function Feedback() {
         )}
 
         {/* Weaknesses */}
-        {feedback.items && feedback.items.filter(item => item.itemType === 'weakness').length > 0 && (
+        {feedback.items && feedback.items.filter(item => item.type === 'weakness').length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -149,10 +153,9 @@ export default function Feedback() {
             </CardHeader>
             <CardContent className="space-y-3">
               {feedback.items
-                .filter(item => item.itemType === 'weakness')
+                .filter(item => item.type === 'weakness')
                 .map((item, idx) => (
                   <div key={idx} className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-1">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.description}</p>
                   </div>
                 ))}
@@ -161,7 +164,7 @@ export default function Feedback() {
         )}
 
         {/* Suggestions */}
-        {feedback.items && feedback.items.filter(item => item.itemType === 'suggestion').length > 0 && (
+        {feedback.items && feedback.items.filter(item => item.type === 'suggestion').length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -170,10 +173,9 @@ export default function Feedback() {
             </CardHeader>
             <CardContent className="space-y-3">
               {feedback.items
-                .filter(item => item.itemType === 'suggestion')
+                .filter(item => item.type === 'suggestion')
                 .map((item, idx) => (
                   <div key={idx} className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-1">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.description}</p>
                   </div>
                 ))}
@@ -190,23 +192,8 @@ export default function Feedback() {
             </CardHeader>
             <CardContent className="space-y-3">
               {feedback.nextSteps.map((step, idx) => (
-                <div key={idx} className="flex gap-3 p-4 bg-muted rounded-lg">
-                  <div>
-                    <Badge
-                      variant={
-                        step.priority >= 3
-                          ? 'destructive'
-                          : step.priority >= 2
-                          ? 'default'
-                          : 'secondary'
-                      }
-                    >
-                      {step.priority >= 3 ? 'high' : step.priority >= 2 ? 'medium' : 'low'}
-                    </Badge>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">{step.stepText}</p>
-                  </div>
+                <div key={idx} className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">{step.description}</p>
                 </div>
               ))}
             </CardContent>

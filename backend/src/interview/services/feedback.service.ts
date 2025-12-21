@@ -33,18 +33,16 @@ export interface FeedbackNextStepData {
 }
 
 export interface GenerateFeedbackResult {
-  report: {
-    id: number;
-    sessionId: number;
-    overallScore: number;
-    requirementsScore: number;
-    designScore: number;
-    communicationScore: number;
-    timeManagementScore: number;
-    depthScore: number;
-    overallSummary: string;
-    createdAt: Date;
-  };
+  id: number;
+  sessionId: number;
+  overallScore: number;
+  requirementsScore: number;
+  designScore: number;
+  communicationScore: number;
+  timeManagementScore: number;
+  depthScore: number;
+  overallSummary: string;
+  createdAt: Date;
   items: FeedbackItemData[];
   nextSteps: FeedbackNextStepData[];
 }
@@ -459,8 +457,9 @@ export class FeedbackService {
       ),
     );
 
+    // Return flat structure with report fields at top level
     return {
-      report,
+      ...report,
       items: itemRecords
         .map((r) => r[0])
         .map((r) => ({
@@ -505,8 +504,9 @@ export class FeedbackService {
       .where(eq(feedbackNextSteps.reportId, report.id))
       .orderBy(feedbackNextSteps.displayOrder);
 
+    // Return flat structure with report fields at top level
     return {
-      report,
+      ...report,
       items: items.map((item) => ({
         type: item.itemType as 'strength' | 'weakness' | 'suggestion',
         description: item.description,
