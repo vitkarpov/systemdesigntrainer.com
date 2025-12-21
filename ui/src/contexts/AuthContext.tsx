@@ -12,6 +12,7 @@ interface AuthContextType {
   login: () => void;
   logout: () => void;
   isAuthenticated: boolean;
+  accessToken: string | null;
   setAccessToken: (token: string) => void;
 }
 
@@ -81,6 +82,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     login,
     logout,
     isAuthenticated: !!user,
+    accessToken,
     setAccessToken,
   };
 

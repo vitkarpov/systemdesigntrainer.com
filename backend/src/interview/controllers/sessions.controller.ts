@@ -5,11 +5,16 @@ import {
   Patch,
   Param,
   Body,
+  Query,
   ParseIntPipe,
   HttpCode,
   HttpStatus,
   ForbiddenException,
+  Sse,
+  MessageEvent,
 } from '@nestjs/common';
+import { Observable, from, concat, of } from 'rxjs';
+import { switchMap, map, catchError } from 'rxjs/operators';
 import {
   ApiTags,
   ApiOperation,
@@ -258,103 +263,164 @@ export class SessionsController {
 
 
   /**
-   * POST /api/sessions/:id/conversation
-   * Handle a conversation turn with the AI interviewer
+   * SSE /api/sessions/:id/conversation
+   * Handle a conversation turn with the AI interviewer using Server-Sent Events
    * This endpoint:
    * 1. Saves the candidate's message to the transcript
-   * 2. Detects signals in the candidate's message
-   * 3. Checks for red flags
-   * 4. Builds context from session state and recent messages
-   * 5. Gets AI response from Claude
-   * 6. Saves the AI response to the transcript
-   * 7. Returns both messages, detected signals, and red flags
+   * 2. Streams AI response token-by-token
+   * 3. Detects signals and checks for red flags after streaming completes
+   * 4. Saves the AI response to the transcript
+   * 5. Returns stream events: start, delta (multiple), complete
    */
-  @Post(':id/conversation')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Handle conversation turn' })
+  @Sse(':id/conversation')
+  @ApiOperation({ summary: 'Handle conversation turn with streaming' })
   @ApiParam({ name: 'id', description: 'Session ID' })
   @ApiResponse({
-    status: 201,
-    description: 'Conversation turn completed',
-    type: AiResponseDto,
+    status: 200,
+    description: 'SSE stream of conversation events',
   })
-  async handleConversation(
+  handleConversationStream(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: AiRequestDto,
-  ) {
-    await this.verifySessionOwnership(id, user.id);
-    const session = await this.sessionService.getSession(id);
-    const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
+    @Query('text') text: string,
+  ): Observable<MessageEvent> {
+    // Verify ownership and prepare initial data
+    const preparation$ = from(
+      (async () => {
+        await this.verifySessionOwnership(id, user.id);
+        const session = await this.sessionService.getSession(id);
+        const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
 
-    // 1. Save candidate's message
-    const candidateMessage = await this.transcriptService.addMessage({
-      sessionId: id,
-      role: MessageRole.CANDIDATE,
-      text: dto.text,
-      phase: session.currentPhase as InterviewPhase,
-      secondsElapsed: elapsedSeconds,
-    });
+        // Save candidate's message
+        const candidateMessage = await this.transcriptService.addMessage({
+          sessionId: id,
+          role: MessageRole.CANDIDATE,
+          text,
+          phase: session.currentPhase as InterviewPhase,
+          secondsElapsed: elapsedSeconds,
+        });
 
-    // 2. Detect signals in candidate's message
-    const detectedSignals = await this.signalService.detectAndRecordSignals({
-      sessionId: id,
-      text: dto.text,
-      phase: session.currentPhase as InterviewPhase,
-      secondsElapsed: elapsedSeconds,
-      messageId: candidateMessage.id,
-    });
+        // Get recent conversation history
+        const recentMessages = await this.transcriptService.getRecentMessages(
+          id,
+          10,
+        );
 
-    // 3. Check for red flags
-    const detectedRedFlags = await this.redFlagService.checkRedFlags({
-      sessionId: id,
-      currentPhase: session.currentPhase as InterviewPhase,
-      secondsElapsed: elapsedSeconds,
-      messageText: dto.text,
-    });
+        // Build prompt context
+        const promptContext = await this.promptService.buildPromptContext(
+          session,
+          recentMessages,
+          text,
+        );
 
-    // 4. Get recent conversation history (last 10 messages)
-    const recentMessages = await this.transcriptService.getRecentMessages(
-      id,
-      10,
+        return {
+          session,
+          candidateMessage,
+          promptContext,
+          elapsedSeconds,
+        };
+      })(),
     );
 
-    // 5. Build prompt context
-    const promptContext = await this.promptService.buildPromptContext(
-      session,
-      recentMessages,
-      dto.text,
+    // Emit start event, then stream AI response
+    return preparation$.pipe(
+      switchMap(
+        ({ session, candidateMessage, promptContext, elapsedSeconds }) => {
+          const startEvent: MessageEvent = {
+            type: 'start',
+            data: JSON.stringify({
+              candidateMessageId: candidateMessage.id,
+            }),
+          };
+
+          // Get streaming AI response
+          const streamEvents$ = this.aiService
+            .generateStreamingResponse({
+              systemPrompt: promptContext.systemPrompt,
+              userMessage: promptContext.userMessage,
+              temperature: 0.7,
+              maxTokens: 1024,
+            })
+            .pipe(
+              switchMap((event) => {
+                if (event.type === 'delta') {
+                  // Emit delta event
+                  const deltaEvent: MessageEvent = {
+                    type: 'delta',
+                    data: JSON.stringify({ text: event.text }),
+                  };
+                  return of(deltaEvent);
+                } else {
+                  // Complete event - save message and detect signals
+                  return from(
+                    (async () => {
+                      const { fullResponse } = event;
+
+                      // Save AI response to transcript
+                      const updatedElapsedSeconds =
+                        this.sessionService.getElapsedSeconds(session);
+                      const interviewerMessage =
+                        await this.transcriptService.addMessage({
+                          sessionId: id,
+                          role: MessageRole.INTERVIEWER,
+                          text: fullResponse.fullText,
+                          phase: session.currentPhase as InterviewPhase,
+                          secondsElapsed: updatedElapsedSeconds,
+                        });
+
+                      // Detect signals in candidate's message
+                      const detectedSignals =
+                        await this.signalService.detectAndRecordSignals({
+                          sessionId: id,
+                          text,
+                          phase: session.currentPhase as InterviewPhase,
+                          secondsElapsed: elapsedSeconds,
+                          messageId: candidateMessage.id,
+                        });
+
+                      // Check for red flags
+                      const detectedRedFlags =
+                        await this.redFlagService.checkRedFlags({
+                          sessionId: id,
+                          currentPhase: session.currentPhase as InterviewPhase,
+                          secondsElapsed: elapsedSeconds,
+                          messageText: text,
+                        });
+
+                      const completeEvent: MessageEvent = {
+                        type: 'complete',
+                        data: JSON.stringify({
+                          interviewerMessage,
+                          detectedSignals,
+                          detectedRedFlags,
+                          usage: {
+                            inputTokens: fullResponse.usage.inputTokens,
+                            outputTokens: fullResponse.usage.outputTokens,
+                          },
+                        }),
+                      };
+
+                      return completeEvent;
+                    })(),
+                  );
+                }
+              }),
+            );
+
+          // Concatenate start event with stream events
+          return concat(of(startEvent), streamEvents$);
+        },
+      ),
+      catchError((error) => {
+        const errorEvent: MessageEvent = {
+          type: 'error',
+          data: JSON.stringify({
+            message: error.message || 'An error occurred during streaming',
+          }),
+        };
+        return of(errorEvent);
+      }),
     );
-
-    // 6. Get AI response
-    const aiResponse = await this.aiService.generateResponse({
-      systemPrompt: promptContext.systemPrompt,
-      userMessage: promptContext.userMessage,
-      temperature: 0.7,
-      maxTokens: 1024,
-    });
-
-    // 7. Save AI response to transcript
-    const updatedElapsedSeconds =
-      this.sessionService.getElapsedSeconds(session);
-    const interviewerMessage = await this.transcriptService.addMessage({
-      sessionId: id,
-      role: MessageRole.INTERVIEWER,
-      text: aiResponse.text,
-      phase: session.currentPhase as InterviewPhase,
-      secondsElapsed: updatedElapsedSeconds,
-    });
-
-    return {
-      success: true,
-      data: {
-        candidateMessage,
-        interviewerMessage,
-        detectedSignals,
-        detectedRedFlags,
-        usage: aiResponse.usage,
-      },
-    };
   }
 
   /**

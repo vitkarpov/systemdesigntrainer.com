@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
+import { Observable } from 'rxjs';
 
 export interface GenerateResponseOptions {
   systemPrompt: string;
@@ -16,6 +17,19 @@ export interface AiResponse {
     outputTokens: number;
   };
 }
+
+export interface StreamingAiResponse {
+  fullText: string;
+  model: string;
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+  };
+}
+
+export type StreamEvent =
+  | { type: 'delta'; text: string }
+  | { type: 'complete'; fullResponse: StreamingAiResponse };
 
 @Injectable()
 export class AiService {
@@ -105,5 +119,74 @@ export class AiService {
         outputTokens: response.usage.output_tokens,
       },
     };
+  }
+
+  /**
+   * Generate a streaming response from Claude
+   * Returns an Observable that emits text deltas as they arrive
+   */
+  generateStreamingResponse(
+    options: GenerateResponseOptions,
+  ): Observable<StreamEvent> {
+    const {
+      systemPrompt,
+      userMessage,
+      temperature = 0.7,
+      maxTokens = 1024,
+    } = options;
+
+    return new Observable<StreamEvent>((observer) => {
+      let fullText = '';
+      let model = '';
+      let inputTokens = 0;
+      let outputTokens = 0;
+
+      (async () => {
+        try {
+          const stream = await this.client.messages.stream({
+            model: this.model,
+            max_tokens: maxTokens,
+            temperature,
+            system: systemPrompt,
+            messages: [
+              {
+                role: 'user',
+                content: userMessage,
+              },
+            ],
+          });
+
+          // Listen for text deltas
+          stream.on('text', (text: string) => {
+            fullText += text;
+            observer.next({ type: 'delta', text });
+          });
+
+          // Wait for the stream to complete
+          const finalMessage = await stream.finalMessage();
+
+          model = finalMessage.model;
+          inputTokens = finalMessage.usage.input_tokens;
+          outputTokens = finalMessage.usage.output_tokens;
+
+          // Emit completion event
+          observer.next({
+            type: 'complete',
+            fullResponse: {
+              fullText,
+              model,
+              usage: {
+                inputTokens,
+                outputTokens,
+              },
+            },
+          });
+
+          observer.complete();
+        } catch (error) {
+          observer.error(error);
+        }
+      })();
+    });
   }
 }

@@ -96,22 +96,24 @@ curl -s -X GET "http://localhost:3000/api/sessions/$SESSION_ID" \
 
 echo ""
 
-# Test 7: Send candidate message and get AI response
-echo "7. Testing conversation - Candidate asks about requirements..."
-curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/conversation" \
-  -H 'Content-Type: application/json' \
+# Test 7: Send candidate message and get AI response (SSE streaming)
+echo "7. Testing streaming conversation - Candidate asks about requirements..."
+echo "(Streaming response - will show events as they arrive)"
+curl -N --get "http://localhost:3000/api/sessions/$SESSION_ID/conversation" \
+  --data-urlencode "text=What are the key functional and non-functional requirements I should focus on?" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -d '{"text":"What are the key functional and non-functional requirements I should focus on?"}'
+  -H "Accept: text/event-stream"
 
 echo ""
 echo ""
 
-# Test 8: Another conversation turn
+# Test 8: Another conversation turn (SSE streaming)
 echo "8. Candidate discusses scale..."
-curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/conversation" \
-  -H 'Content-Type: application/json' \
+echo "(Streaming response - will show events as they arrive)"
+curl -N --get "http://localhost:3000/api/sessions/$SESSION_ID/conversation" \
+  --data-urlencode "text=I am thinking we need to handle around 1 million URLs and maybe 10000 requests per second. Does that sound reasonable?" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -d '{"text":"I am thinking we need to handle around 1 million URLs and maybe 10000 requests per second. Does that sound reasonable?"}'
+  -H "Accept: text/event-stream"
 
 echo ""
 echo ""
@@ -134,10 +136,11 @@ echo ""
 
 # Test 11: Send message with implementation details (should trigger red flag)
 echo "11. Testing red flag detection - Implementation details in early phase..."
-curl -s -X POST "http://localhost:3000/api/sessions/$SESSION_ID/conversation" \
-  -H 'Content-Type: application/json' \
+echo "(Streaming response - will show events as they arrive)"
+curl -N --get "http://localhost:3000/api/sessions/$SESSION_ID/conversation" \
+  --data-urlencode "text=I would implement this with a class URLShortener that has a function generateShortUrl() which uses a for loop to iterate through characters..." \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -d '{"text":"I would implement this with a class URLShortener that has a function generateShortUrl() which uses a for loop to iterate through characters..."}'
+  -H "Accept: text/event-stream"
 
 echo ""
 echo ""

@@ -8,13 +8,12 @@ import { Badge } from '../../components/ui/badge';
 import {
   useSessionsControllerGetSession,
   useSessionsControllerGetTranscript,
-  useSessionsControllerHandleConversation,
   useSessionsControllerAdvancePhase,
   useSessionsControllerGenerateFeedback,
   getSessionsControllerGetSessionQueryKey,
-  getSessionsControllerGetTranscriptQueryKey,
 } from '../../api/hooks.gen';
 import { formatElapsedTime } from '../../lib/utils';
+import { useConversationStream } from '../../hooks/useConversationStream';
 
 export default function Interview() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -24,8 +23,25 @@ export default function Interview() {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [optimisticMessage, setOptimisticMessage] = useState<{ text: string; timestamp: number } | null>(null);
 
   const sessionIdNum = Number(sessionId);
+
+  // Streaming hook
+  const { sendMessage, streamingText, isStreaming, cancel } = useConversationStream({
+    sessionId: sessionIdNum,
+    onStart: () => {
+      // Keep the optimistic message visible until complete
+    },
+    onComplete: () => {
+      // Clear optimistic message once real data is fetched
+      setOptimisticMessage(null);
+    },
+    onError: () => {
+      setError('Failed to send message. Please try again.');
+      setOptimisticMessage(null);
+    },
+  });
 
   const { data: session, isLoading: isLoadingSession } = useSessionsControllerGetSession(sessionIdNum, {
     query: {
@@ -42,7 +58,6 @@ export default function Interview() {
 
   const messages = transcriptData?.data.messages || [];
 
-  const conversationMutation = useSessionsControllerHandleConversation();
   const advancePhaseMutation = useSessionsControllerAdvancePhase();
   const generateFeedbackMutation = useSessionsControllerGenerateFeedback();
 
@@ -64,35 +79,29 @@ export default function Interview() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, streamingText, optimisticMessage]);
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || !sessionId || conversationMutation.isPending) return;
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cancel();
+    };
+  }, [cancel]);
+
+  const handleSendMessage = () => {
+    if (!inputValue.trim() || isStreaming) return;
 
     const messageContent = inputValue.trim();
     setInputValue('');
     setError(null);
 
-    try {
-      await conversationMutation.mutateAsync({
-        id: sessionIdNum,
-        data: {
-          text: messageContent,
-        },
-      });
+    // Show optimistic message immediately
+    setOptimisticMessage({
+      text: messageContent,
+      timestamp: Date.now(),
+    });
 
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: getSessionsControllerGetTranscriptQueryKey(sessionIdNum),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: getSessionsControllerGetSessionQueryKey(sessionIdNum),
-        }),
-      ]);
-    } catch (err) {
-      console.error('Failed to send message:', err);
-      setError('Failed to send message. Please try again.');
-    }
+    sendMessage(messageContent);
   };
 
   const handleAdvancePhase = async () => {
@@ -125,7 +134,7 @@ export default function Interview() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -133,7 +142,6 @@ export default function Interview() {
   };
 
   const isLoading = isLoadingSession || isLoadingMessages;
-  const isSending = conversationMutation.isPending;
 
   if (isLoading) {
     return (
@@ -200,6 +208,31 @@ export default function Interview() {
             </div>
           </div>
         ))}
+        {/* Optimistic candidate message */}
+        {optimisticMessage && (
+          <div className="flex justify-end">
+            <div className="max-w-[80%] rounded-lg px-4 py-3 bg-primary text-primary-foreground opacity-90">
+              <div className="text-xs opacity-70 mb-1">
+                You • {formatElapsedTime(elapsedTime)}
+              </div>
+              <div className="whitespace-pre-wrap">{optimisticMessage.text}</div>
+            </div>
+          </div>
+        )}
+        {/* Streaming interviewer message */}
+        {isStreaming && streamingText && (
+          <div className="flex justify-start">
+            <div className="max-w-[80%] rounded-lg px-4 py-3 bg-muted">
+              <div className="text-xs opacity-70 mb-1">
+                Interviewer • {formatElapsedTime(elapsedTime)}
+              </div>
+              <div className="whitespace-pre-wrap">
+                {streamingText}
+                <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />
+              </div>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -212,17 +245,17 @@ export default function Interview() {
           <Textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="Type your response... (Shift+Enter for new line)"
             className="min-h-[60px] resize-none"
-            disabled={isSending}
+            disabled={isStreaming}
           />
           <Button
             onClick={handleSendMessage}
-            disabled={isSending || !inputValue.trim()}
+            disabled={isStreaming || !inputValue.trim()}
             className="self-end"
           >
-            {isSending ? 'Sending...' : 'Send'}
+            {isStreaming ? 'Streaming...' : 'Send'}
           </Button>
         </div>
       </div>
