@@ -43,7 +43,6 @@ export class PromptService {
     const userMessage = this.buildUserMessage(
       recentMessages,
       candidateMessage,
-      session,
     );
 
     return {
@@ -97,6 +96,7 @@ ${phaseInstructions}
 
 # Response Format
 - Keep responses very concise (1-3 sentences typically)
+- Exception: At the very start of the interview, your greeting, introduction, and problem presentation can be longer (4-6 sentences) to establish rapport
 - If the candidate asks a question, answer it directly
 - If the candidate makes a statement or presents an idea, acknowledge it briefly
 - Only ask a follow-up question if they explicitly seem to be asking for your input
@@ -112,11 +112,17 @@ Remember: Real interviewers listen more than they speak. The candidate should be
     const instructions = {
       [InterviewPhase.PROBLEM]: `
 ## Problem Understanding Phase (0-5 minutes)
-- The problem has been presented
-- Wait for the candidate to ask clarifying questions
-- Answer their questions directly and honestly
-- Avoid volunteering information they haven't asked about
-- If they jump to solutions without asking questions, you can gently note: "Feel free to ask any questions about the problem first"`,
+- If this is the very start of the interview (no conversation history yet), begin by:
+  1. Greeting the candidate warmly (e.g., "Hi! Thanks for joining today.")
+  2. Briefly introducing yourself (e.g., "I'm [Name], a [role] at [company]. I've been working on [relevant area] for [time period].")
+  3. Breaking the ice with a friendly comment to help them relax
+  4. Then present the problem clearly and concisely
+  5. Ask if they have any clarifying questions
+- Once the problem has been presented:
+  - Wait for the candidate to ask clarifying questions
+  - Answer their questions directly and honestly
+  - Avoid volunteering information they haven't asked about
+  - If they jump to solutions without asking questions, you can gently note: "Feel free to ask any questions about the problem first"`,
 
       [InterviewPhase.REQUIREMENTS]: `
 ## Requirements Gathering Phase (5-15 minutes)
@@ -167,7 +173,6 @@ Remember: Real interviewers listen more than they speak. The candidate should be
   private buildUserMessage(
     recentMessages: TranscriptMessage[],
     candidateMessage: string,
-    session: SessionState,
   ): string {
     let context = '';
 

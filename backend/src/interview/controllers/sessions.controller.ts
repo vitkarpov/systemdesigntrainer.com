@@ -217,6 +217,30 @@ export class SessionsController {
     await this.verifySessionOwnership(id, user.id);
     const session = await this.sessionService.startSession(id);
 
+    // Generate initial greeting from interviewer
+    const promptContext = await this.promptService.buildPromptContext(
+      session,
+      [], // No conversation history yet
+      'Hello', // Simple initial message from candidate to trigger greeting
+    );
+
+    const aiResponse = await this.aiService.generateResponse({
+      systemPrompt: promptContext.systemPrompt,
+      userMessage: promptContext.userMessage,
+      temperature: 0.7,
+      maxTokens: 1024,
+    });
+
+    // Save the initial greeting to transcript
+    const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
+    await this.transcriptService.addMessage({
+      sessionId: id,
+      role: MessageRole.INTERVIEWER,
+      text: aiResponse.text,
+      phase: session.currentPhase as InterviewPhase,
+      secondsElapsed: elapsedSeconds,
+    });
+
     return {
       success: true,
       message: 'Session started',
