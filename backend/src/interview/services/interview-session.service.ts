@@ -85,6 +85,44 @@ export class InterviewSessionService {
   }
 
   /**
+   * Get all sessions for a user with interview case details
+   */
+  async getUserSessionsWithCases(userId: number) {
+    const sessions = await this.getUserSessions(userId);
+
+    // Fetch interview cases for all sessions
+    const caseIds = [...new Set(sessions.map((s) => s.caseId))];
+    const cases = await this.db.query.interviewCases.findMany({
+      where: (interviewCases, { inArray }) =>
+        inArray(interviewCases.id, caseIds),
+    });
+
+    const casesMap = new Map(cases.map((c) => [c.id, c]));
+
+    return sessions.map((session) => {
+      const interviewCase = casesMap.get(session.caseId);
+      return {
+        id: session.id,
+        userId: session.userId,
+        caseId: session.caseId,
+        status: session.status,
+        currentPhase: session.currentPhase,
+        startedAt: session.startedAt,
+        completedAt: session.completedAt,
+        createdAt: session.createdAt,
+        interviewCase: interviewCase
+          ? {
+              id: interviewCase.id,
+              title: interviewCase.title,
+              description: interviewCase.description,
+              difficulty: interviewCase.difficulty,
+            }
+          : null,
+      };
+    });
+  }
+
+  /**
    * Start a session (transition from NOT_STARTED to IN_PROGRESS)
    */
   async startSession(sessionId: number): Promise<SessionState> {

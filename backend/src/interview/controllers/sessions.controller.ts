@@ -12,6 +12,7 @@ import {
   ForbiddenException,
   Sse,
   MessageEvent,
+  Inject,
 } from '@nestjs/common';
 import { Observable, from, concat, of } from 'rxjs';
 import { switchMap, map, catchError } from 'rxjs/operators';
@@ -44,6 +45,7 @@ import {
   AiRequestDto,
   GenerateFeedbackResponseDto,
   GetFeedbackResponseDto,
+  GetDashboardResponseDto,
 } from '../dto/responses.dto';
 import { InterviewPhase, MessageRole } from '../types/session.types';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
@@ -75,6 +77,67 @@ export class SessionsController {
     if (session.userId !== userId) {
       throw new ForbiddenException('You do not have access to this session');
     }
+  }
+
+  /**
+   * GET /api/sessions/dashboard
+   * Get all sessions for the current user with feedback scores
+   */
+  @Get('dashboard')
+  @ApiOperation({ summary: 'Get dashboard with user sessions and stats' })
+  @ApiResponse({
+    status: 200,
+    description: 'Dashboard data retrieved',
+    type: GetDashboardResponseDto,
+  })
+  async getDashboard(@CurrentUser() user: User) {
+    // Fetch sessions with interview case details
+    const sessions = await this.sessionService.getUserSessionsWithCases(user.id);
+
+    // Fetch feedback scores for all sessions
+    const sessionIds = sessions.map((s) => s.id);
+    const feedbackScoresMap = await this.feedbackService.getFeedbackScoresForSessions(sessionIds);
+
+    // Combine sessions with feedback scores
+    const sessionsWithFeedback = sessions.map((session) => {
+      const feedback = feedbackScoresMap.get(session.id);
+      return {
+        ...session,
+        overallScore: feedback?.overallScore ?? null,
+        requirementsScore: feedback?.requirementsScore ?? null,
+        designScore: feedback?.designScore ?? null,
+        communicationScore: feedback?.communicationScore ?? null,
+        timeManagementScore: feedback?.timeManagementScore ?? null,
+        depthScore: feedback?.depthScore ?? null,
+      };
+    });
+
+    // Calculate stats
+    const completedSessions = sessionsWithFeedback.filter(
+      (s) => s.status === 'completed',
+    );
+    const sessionsWithScores = sessionsWithFeedback.filter(
+      (s) => s.overallScore !== null,
+    );
+    const averageScore =
+      sessionsWithScores.length > 0
+        ? Math.round(
+            sessionsWithScores.reduce((sum, s) => sum + (s.overallScore || 0), 0) /
+              sessionsWithScores.length,
+          )
+        : null;
+
+    return {
+      success: true,
+      data: {
+        sessions: sessionsWithFeedback,
+        stats: {
+          totalSessions: sessionsWithFeedback.length,
+          completedSessions: completedSessions.length,
+          averageScore,
+        },
+      },
+    };
   }
 
   /**

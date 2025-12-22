@@ -520,6 +520,31 @@ export class FeedbackService {
   }
 
   /**
+   * Get feedback scores for multiple sessions (for dashboard)
+   */
+  async getFeedbackScoresForSessions(sessionIds: number[]) {
+    if (sessionIds.length === 0) {
+      return new Map();
+    }
+
+    const reports = await this.db.query.feedbackReports.findMany({
+      where: (reports, { inArray }) =>
+        inArray(reports.sessionId, sessionIds),
+      columns: {
+        sessionId: true,
+        overallScore: true,
+        requirementsScore: true,
+        designScore: true,
+        communicationScore: true,
+        timeManagementScore: true,
+        depthScore: true,
+      },
+    });
+
+    return new Map(reports.map((r) => [r.sessionId, r]));
+  }
+
+  /**
    * Check if feedback exists for a session
    */
   async feedbackExists(sessionId: number): Promise<boolean> {

@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Home from './pages/Home/Home';
+import Dashboard from './pages/Dashboard/Dashboard';
 import Interview from './pages/Interview/Interview';
 import Feedback from './pages/Feedback/Feedback';
 import Login from './pages/Auth/Login';
@@ -15,6 +16,14 @@ function App() {
       <Route path="/auth/error" element={<AuthError />} />
       <Route
         path="/"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/home"
         element={
           <ProtectedRoute>
             <Home />

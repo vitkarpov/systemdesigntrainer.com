@@ -429,3 +429,63 @@ export class UserResponseDto {
   @ApiProperty()
   interviewsRemaining: number;
 }
+
+export class DashboardSessionDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty({ enum: ['not_started', 'in_progress', 'completed', 'abandoned'] })
+  status: string;
+
+  @ApiProperty({ nullable: true })
+  startedAt: Date | null;
+
+  @ApiProperty({ nullable: true })
+  completedAt: Date | null;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty({ type: InterviewCaseDto })
+  interviewCase: InterviewCaseDto;
+
+  @ApiProperty({ nullable: true, description: 'Overall score if feedback exists' })
+  overallScore?: number | null;
+
+  @ApiProperty({ nullable: true, description: 'Requirements score if feedback exists' })
+  requirementsScore?: number | null;
+
+  @ApiProperty({ nullable: true, description: 'Design score if feedback exists' })
+  designScore?: number | null;
+
+  @ApiProperty({ nullable: true, description: 'Communication score if feedback exists' })
+  communicationScore?: number | null;
+
+  @ApiProperty({ nullable: true, description: 'Time management score if feedback exists' })
+  timeManagementScore?: number | null;
+
+  @ApiProperty({ nullable: true, description: 'Depth score if feedback exists' })
+  depthScore?: number | null;
+}
+
+export class DashboardStatsDto {
+  @ApiProperty({ description: 'Total number of sessions' })
+  totalSessions: number;
+
+  @ApiProperty({ description: 'Number of completed sessions' })
+  completedSessions: number;
+
+  @ApiProperty({ description: 'Average overall score across completed sessions with feedback' })
+  averageScore: number | null;
+}
+
+export class GetDashboardResponseDto {
+  @ApiProperty({ default: true })
+  success: boolean;
+
+  @ApiProperty()
+  data: {
+    sessions: DashboardSessionDto[];
+    stats: DashboardStatsDto;
+  };
+}
