@@ -66,37 +66,44 @@ export class PhaseService {
     name: string;
     description: string;
     order: number;
+    recommendedMinutes: number;
   } {
     const metadata = {
       [InterviewPhase.PROBLEM]: {
         name: 'Problem Understanding',
         description: 'Clarify the problem statement and scope',
         order: 1,
+        recommendedMinutes: 5,
       },
       [InterviewPhase.REQUIREMENTS]: {
         name: 'Requirements Gathering',
         description: 'Discuss functional and non-functional requirements',
         order: 2,
+        recommendedMinutes: 10,
       },
       [InterviewPhase.HIGH_LEVEL]: {
         name: 'High-Level Design',
         description: 'Design the overall system architecture',
         order: 3,
+        recommendedMinutes: 15,
       },
       [InterviewPhase.DEEP_DIVE]: {
         name: 'Deep Dive',
         description: 'Explore specific components in detail',
         order: 4,
+        recommendedMinutes: 15,
       },
       [InterviewPhase.BOTTLENECKS]: {
         name: 'Bottlenecks & Trade-offs',
         description: 'Identify and resolve potential bottlenecks',
         order: 5,
+        recommendedMinutes: 10,
       },
       [InterviewPhase.WRAP_UP]: {
         name: 'Wrap Up',
         description: 'Final questions and summary',
         order: 6,
+        recommendedMinutes: 5,
       },
     };
 

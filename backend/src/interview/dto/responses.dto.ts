@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class PhaseMetadataDto {
   @ApiProperty({ description: 'Phase display name' })
@@ -9,6 +9,9 @@ export class PhaseMetadataDto {
 
   @ApiProperty({ description: 'Phase order (1-6)' })
   order: number;
+
+  @ApiProperty({ description: 'Recommended time for this phase in minutes' })
+  recommendedMinutes: number;
 }
 
 export class UsageDto {

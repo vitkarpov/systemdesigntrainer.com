@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
 import { Card } from '../../components/ui/card';
-import { Badge } from '../../components/ui/badge';
+import { PhaseDisplay } from '../../components/PhaseDisplay';
 import {
   useSessionsControllerGetSession,
   useSessionsControllerGetTranscript,
@@ -164,24 +164,29 @@ export default function Interview() {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <div className="border-b px-6 py-4 flex items-center justify-between bg-card">
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-semibold">{session?.data.session.interviewCase?.title}</h1>
-          <Badge variant="secondary">{session?.data.session.currentPhase.replace('_', ' ')}</Badge>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-muted-foreground">
-            Time: {formatElapsedTime(elapsedTime)}
-          </div>
-          {session?.data.session.currentPhase !== 'wrap_up' && (
-            <Button variant="outline" size="sm" onClick={handleAdvancePhase} disabled={advancePhaseMutation.isPending}>
-              Next Phase
+      <div className="border-b px-6 py-4 bg-card space-y-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold">{session?.data.session.interviewCase?.title}</h1>
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-muted-foreground font-medium">
+              Total: {formatElapsedTime(elapsedTime)}
+            </div>
+            {session?.data.session.currentPhase !== 'wrap_up' && (
+              <Button variant="outline" size="sm" onClick={handleAdvancePhase} disabled={advancePhaseMutation.isPending}>
+                Next Phase
+              </Button>
+            )}
+            <Button variant="destructive" size="sm" onClick={handleEndInterview} disabled={generateFeedbackMutation.isPending}>
+              {generateFeedbackMutation.isPending ? 'Ending...' : 'End Interview'}
             </Button>
-          )}
-          <Button variant="destructive" size="sm" onClick={handleEndInterview} disabled={generateFeedbackMutation.isPending}>
-            {generateFeedbackMutation.isPending ? 'Ending...' : 'End Interview'}
-          </Button>
+          </div>
         </div>
+        {session?.data.phaseMetadata && (
+          <PhaseDisplay
+            phaseMetadata={session.data.phaseMetadata}
+            phaseElapsedSeconds={session.data.phaseElapsedSeconds}
+          />
+        )}
       </div>
 
       {/* Messages */}
