@@ -45,14 +45,8 @@ async function seed() {
 - Submit long URLs and receive short, unique codes
 - Redirect users from short URLs to the original long URLs
 - Track basic analytics (click counts)
-- Handle millions of URLs and redirects per day
 
-Focus on system design aspects including:
-- API design
-- Database schema
-- Scaling strategies
-- Caching approach
-- Handling peak traffic`,
+You can discuss any relevant system design aspects as you see fit.`,
       estimatedDuration: 45,
       isActive: true,
     })
@@ -78,61 +72,48 @@ Focus on system design aspects including:
     },
     {
       caseId: urlShortenerCase.id,
-      expectationType: 'capacity',
-      description:
-        'Estimate read/write ratio (typically 100:1 for URL shorteners)',
-      displayOrder: 3,
-    },
-    {
-      caseId: urlShortenerCase.id,
-      expectationType: 'capacity',
-      description: 'Calculate storage requirements for URLs and analytics',
-      displayOrder: 4,
-    },
-    {
-      caseId: urlShortenerCase.id,
       expectationType: 'api',
       description:
         'Define REST API endpoints (POST /shorten, GET /{shortCode})',
-      displayOrder: 5,
+      displayOrder: 3,
     },
     {
       caseId: urlShortenerCase.id,
       expectationType: 'data_model',
       description: 'Design database schema for URL mappings',
-      displayOrder: 6,
+      displayOrder: 4,
     },
     {
       caseId: urlShortenerCase.id,
       expectationType: 'high_level',
       description:
         'Propose component architecture (API servers, database, cache)',
-      displayOrder: 7,
+      displayOrder: 5,
     },
     {
       caseId: urlShortenerCase.id,
       expectationType: 'deep_dive',
       description:
         'Explain short code generation strategy (base62 encoding, hashing)',
-      displayOrder: 8,
+      displayOrder: 6,
     },
     {
       caseId: urlShortenerCase.id,
       expectationType: 'deep_dive',
       description: 'Design caching strategy (Redis for hot URLs)',
-      displayOrder: 9,
+      displayOrder: 7,
     },
     {
       caseId: urlShortenerCase.id,
       expectationType: 'scalability',
       description: 'Discuss horizontal scaling of API servers',
-      displayOrder: 10,
+      displayOrder: 8,
     },
     {
       caseId: urlShortenerCase.id,
       expectationType: 'scalability',
       description: 'Address database partitioning/sharding strategy',
-      displayOrder: 11,
+      displayOrder: 9,
     },
   ];
 
