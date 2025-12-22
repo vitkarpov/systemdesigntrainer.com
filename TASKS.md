@@ -1,8 +1,8 @@
 # Development Tasks & Progress
 
-**Last Updated:** 2025-12-18
+**Last Updated:** 2025-12-22
 
-## 📍 Current Status: Week 4 - Authentication Complete ✅
+## 📍 Current Status: Week 4 - User Dashboard Complete ✅
 
 ---
 
@@ -155,12 +155,25 @@
 - [x] Updated test-api.sh with auth support
 - [x] Test user added to seed data
 
+### User Dashboard ✅ COMPLETE
+- [x] Dashboard API endpoint (GET /api/sessions/dashboard)
+- [x] InterviewSessionService.getUserSessionsWithCases() method
+- [x] FeedbackService.getFeedbackScoresForSessions() method
+- [x] Dashboard page component with session list
+- [x] Stats cards (total interviews, completed, average score)
+- [x] Session cards with interview case details
+- [x] Status badges and timestamps
+- [x] Score display for completed interviews
+- [x] Navigation to continue/view feedback
+- [x] Set dashboard as home route (/)
+
 ### Payments (Stripe)
 - [ ] Stripe integration
 - [ ] Free tier: 1 interview
 - [ ] Pro tier: unlimited interviews ($39-59/month)
 - [ ] Pay-per-interview: $15/interview
 - [ ] Usage tracking
+- [ ] Subscription management UI
 
 ### Frontend (React + Vite) ✅ COMPLETE
 - [x] Interview UI component
@@ -169,6 +182,7 @@
 - [x] Phase progress indicator
 - [x] Feedback display
 - [x] Home page with start interview
+- [x] Dashboard page with session history
 - [x] Tailwind CSS + Shadcn/ui setup
 - [x] React Router navigation
 - [x] API client integration
@@ -191,29 +205,24 @@
 
 ## 🎯 Immediate Next Task
 
-**Authentication Complete - Next: Payments & User Dashboard**
+**User Dashboard Complete - Next: Stripe Payments**
 
-The core interview functionality AND authentication are now complete! The next priorities are:
+The core interview functionality, authentication, AND user dashboard are now complete! The next priority is:
 
-1. **User Dashboard**
-   - View past interviews (list of sessions)
-   - Track progress over time
-   - Access feedback history
-   - Profile management
-
-2. **Stripe Payments Integration**
-   - Free tier: 1 interview (already tracked)
-   - Pro tier: unlimited interviews ($39-59/month)
-   - Pay-per-interview: $15/interview
-   - Usage tracking and enforcement
+**Stripe Payments Integration**
+- Free tier: 1 interview (already tracked)
+- Pro tier: unlimited interviews ($39-59/month)
+- Pay-per-interview: $15/interview
+- Usage tracking and enforcement
+- Subscription management
 
 **Recently Completed:**
-- ✅ WorkOS authentication with GitHub OAuth
-- ✅ JWT-based session management
-- ✅ Protected routes with user authorization
-- ✅ Frontend auth context and login flow
-- ✅ Dev test token endpoint for API testing
-- ✅ Test user in seed data
+- ✅ User Dashboard with session list and stats
+- ✅ Dashboard API endpoint (GET /api/sessions/dashboard)
+- ✅ Stats cards (total interviews, completed, average score)
+- ✅ Session cards with status, scores, and actions
+- ✅ Navigation between dashboard, interviews, and feedback
+- ✅ Backend service layer refactoring for better separation of concerns
 
 ---
 
@@ -222,14 +231,14 @@ The core interview functionality AND authentication are now complete! The next p
 - **Week 1:** ✅ 100% Complete (Foundation + REST API)
 - **Week 2:** ✅ 100% Complete (AI Integration + Prompt Engine + Signal Tracking + Red Flags)
 - **Week 3:** ✅ 100% Complete (Feedback Generation with scoring and recommendations)
-- **Week 4:** ✅ 100% Complete (Frontend + Authentication)
+- **Week 4:** ✅ 100% Complete (Frontend + Authentication + User Dashboard)
 
-**Overall MVP Progress:** ~85% (Core functionality + Auth complete)
+**Overall MVP Progress:** ~90% (Core functionality + Auth + Dashboard complete)
 
 **Status:**
 - ✅ Backend API: All endpoints working and tested with auth
 - ✅ Frontend: Full interview flow with React + Tailwind + Shadcn/ui
 - ✅ Auth: WorkOS + GitHub OAuth + JWT + Protected routes
-- ⏳ User Dashboard: Not started
+- ✅ User Dashboard: Session history, stats, and navigation
 - ⏳ Payments: Not started
 - ⏳ Landing Page: Not started
