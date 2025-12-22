@@ -585,6 +585,20 @@ export class SessionsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     await this.verifySessionOwnership(id, user.id);
+
+    // Complete the session (mark as terminal status)
+    // If already completed, this will gracefully handle it
+    try {
+      await this.sessionService.completeSession(id);
+    } catch (err) {
+      // If session is already completed, that's fine - continue to generate/return feedback
+      const session = await this.sessionService.getSession(id);
+      if (session.status !== 'completed') {
+        // If it's not completed and we got an error, rethrow
+        throw err;
+      }
+    }
+
     const feedback = await this.feedbackService.generateFeedback(id);
 
     return {

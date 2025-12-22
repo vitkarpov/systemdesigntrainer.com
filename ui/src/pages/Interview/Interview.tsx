@@ -89,7 +89,7 @@ export default function Interview() {
   }, [cancel]);
 
   const handleSendMessage = () => {
-    if (!inputValue.trim() || isStreaming) return;
+    if (!inputValue.trim() || isStreaming || session?.data.session.status !== 'in_progress') return;
 
     const messageContent = inputValue.trim();
     setInputValue('');
@@ -171,14 +171,21 @@ export default function Interview() {
             <div className="text-sm text-muted-foreground font-medium">
               Total: {formatElapsedTime(elapsedTime)}
             </div>
-            {session?.data.session.currentPhase !== 'wrap_up' && (
-              <Button variant="outline" size="sm" onClick={handleAdvancePhase} disabled={advancePhaseMutation.isPending}>
-                Next Phase
-              </Button>
+            {session?.data.session.status === 'in_progress' && (
+              <>
+                {session?.data.session.currentPhase !== 'wrap_up' && (
+                  <Button variant="outline" size="sm" onClick={handleAdvancePhase} disabled={advancePhaseMutation.isPending}>
+                    Next Phase
+                  </Button>
+                )}
+                <Button variant="destructive" size="sm" onClick={handleEndInterview} disabled={generateFeedbackMutation.isPending}>
+                  {generateFeedbackMutation.isPending ? 'Ending...' : 'End Interview'}
+                </Button>
+              </>
             )}
-            <Button variant="destructive" size="sm" onClick={handleEndInterview} disabled={generateFeedbackMutation.isPending}>
-              {generateFeedbackMutation.isPending ? 'Ending...' : 'End Interview'}
-            </Button>
+            {session?.data.session.status === 'completed' && (
+              <div className="text-sm font-medium text-muted-foreground">Interview Completed</div>
+            )}
           </div>
         </div>
         {session?.data.phaseMetadata && (
@@ -246,18 +253,27 @@ export default function Interview() {
         {error && (
           <div className="mb-2 text-sm text-destructive">{error}</div>
         )}
+        {session?.data.session.status !== 'in_progress' && (
+          <div className="mb-2 text-sm text-muted-foreground">
+            This interview has ended. You can review the transcript but cannot send new messages.
+          </div>
+        )}
         <div className="flex gap-2">
           <Textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your response... (Shift+Enter for new line)"
+            placeholder={
+              session?.data.session.status !== 'in_progress'
+                ? 'Interview has ended'
+                : 'Type your response... (Shift+Enter for new line)'
+            }
             className="min-h-[60px] resize-none"
-            disabled={isStreaming}
+            disabled={isStreaming || session?.data.session.status !== 'in_progress'}
           />
           <Button
             onClick={handleSendMessage}
-            disabled={isStreaming || !inputValue.trim()}
+            disabled={isStreaming || !inputValue.trim() || session?.data.session.status !== 'in_progress'}
             className="self-end"
           >
             {isStreaming ? 'Streaming...' : 'Send'}
