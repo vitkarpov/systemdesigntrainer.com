@@ -4,12 +4,31 @@ import {
   interviewCases,
   interviewCaseExpectations,
   interviewCaseTags,
+  interviewSessions,
+  transcriptMessages,
+  interviewSignals,
+  interviewRedFlags,
+  diagramSnapshots,
+  diagramElements,
+  feedbackReports,
+  feedbackItems,
+  feedbackNextSteps,
 } from './schema';
 
 async function seed() {
   console.log('Cleaning up database...');
 
   // Delete existing data in correct order (respecting foreign key constraints)
+  // Start with the most nested dependencies
+  await db.delete(diagramElements);
+  await db.delete(diagramSnapshots);
+  await db.delete(feedbackItems);
+  await db.delete(feedbackNextSteps);
+  await db.delete(feedbackReports);
+  await db.delete(interviewSignals);
+  await db.delete(interviewRedFlags);
+  await db.delete(transcriptMessages);
+  await db.delete(interviewSessions);
   await db.delete(interviewCaseTags);
   await db.delete(interviewCaseExpectations);
   await db.delete(interviewCases);
