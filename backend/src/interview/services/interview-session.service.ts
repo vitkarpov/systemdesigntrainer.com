@@ -227,8 +227,9 @@ export class InterviewSessionService {
       return 0;
     }
 
-    const now = new Date();
-    const elapsed = now.getTime() - session.startedAt.getTime();
+    // If session is completed, use completedAt instead of current time
+    const endTime = session.completedAt || new Date();
+    const elapsed = endTime.getTime() - session.startedAt.getTime();
     return Math.floor(elapsed / 1000);
   }
 

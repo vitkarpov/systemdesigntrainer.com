@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
 import { Card } from '../../components/ui/card';
@@ -46,7 +47,10 @@ export default function Interview() {
   const { data: session, isLoading: isLoadingSession } = useSessionsControllerGetSession(sessionIdNum, {
     query: {
       enabled: !!sessionId && !isNaN(sessionIdNum),
-      refetchInterval: 1000,
+      refetchInterval: (data) => {
+        // Stop polling if session is not in progress
+        return data?.data?.session?.status === 'in_progress' ? 1000 : false;
+      },
     },
   });
 
@@ -166,7 +170,18 @@ export default function Interview() {
       {/* Header */}
       <div className="border-b px-6 py-4 bg-card space-y-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold">{session?.data.session.interviewCase?.title}</h1>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+            <h1 className="text-lg font-semibold">{session?.data.session.interviewCase?.title}</h1>
+          </div>
           <div className="flex items-center gap-3">
             <div className="text-sm text-muted-foreground font-medium">
               Total: {formatElapsedTime(elapsedTime)}
