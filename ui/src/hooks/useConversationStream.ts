@@ -10,7 +10,7 @@ interface UseConversationStreamOptions {
   sessionId: number;
   onStart?: (data: { candidateMessageId: number }) => void;
   onComplete?: () => void;
-  onError?: (error: Error) => void;
+  onError?: (error: Error, errorData?: { candidateMessageId?: number; partialResponse?: string | null }) => void;
 }
 
 interface StreamEvent {
@@ -125,7 +125,20 @@ export function useConversationStream({ sessionId, onStart, onComplete, onError 
                   onComplete();
                 }
               } else if (eventType === 'error') {
-                throw new Error(data.message || 'Stream error');
+                const error = new Error(data.message || 'Stream error');
+                const errorData = {
+                  candidateMessageId: data.candidateMessageId,
+                  partialResponse: data.partialResponse || null,
+                };
+
+                setIsStreaming(false);
+                setStreamingText('');
+
+                if (onError) {
+                  onError(error, errorData);
+                } else {
+                  throw error;
+                }
               }
             }
           }

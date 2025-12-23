@@ -5,15 +5,20 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
 import { Card } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
 import { PhaseDisplay } from '../../components/PhaseDisplay';
 import { DiagramCanvas } from '../../components/diagram/DiagramCanvas';
+import { FailedMessageBanner } from '../../components/FailedMessageBanner';
+import { RetryButton } from '../../components/RetryButton';
 import type { Node, Edge } from '@xyflow/react';
 import {
   useSessionsControllerGetSession,
   useSessionsControllerGetTranscript,
   useSessionsControllerAdvancePhase,
   useSessionsControllerGenerateFeedback,
+  useSessionsControllerGetFailedMessages,
   getSessionsControllerGetSessionQueryKey,
+  getSessionsControllerGetFailedMessagesQueryKey,
 } from '../../api/hooks.gen';
 import { formatElapsedTime } from '../../lib/utils';
 import { useConversationStream } from '../../hooks/useConversationStream';
@@ -28,6 +33,7 @@ export default function Interview() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [optimisticMessage, setOptimisticMessage] = useState<{ text: string; timestamp: number } | null>(null);
   const [diagramData, setDiagramData] = useState<{ nodes: Node[]; edges: Edge[] } | null>(null);
+  const [showRetryBanner, setShowRetryBanner] = useState(false);
 
   const sessionIdNum = Number(sessionId);
 
@@ -41,9 +47,13 @@ export default function Interview() {
       // Clear optimistic message once real data is fetched
       setOptimisticMessage(null);
     },
-    onError: () => {
-      setError('Failed to send message. Please try again.');
+    onError: (error, errorData) => {
+      setError(error.message || 'Failed to send message. Please try again.');
       setOptimisticMessage(null);
+      // Show retry banner if we have error data
+      if (errorData?.candidateMessageId) {
+        setShowRetryBanner(true);
+      }
     },
   });
 
@@ -63,7 +73,21 @@ export default function Interview() {
     },
   });
 
+  const { data: failedMessagesData } = useSessionsControllerGetFailedMessages(sessionIdNum, {
+    query: {
+      enabled: !!sessionId && !isNaN(sessionIdNum),
+      refetchInterval: 5000, // Poll every 5 seconds for failed messages
+    },
+  });
+
   const messages = transcriptData?.data.messages || [];
+  // Type assertion needed because API types not yet regenerated
+  const failedData = failedMessagesData as any;
+  const retryableCount = failedData?.data?.retryableCount || 0;
+  const failedMessageIds = new Set([
+    ...(failedData?.data?.failedMessages || []).map((m: any) => m.id),
+    ...(failedData?.data?.pendingMessages || []).map((m: any) => m.id),
+  ]);
 
   const advancePhaseMutation = useSessionsControllerAdvancePhase();
   const generateFeedbackMutation = useSessionsControllerGenerateFeedback();
@@ -150,6 +174,23 @@ export default function Interview() {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const handleViewRetry = () => {
+    // Scroll to the first failed message
+    const firstFailedMessage = messages.find((m) => failedMessageIds.has(m.id));
+    if (firstFailedMessage) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleRetrySuccess = () => {
+    setShowRetryBanner(false);
+    setError(null);
+    // Invalidate failed messages query
+    queryClient.invalidateQueries({
+      queryKey: getSessionsControllerGetFailedMessagesQueryKey(sessionIdNum),
+    });
   };
 
   const isLoading = isLoadingSession || isLoadingMessages;
@@ -247,28 +288,69 @@ export default function Interview() {
         <div className={`flex flex-col ${shouldShowDiagram ? (isHighLevelPhase ? 'w-1/2' : 'flex-1') : 'w-full'}`}>
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${
-              message.role === 'candidate' ? 'justify-end' : 'justify-start'
-            }`}
-          >
+        {/* Failed Messages Banner */}
+        {(retryableCount > 0 || showRetryBanner) && (
+          <FailedMessageBanner
+            retryableCount={retryableCount}
+            onViewRetry={handleViewRetry}
+          />
+        )}
+        {messages.map((message) => {
+          const isFailed = failedMessageIds.has(message.id);
+          // Get the actual failed/pending message data to access status and partialText
+          const failedMessage = [...(failedData?.data?.failedMessages || []), ...(failedData?.data?.pendingMessages || [])].find((m: any) => m.id === message.id);
+          const messageStatus = failedMessage?.status || 'completed';
+
+          return (
             <div
-              className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                message.role === 'candidate'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted'
-              }`}
+              key={message.id}
+              className={`flex ${
+                message.role === 'candidate' ? 'justify-end' : 'justify-start'
+              } flex-col ${message.role === 'candidate' ? 'items-end' : 'items-start'}`}
             >
-              <div className="text-xs opacity-70 mb-1">
-                {message.role === 'candidate' ? 'You' : 'Interviewer'} •{' '}
-                {formatElapsedTime(message.secondsElapsed)}
+              <div
+                className={`max-w-[80%] rounded-lg px-4 py-3 ${
+                  message.role === 'candidate'
+                    ? isFailed
+                      ? 'bg-red-100 dark:bg-red-900/20 text-red-900 dark:text-red-100 border border-red-300 dark:border-red-800'
+                      : 'bg-primary text-primary-foreground'
+                    : 'bg-muted'
+                }`}
+              >
+                <div className="text-xs opacity-70 mb-1 flex items-center gap-2">
+                  <span>
+                    {message.role === 'candidate' ? 'You' : 'Interviewer'} •{' '}
+                    {formatElapsedTime(message.secondsElapsed)}
+                  </span>
+                  {isFailed && messageStatus === 'failed' && (
+                    <Badge variant="destructive" className="text-xs">Failed</Badge>
+                  )}
+                  {isFailed && messageStatus === 'pending' && (
+                    <Badge variant="outline" className="text-xs">Pending</Badge>
+                  )}
+                </div>
+                <div className="whitespace-pre-wrap">{message.text}</div>
+                {failedMessage?.partialText && (
+                  <div className="mt-2 pt-2 border-t border-current/20">
+                    <div className="text-xs opacity-70 mb-1">Partial AI Response:</div>
+                    <div className="whitespace-pre-wrap opacity-80">
+                      {failedMessage.partialText}
+                      <span>...</span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="whitespace-pre-wrap">{message.text}</div>
+              {isFailed && message.role === 'candidate' && (
+                <RetryButton
+                  sessionId={sessionIdNum}
+                  candidateMessageId={message.id}
+                  onRetrySuccess={handleRetrySuccess}
+                  onRetryError={(error) => setError(error.message)}
+                />
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
         {/* Optimistic candidate message */}
         {optimisticMessage && (
           <div className="flex justify-end">
