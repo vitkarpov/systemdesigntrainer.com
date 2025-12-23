@@ -41,13 +41,19 @@ export function useConversationStream({ sessionId, onStart, onComplete, onError 
       abortControllerRef.current = abortController;
 
       try {
-        let url = `/api/sessions/${sessionId}/conversation?text=${encodeURIComponent(text)}`;
+        // Set parameters as cookies to avoid URL length limitations
+        document.cookie = `text=${encodeURIComponent(text)}; path=/; SameSite=Lax`;
 
         // Add diagram data if provided
         if (diagram && diagram.nodes && diagram.nodes.length > 0) {
           const diagramJson = JSON.stringify(diagram);
-          url += `&diagramData=${encodeURIComponent(diagramJson)}`;
+          document.cookie = `diagramData=${encodeURIComponent(diagramJson)}; path=/; SameSite=Lax`;
+        } else {
+          // Clear diagram cookie if no diagram provided
+          document.cookie = 'diagramData=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
         }
+
+        const url = `/api/sessions/${sessionId}/conversation`;
 
         const response = await fetch(url, {
           method: 'GET',
@@ -138,6 +144,9 @@ export function useConversationStream({ sessionId, onStart, onComplete, onError 
           onError(err);
         }
       } finally {
+        // Clean up cookies after request completes
+        document.cookie = 'text=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = 'diagramData=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
         abortControllerRef.current = null;
       }
     },

@@ -5,7 +5,6 @@ import {
   Patch,
   Param,
   Body,
-  Query,
   ParseIntPipe,
   HttpCode,
   HttpStatus,
@@ -13,9 +12,11 @@ import {
   Sse,
   MessageEvent,
   Inject,
+  Req,
 } from '@nestjs/common';
 import { Observable, from, concat, of } from 'rxjs';
 import { switchMap, map, catchError } from 'rxjs/operators';
+import { Request } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -426,6 +427,10 @@ export class SessionsController {
    * 3. Detects signals and checks for red flags after streaming completes
    * 4. Saves the AI response to the transcript
    * 5. Returns stream events: start, delta (multiple), complete
+   *
+   * Note: Parameters are passed via cookies to avoid URL length limitations:
+   * - 'text' cookie: The candidate's message text
+   * - 'diagramData' cookie: Optional diagram data as JSON string
    */
   @Sse(':id/conversation')
   @ApiOperation({ summary: 'Handle conversation turn with streaming' })
@@ -437,9 +442,11 @@ export class SessionsController {
   handleConversationStream(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
-    @Query('text') text: string,
-    @Query('diagramData') diagramData?: string,
+    @Req() request: Request,
   ): Observable<MessageEvent> {
+    // Read parameters from cookies
+    const text = request.cookies?.text as string;
+    const diagramData = request.cookies?.diagramData as string | undefined;
     // Verify ownership and prepare initial data
     const preparation$ = from(
       (async () => {
