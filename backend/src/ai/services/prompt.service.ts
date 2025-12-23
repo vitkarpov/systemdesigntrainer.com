@@ -28,16 +28,19 @@ export class PromptService {
     session: SessionState,
     recentMessages: TranscriptMessage[],
     candidateMessage: string,
+    diagramData?: { nodes: any[]; edges: any[] } | null,
   ): Promise<PromptContext> {
     const interviewCase = await this.getInterviewCase(session.caseId);
     const phaseInstructions = this.getPhaseInstructions(
       session.currentPhase as InterviewPhase,
     );
+    const diagramContext = this.buildDiagramContext(diagramData);
 
     const systemPrompt = this.buildSystemPrompt(
       session,
       interviewCase,
       phaseInstructions,
+      diagramContext,
     );
 
     const userMessage = this.buildUserMessage(
@@ -58,6 +61,7 @@ export class PromptService {
     session: SessionState,
     interviewCase: any,
     phaseInstructions: string,
+    diagramContext: string,
   ): string {
     const elapsedMinutes = session.startedAt
       ? Math.floor((Date.now() - session.startedAt.getTime()) / 60000)
@@ -84,7 +88,7 @@ You are conducting a realistic system design interview. Your goal is to:
 5. Remain engaged but allow the candidate to drive the conversation
 
 # Current Phase Instructions
-${phaseInstructions}
+${phaseInstructions}${diagramContext}
 
 # Interview Style Guidelines
 - Be conversational and professional
@@ -165,6 +169,37 @@ Remember: Real interviewers listen more than they speak. The candidate should be
     };
 
     return instructions[phase] || '';
+  }
+
+  /**
+   * Build context about the candidate's diagram for the AI
+   */
+  private buildDiagramContext(
+    diagramData?: { nodes: any[]; edges: any[] } | null,
+  ): string {
+    if (!diagramData || diagramData.nodes.length === 0) {
+      return '';
+    }
+
+    // Extract component types and counts
+    const componentCounts = new Map<string, number>();
+    diagramData.nodes.forEach((node) => {
+      const type = node.type || 'generic';
+      componentCounts.set(type, (componentCounts.get(type) || 0) + 1);
+    });
+
+    // Build readable summary
+    const components = Array.from(componentCounts.entries())
+      .map(([type, count]) => `${count} ${type}${count > 1 ? 's' : ''}`)
+      .join(', ');
+
+    const connectionCount = diagramData.edges.length;
+
+    return `\n\n# Candidate's Current Diagram
+The candidate has drawn a diagram with the following components: ${components}.
+They have ${connectionCount} connection${connectionCount !== 1 ? 's' : ''} between components.
+
+When responding, you can reference their diagram naturally if relevant (e.g., "I see you have a load balancer in your design..."). Only mention the diagram if it's relevant to their question or statement. Don't force references to it.`;
   }
 
   /**

@@ -65,3 +65,86 @@ body {
   margin: 0;
   min-height: 100vh;
 }
+
+/* ReactFlow Custom Theming */
+.react-flow {
+  font-family: inherit;
+}
+
+.react-flow__node {
+  font-family: inherit;
+}
+
+.react-flow__edge-path {
+  stroke: hsl(var(--border));
+  stroke-width: 2;
+}
+
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:focus .react-flow__edge-path,
+.react-flow__edge:focus-visible .react-flow__edge-path {
+  stroke: hsl(var(--primary));
+  stroke-width: 2.5;
+}
+
+.react-flow__handle {
+  background: hsl(var(--primary));
+  border: 2px solid hsl(var(--background));
+  width: 12px;
+  height: 12px;
+}
+
+.react-flow__handle:hover {
+  background: hsl(var(--primary));
+  transform: scale(1.2);
+}
+
+.react-flow__controls {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.react-flow__controls-button {
+  background: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.react-flow__controls-button:hover {
+  background: hsl(var(--muted));
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none;
+}
+
+.react-flow__minimap {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+}
+
+.react-flow__minimap-mask {
+  fill: hsl(var(--muted));
+}
+
+.react-flow__minimap-node {
+  fill: hsl(var(--primary));
+  opacity: 0.6;
+}
+
+.react-flow__background {
+  background: hsl(var(--background));
+}
+
+/* Dark mode adjustments */
+.dark .react-flow__edge-path {
+  stroke: hsl(var(--border));
+}
+
+.dark .react-flow__handle {
+  background: hsl(var(--primary));
+  border-color: hsl(var(--background));
+}

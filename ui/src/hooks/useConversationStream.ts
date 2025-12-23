@@ -26,7 +26,7 @@ export function useConversationStream({ sessionId, onStart, onComplete, onError 
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, diagram?: { nodes: any[]; edges: any[] } | null) => {
       if (isStreaming) return;
 
       setIsStreaming(true);
@@ -41,7 +41,13 @@ export function useConversationStream({ sessionId, onStart, onComplete, onError 
       abortControllerRef.current = abortController;
 
       try {
-        const url = `/api/sessions/${sessionId}/conversation?text=${encodeURIComponent(text)}`;
+        let url = `/api/sessions/${sessionId}/conversation?text=${encodeURIComponent(text)}`;
+
+        // Add diagram data if provided
+        if (diagram && diagram.nodes && diagram.nodes.length > 0) {
+          const diagramJson = JSON.stringify(diagram);
+          url += `&diagramData=${encodeURIComponent(diagramJson)}`;
+        }
 
         const response = await fetch(url, {
           method: 'GET',

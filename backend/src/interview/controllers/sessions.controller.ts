@@ -29,6 +29,7 @@ import { PhaseService } from '../services/phase.service';
 import { SignalService } from '../services/signal.service';
 import { RedFlagService } from '../services/red-flag.service';
 import { FeedbackService } from '../services/feedback.service';
+import { DiagramService } from '../services/diagram.service';
 import { AiService } from '../../ai/services/ai.service';
 import { PromptService } from '../../ai/services/prompt.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
@@ -47,6 +48,11 @@ import {
   GetFeedbackResponseDto,
   GetDashboardResponseDto,
 } from '../dto/responses.dto';
+import {
+  SaveDiagramDto,
+  SaveDiagramResponseDto,
+  GetDiagramResponseDto,
+} from '../dto/diagram.dto';
 import { InterviewPhase, MessageRole } from '../types/session.types';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../db/schema/users.schema';
@@ -62,6 +68,7 @@ export class SessionsController {
     private signalService: SignalService,
     private redFlagService: RedFlagService,
     private feedbackService: FeedbackService,
+    private diagramService: DiagramService,
     private aiService: AiService,
     private promptService: PromptService,
   ) {}
@@ -232,6 +239,67 @@ export class SessionsController {
   }
 
   /**
+   * POST /api/sessions/:id/diagram
+   * Save a diagram snapshot
+   */
+  @Post(':id/diagram')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Save diagram snapshot' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Diagram saved successfully',
+    type: SaveDiagramResponseDto,
+  })
+  async saveDiagram(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: SaveDiagramDto,
+  ) {
+    await this.verifySessionOwnership(id, user.id);
+    const session = await this.sessionService.getSession(id);
+    const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
+
+    const result = await this.diagramService.saveDiagramSnapshot({
+      sessionId: id,
+      nodes: dto.nodes,
+      edges: dto.edges,
+      phase: session.currentPhase as InterviewPhase,
+      secondsElapsed: elapsedSeconds,
+    });
+
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  /**
+   * GET /api/sessions/:id/diagram
+   * Get the latest diagram for a session
+   */
+  @Get(':id/diagram')
+  @ApiOperation({ summary: 'Get latest diagram' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Diagram retrieved (or null if none exists)',
+    type: GetDiagramResponseDto,
+  })
+  async getDiagram(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.verifySessionOwnership(id, user.id);
+    const diagram = await this.diagramService.getLatestDiagram(id);
+
+    return {
+      success: true,
+      data: diagram,
+    };
+  }
+
+  /**
    * GET /api/sessions/:id
    * Get session details
    */
@@ -370,6 +438,7 @@ export class SessionsController {
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
     @Query('text') text: string,
+    @Query('diagramData') diagramData?: string,
   ): Observable<MessageEvent> {
     // Verify ownership and prepare initial data
     const preparation$ = from(
@@ -393,11 +462,22 @@ export class SessionsController {
           10,
         );
 
-        // Build prompt context
+        // Parse diagram data if provided
+        let diagram = null;
+        if (diagramData) {
+          try {
+            diagram = JSON.parse(diagramData);
+          } catch (err) {
+            console.error('Failed to parse diagram data:', err);
+          }
+        }
+
+        // Build prompt context WITH diagram
         const promptContext = await this.promptService.buildPromptContext(
           session,
           recentMessages,
           text,
+          diagram,
         );
 
         return {

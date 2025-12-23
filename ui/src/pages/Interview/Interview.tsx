@@ -6,6 +6,8 @@ import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
 import { Card } from '../../components/ui/card';
 import { PhaseDisplay } from '../../components/PhaseDisplay';
+import { DiagramCanvas } from '../../components/diagram/DiagramCanvas';
+import type { Node, Edge } from '@xyflow/react';
 import {
   useSessionsControllerGetSession,
   useSessionsControllerGetTranscript,
@@ -25,6 +27,7 @@ export default function Interview() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [optimisticMessage, setOptimisticMessage] = useState<{ text: string; timestamp: number } | null>(null);
+  const [diagramData, setDiagramData] = useState<{ nodes: Node[]; edges: Edge[] } | null>(null);
 
   const sessionIdNum = Number(sessionId);
 
@@ -105,7 +108,11 @@ export default function Interview() {
       timestamp: Date.now(),
     });
 
-    sendMessage(messageContent);
+    // Determine if we should send diagram data (only in HIGH_LEVEL phase)
+    const currentPhase = session?.data.session.currentPhase;
+    const isHighLevelPhase = currentPhase === 'high_level';
+
+    sendMessage(messageContent, isHighLevelPhase ? diagramData : null);
   };
 
   const handleAdvancePhase = async () => {
@@ -165,6 +172,14 @@ export default function Interview() {
     );
   }
 
+  // Determine phase-based display
+  const currentPhase = session?.data.session.currentPhase;
+  const isHighLevelPhase = currentPhase === 'high_level';
+  const shouldShowDiagram =
+    isHighLevelPhase ||
+    currentPhase === 'deep_dive' ||
+    currentPhase === 'bottlenecks';
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
@@ -211,8 +226,27 @@ export default function Interview() {
         )}
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Diagram Canvas (conditional) */}
+        {shouldShowDiagram && (
+          <div className={isHighLevelPhase ? 'w-1/2 border-r border-border' : 'w-80 border-r border-border'}>
+            <DiagramCanvas
+              sessionId={sessionIdNum}
+              isReadOnly={!isHighLevelPhase}
+              onDiagramChange={(nodes, edges) => {
+                if (isHighLevelPhase) {
+                  setDiagramData({ nodes, edges });
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {/* Chat Area (Messages + Input) */}
+        <div className={`flex flex-col ${shouldShowDiagram ? (isHighLevelPhase ? 'w-1/2' : 'flex-1') : 'w-full'}`}>
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -260,11 +294,11 @@ export default function Interview() {
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
-      </div>
+            <div ref={messagesEndRef} />
+          </div>
 
-      {/* Input */}
-      <div className="border-t px-6 py-4 bg-card">
+          {/* Input */}
+          <div className="border-t px-6 py-4 bg-card">
         {error && (
           <div className="mb-2 text-sm text-destructive">{error}</div>
         )}
@@ -293,6 +327,8 @@ export default function Interview() {
           >
             {isStreaming ? 'Streaming...' : 'Send'}
           </Button>
+        </div>
+          </div>
         </div>
       </div>
     </div>
