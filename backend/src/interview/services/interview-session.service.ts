@@ -7,7 +7,7 @@ import {
 import { eq } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../db/db.module';
 import type { db as DbType } from '../../db/db';
-import { interviewSessions } from '../../db/schema';
+import { interviewSessions, interviewCases } from '../../db/schema';
 import { PhaseService } from './phase.service';
 import {
   SessionStatus,
@@ -41,6 +41,15 @@ export class InterviewSessionService {
    * Create a new interview session
    */
   async createSession(dto: CreateSessionDto): Promise<SessionState> {
+    // Validate that the case exists
+    const caseExists = await this.db.query.interviewCases.findFirst({
+      where: eq(interviewCases.id, dto.caseId),
+    });
+
+    if (!caseExists) {
+      throw new BadRequestException(`Interview case with id ${dto.caseId} not found`);
+    }
+
     const [session] = await this.db
       .insert(interviewSessions)
       .values({

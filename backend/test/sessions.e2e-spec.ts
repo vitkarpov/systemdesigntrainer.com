@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
+import * as cookieParser from 'cookie-parser';
 import { AppModule } from '../src/app.module';
 import {
   cleanDatabase,
@@ -10,6 +11,8 @@ import {
 } from './test-utils';
 import { getTestDb } from '../src/db/test-db';
 import { DATABASE_CONNECTION, DATABASE_POOL } from '../src/db/db.module';
+import { AiService } from '../src/ai/services/ai.service';
+import { MockAiService } from './mocks/ai.service.mock';
 
 describe('Session Lifecycle (e2e)', () => {
   let app: INestApplication;
@@ -27,9 +30,12 @@ describe('Session Lifecycle (e2e)', () => {
       .useValue(db)
       .overrideProvider(DATABASE_POOL)
       .useValue(pool)
+      .overrideProvider(AiService)
+      .useValue(new MockAiService())
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.use(cookieParser());
     await app.init();
   });
 
@@ -161,23 +167,27 @@ describe('Session Lifecycle (e2e)', () => {
       sessionId = session.id;
     });
 
-    it('should get session details', () => {
-      return request(app.getHttpServer())
+    it('should get session details', async () => {
+      // Get session
+      const sessionResponse = await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}`)
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(200)
-        .expect((res) => {
-          expect(res.body.success).toBe(true);
-          expect(res.body.data).toHaveProperty('session');
-          expect(res.body.data.session).toHaveProperty('id', sessionId);
-          expect(res.body.data.session).toHaveProperty('status', 'in_progress');
-          expect(res.body.data.session).toHaveProperty('currentPhase');
-          expect(res.body.data.session).toHaveProperty('case');
-          expect(res.body.data.session.case).toHaveProperty(
-            'title',
-            'Design a URL Shortener',
-          );
-        });
+        .expect(200);
+
+      expect(sessionResponse.body.success).toBe(true);
+      expect(sessionResponse.body.data).toHaveProperty('session');
+      expect(sessionResponse.body.data.session).toHaveProperty('id', sessionId);
+      expect(sessionResponse.body.data.session).toHaveProperty('status', 'in_progress');
+      expect(sessionResponse.body.data.session).toHaveProperty('currentPhase');
+      expect(sessionResponse.body.data.session).toHaveProperty('caseId', testCaseId);
+
+      // Get case details separately
+      const caseResponse = await request(app.getHttpServer())
+        .get(`/api/cases/${testCaseId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(caseResponse.body).toHaveProperty('title', 'Design a URL Shortener');
     });
 
     it('should return 403 for unauthorized access', async () => {

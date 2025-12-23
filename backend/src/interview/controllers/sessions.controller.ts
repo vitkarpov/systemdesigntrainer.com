@@ -338,10 +338,10 @@ export class SessionsController {
    * Start a session (NOT_STARTED -> IN_PROGRESS)
    */
   @Post(':id/start')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Start an interview session' })
   @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({ status: 200, description: 'Session started', type: StartSessionResponseDto })
+  @ApiResponse({ status: 201, description: 'Session started', type: StartSessionResponseDto })
   async startSession(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
+import * as cookieParser from 'cookie-parser';
 import { AppModule } from '../src/app.module';
 import {
   cleanDatabase,
@@ -35,6 +36,7 @@ describe('Conversation & AI Integration (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.use(cookieParser());
     await app.init();
   });
 
@@ -178,7 +180,7 @@ describe('Conversation & AI Integration (e2e)', () => {
       expect(Array.isArray(signals.body.data.signals)).toBe(true);
 
       // Should have detected multiple signals
-      const signalTypes = signals.body.data.signals.map((s: any) => s.signalType);
+      const signalTypes = signals.body.data.signals.map((s: any) => s.signalName);
       expect(signalTypes).toContain('asked_functional_reqs');
     });
 
@@ -195,7 +197,7 @@ describe('Conversation & AI Integration (e2e)', () => {
         .get(`/api/sessions/${sessionId}/signals`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      const signalTypes = signals.body.data.signals.map((s: any) => s.signalType);
+      const signalTypes = signals.body.data.signals.map((s: any) => s.signalName);
       expect(signalTypes).toContain('mentioned_scale');
       expect(signalTypes).toContain('proposed_api');
     });
@@ -213,7 +215,7 @@ describe('Conversation & AI Integration (e2e)', () => {
         .get(`/api/sessions/${sessionId}/signals`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      const signalTypes = signals.body.data.signals.map((s: any) => s.signalType);
+      const signalTypes = signals.body.data.signals.map((s: any) => s.signalName);
       expect(signalTypes).toContain('discussed_tradeoffs');
     });
   });
@@ -245,7 +247,7 @@ describe('Conversation & AI Integration (e2e)', () => {
       expect(redFlags.body.success).toBe(true);
       expect(Array.isArray(redFlags.body.data.redFlags)).toBe(true);
 
-      const flagTypes = redFlags.body.data.redFlags.map((f: any) => f.flagType);
+      const flagTypes = redFlags.body.data.redFlags.map((f: any) => f.flagName);
       expect(flagTypes).toContain('went_too_deep_early');
     });
 
@@ -276,7 +278,7 @@ describe('Conversation & AI Integration (e2e)', () => {
         .get(`/api/sessions/${sessionId}/red-flags`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      const flagTypes = redFlags.body.data.redFlags.map((f: any) => f.flagType);
+      const flagTypes = redFlags.body.data.redFlags.map((f: any) => f.flagName);
       expect(flagTypes).toContain('poor_time_management');
     });
   });
