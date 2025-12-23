@@ -8,6 +8,7 @@ import { SignalService } from './services/signal.service';
 import { RedFlagService } from './services/red-flag.service';
 import { FeedbackService } from './services/feedback.service';
 import { DiagramService } from './services/diagram.service';
+import { ConversationSagaService } from './services/conversation-saga.service';
 import { SessionsController } from './controllers/sessions.controller';
 import { CasesController } from './controllers/cases.controller';
 import { DatabaseModule } from '../db/db.module';
@@ -36,6 +37,7 @@ import { AiModule } from '../ai/ai.module';
     RedFlagService,
     FeedbackService,
     DiagramService,
+    ConversationSagaService,
   ],
   exports: [
     InterviewSessionService,

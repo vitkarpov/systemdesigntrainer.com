@@ -11,6 +11,8 @@ export interface AddMessageDto {
   text: string;
   phase: InterviewPhase;
   secondsElapsed: number;
+  status?: string; // For saga pattern: 'pending', 'completed', 'failed'
+  partialText?: string; // Store partial response if streaming fails
 }
 
 export interface TranscriptMessage {
@@ -20,6 +22,8 @@ export interface TranscriptMessage {
   text: string;
   phase: string;
   secondsElapsed: number;
+  status: string;
+  partialText: string | null;
   createdAt: Date;
 }
 
@@ -34,15 +38,25 @@ export class TranscriptService {
    * Add a message to the transcript
    */
   async addMessage(dto: AddMessageDto): Promise<TranscriptMessage> {
+    const values: any = {
+      sessionId: dto.sessionId,
+      role: dto.role,
+      text: dto.text,
+      phase: dto.phase,
+      secondsElapsed: dto.secondsElapsed,
+    };
+
+    // Add saga pattern fields if provided
+    if (dto.status) {
+      values.status = dto.status;
+    }
+    if (dto.partialText) {
+      values.partialText = dto.partialText;
+    }
+
     const [message] = await this.db
       .insert(transcriptMessages)
-      .values({
-        sessionId: dto.sessionId,
-        role: dto.role,
-        text: dto.text,
-        phase: dto.phase,
-        secondsElapsed: dto.secondsElapsed,
-      })
+      .values(values)
       .returning();
 
     return message;

@@ -9,6 +9,8 @@ import {
   HttpCode,
   HttpStatus,
   ForbiddenException,
+  NotFoundException,
+  BadRequestException,
   Sse,
   MessageEvent,
   Inject,
@@ -32,6 +34,7 @@ import { SignalService } from '../services/signal.service';
 import { RedFlagService } from '../services/red-flag.service';
 import { FeedbackService } from '../services/feedback.service';
 import { DiagramService } from '../services/diagram.service';
+import { ConversationSagaService } from '../services/conversation-saga.service';
 import { AiService } from '../../ai/services/ai.service';
 import { PromptService } from '../../ai/services/prompt.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
@@ -72,6 +75,7 @@ export class SessionsController {
     private redFlagService: RedFlagService,
     private feedbackService: FeedbackService,
     private diagramService: DiagramService,
+    private conversationSaga: ConversationSagaService,
     private aiService: AiService,
     private promptService: PromptService,
   ) {}
@@ -409,23 +413,25 @@ export class SessionsController {
   /**
    * SSE /api/sessions/:id/conversation
    * Handle a conversation turn with the AI interviewer using Server-Sent Events
-   * This endpoint:
-   * 1. Saves the candidate's message to the transcript
+   *
+   * This endpoint implements the SAGA PATTERN for robust error handling:
+   * 1. Starts saga - saves candidate message with 'pending' status
    * 2. Streams AI response token-by-token
-   * 3. Detects signals and checks for red flags after streaming completes
-   * 4. Saves the AI response to the transcript
-   * 5. Returns stream events: start, delta (multiple), complete
+   * 3. On completion - saves AI response, detects signals, marks candidate as 'completed'
+   * 4. On error - marks candidate as 'failed' with partial response for retry
+   *
+   * Returns stream events: start, delta (multiple), complete
    *
    * Note: Parameters are passed via cookies to avoid URL length limitations:
    * - 'text' cookie: The candidate's message text
    * - 'diagramData' cookie: Optional diagram data as JSON string
    */
   @Sse(':id/conversation')
-  @ApiOperation({ summary: 'Handle conversation turn with streaming' })
+  @ApiOperation({ summary: 'Handle conversation turn with streaming (saga pattern)' })
   @ApiParam({ name: 'id', description: 'Session ID' })
   @ApiResponse({
     status: 200,
-    description: 'SSE stream of conversation events',
+    description: 'SSE stream of conversation events with saga compensation',
   })
   handleConversationStream(
     @CurrentUser() user: User,
@@ -447,27 +453,12 @@ export class SessionsController {
       return of(errorEvent);
     }
 
-    // Verify ownership and prepare initial data
+    // Prepare saga context and start conversation turn
     const preparation$ = from(
       (async () => {
         await this.verifySessionOwnership(id, user.id);
         const session = await this.sessionService.getSession(id);
         const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
-
-        // Save candidate's message
-        const candidateMessage = await this.transcriptService.addMessage({
-          sessionId: id,
-          role: MessageRole.CANDIDATE,
-          text,
-          phase: session.currentPhase as InterviewPhase,
-          secondsElapsed: elapsedSeconds,
-        });
-
-        // Get recent conversation history
-        const recentMessages = await this.transcriptService.getRecentMessages(
-          id,
-          10,
-        );
 
         // Parse diagram data if provided
         let diagram = null;
@@ -482,7 +473,19 @@ export class SessionsController {
         // Fetch interview case data
         const interviewCase = await this.casesService.getCaseById(session.caseId);
 
-        // Build prompt context WITH diagram
+        // SAGA STEP 1: Start conversation turn (save candidate message as 'pending')
+        const { candidateMessageId } = await this.conversationSaga.startConversationTurn(
+          session,
+          interviewCase,
+          text,
+          elapsedSeconds,
+          diagram,
+        );
+
+        // Get recent conversation history for prompt
+        const recentMessages = await this.transcriptService.getRecentMessages(id, 10);
+
+        // Build prompt context
         const promptContext = this.promptService.buildPromptContext(
           session,
           interviewCase,
@@ -493,23 +496,27 @@ export class SessionsController {
 
         return {
           session,
-          candidateMessage,
+          candidateMessageId,
+          candidateText: text,
           promptContext,
           elapsedSeconds,
         };
       })(),
     );
 
-    // Emit start event, then stream AI response
+    // Stream AI response with saga compensation on error
     return preparation$.pipe(
       switchMap(
-        ({ session, candidateMessage, promptContext, elapsedSeconds }) => {
+        ({ session, candidateMessageId, candidateText, promptContext, elapsedSeconds }) => {
           const startEvent: MessageEvent = {
             type: 'start',
             data: JSON.stringify({
-              candidateMessageId: candidateMessage.id,
+              candidateMessageId,
             }),
           };
+
+          // Track partial response for compensation
+          let partialResponse = '';
 
           // Get streaming AI response
           const streamEvents$ = this.aiService
@@ -522,6 +529,9 @@ export class SessionsController {
             .pipe(
               switchMap((event) => {
                 if (event.type === 'delta') {
+                  // Accumulate partial response
+                  partialResponse += event.text;
+
                   // Emit delta event
                   const deltaEvent: MessageEvent = {
                     type: 'delta',
@@ -529,48 +539,30 @@ export class SessionsController {
                   };
                   return of(deltaEvent);
                 } else {
-                  // Complete event - save message and detect signals
+                  // SAGA STEP 2: Complete conversation turn (save AI response, detect signals)
                   return from(
                     (async () => {
                       const { fullResponse } = event;
 
-                      // Save AI response to transcript
                       const updatedElapsedSeconds =
                         this.sessionService.getElapsedSeconds(session);
-                      const interviewerMessage =
-                        await this.transcriptService.addMessage({
-                          sessionId: id,
-                          role: MessageRole.INTERVIEWER,
-                          text: fullResponse.fullText,
-                          phase: session.currentPhase as InterviewPhase,
-                          secondsElapsed: updatedElapsedSeconds,
-                        });
 
-                      // Detect signals in candidate's message
-                      const detectedSignals =
-                        await this.signalService.detectAndRecordSignals({
-                          sessionId: id,
-                          text,
-                          phase: session.currentPhase as InterviewPhase,
-                          secondsElapsed: elapsedSeconds,
-                          messageId: candidateMessage.id,
-                        });
-
-                      // Check for red flags
-                      const detectedRedFlags =
-                        await this.redFlagService.checkRedFlags({
-                          sessionId: id,
-                          currentPhase: session.currentPhase as InterviewPhase,
-                          secondsElapsed: elapsedSeconds,
-                          messageText: text,
-                        });
+                      const result = await this.conversationSaga.completeConversationTurn(
+                        session.id,
+                        candidateMessageId,
+                        fullResponse.fullText,
+                        candidateText,
+                        session.currentPhase as InterviewPhase,
+                        updatedElapsedSeconds,
+                        fullResponse.usage,
+                      );
 
                       const completeEvent: MessageEvent = {
                         type: 'complete',
                         data: JSON.stringify({
-                          interviewerMessage,
-                          detectedSignals,
-                          detectedRedFlags,
+                          interviewerMessage: result.interviewerMessage,
+                          detectedSignals: result.detectedSignals,
+                          detectedRedFlags: result.detectedRedFlags,
                           usage: {
                             inputTokens: fullResponse.usage.inputTokens,
                             outputTokens: fullResponse.usage.outputTokens,
@@ -583,6 +575,27 @@ export class SessionsController {
                   );
                 }
               }),
+              catchError((error) => {
+                // SAGA COMPENSATION: Mark candidate message as failed with partial response
+                return from(
+                  (async () => {
+                    await this.conversationSaga.handleStreamingFailure(
+                      candidateMessageId,
+                      partialResponse || undefined,
+                    );
+
+                    const errorEvent: MessageEvent = {
+                      type: 'error',
+                      data: JSON.stringify({
+                        message: error.message || 'AI response generation failed',
+                        partialResponse: partialResponse || null,
+                        candidateMessageId, // Client can use this for retry
+                      }),
+                    };
+                    return errorEvent;
+                  })(),
+                );
+              }),
             );
 
           // Concatenate start event with stream events
@@ -590,15 +603,154 @@ export class SessionsController {
         },
       ),
       catchError((error) => {
+        // Early failure before streaming started
         const errorEvent: MessageEvent = {
           type: 'error',
           data: JSON.stringify({
-            message: error.message || 'An error occurred during streaming',
+            message: error.message || 'Failed to start conversation turn',
           }),
         };
         return of(errorEvent);
       }),
     );
+  }
+
+  /**
+   * POST /api/sessions/:id/conversation/retry
+   * Retry a failed conversation turn
+   *
+   * This endpoint allows the UI to retry a conversation turn that failed.
+   * It looks up the failed candidate message, retries the AI response,
+   * and uses the saga pattern for error handling.
+   */
+  @Post(':id/conversation/retry')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Retry a failed conversation turn' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Conversation turn retried successfully',
+  })
+  async retryConversation(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) sessionId: number,
+    @Body() body: { candidateMessageId: number },
+  ) {
+    await this.verifySessionOwnership(sessionId, user.id);
+
+    // Get the failed/pending message using saga service
+    const candidateMessage = await this.conversationSaga.getMessage(
+      body.candidateMessageId,
+    );
+
+    if (!candidateMessage) {
+      throw new NotFoundException('Message not found');
+    }
+
+    // Verify message belongs to this session
+    if (candidateMessage.sessionId !== sessionId) {
+      throw new ForbiddenException('Message does not belong to this session');
+    }
+
+    // Verify message is retryable (failed or pending)
+    if (candidateMessage.status === 'completed') {
+      throw new BadRequestException(
+        'Cannot retry a completed message. This message was already processed successfully.',
+      );
+    }
+
+    // Get session and elapsed time
+    const session = await this.sessionService.getSession(sessionId);
+    const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
+
+    // Get interview case
+    const interviewCase = await this.casesService.getCaseById(session.caseId);
+
+    // Get recent conversation history (exclude the failed message)
+    const allMessages = await this.transcriptService.getSessionTranscript(
+      sessionId,
+    );
+    const messagesBeforeFailed = allMessages.filter(
+      (m) => m.id < candidateMessage.id && m.status === 'completed',
+    );
+    const recentMessages = messagesBeforeFailed.slice(-10);
+
+    // Build prompt context
+    const promptContext = this.promptService.buildPromptContext(
+      session,
+      interviewCase,
+      recentMessages,
+      candidateMessage.text,
+      null, // No diagram on retry for simplicity
+    );
+
+    // Reset message to pending state for retry
+    await this.conversationSaga.resetMessageForRetry(candidateMessage.id);
+
+    try {
+      // Generate AI response (non-streaming for retry)
+      const aiResponse = await this.aiService.generateResponse({
+        systemPrompt: promptContext.systemPrompt,
+        userMessage: promptContext.userMessage,
+        temperature: 0.7,
+        maxTokens: 1024,
+      });
+
+      // Complete the conversation turn using saga
+      const result = await this.conversationSaga.completeConversationTurn(
+        sessionId,
+        candidateMessage.id,
+        aiResponse.text,
+        candidateMessage.text,
+        session.currentPhase as InterviewPhase,
+        elapsedSeconds,
+        aiResponse.usage,
+      );
+
+      return {
+        success: true,
+        message: 'Conversation turn retried successfully',
+        data: {
+          interviewerMessage: result.interviewerMessage,
+          detectedSignals: result.detectedSignals,
+          detectedRedFlags: result.detectedRedFlags,
+        },
+      };
+    } catch (error) {
+      // Saga compensation: Mark as failed again
+      await this.conversationSaga.handleStreamingFailure(candidateMessage.id);
+      throw error;
+    }
+  }
+
+  /**
+   * GET /api/sessions/:id/conversation/failed
+   * Get all failed conversation turns for retry UI
+   */
+  @Get(':id/conversation/failed')
+  @ApiOperation({ summary: 'Get failed conversation turns' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Failed messages retrieved',
+  })
+  async getFailedMessages(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) sessionId: number,
+  ) {
+    await this.verifySessionOwnership(sessionId, user.id);
+
+    const failedMessages = await this.conversationSaga.getFailedMessages(sessionId);
+    const pendingMessages = await this.conversationSaga.getPendingMessages(sessionId);
+
+    return {
+      success: true,
+      data: {
+        failedMessages,
+        pendingMessages,
+        retryableCount: failedMessages.length + pendingMessages.length,
+      },
+    };
   }
 
   /**

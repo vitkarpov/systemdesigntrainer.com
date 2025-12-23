@@ -53,6 +53,15 @@ export const transcriptMessages = pgTable('transcript_messages', {
   role: varchar('role', { length: 20 }).notNull(),
   text: text('text').notNull(),
 
+  // Saga pattern: Track message processing status
+  // - 'completed': Message successfully processed
+  // - 'pending': Candidate message waiting for AI response
+  // - 'failed': AI response generation failed (for retry)
+  status: varchar('status', { length: 20 }).notNull().default('completed'),
+
+  // Store partial AI response if streaming fails
+  partialText: text('partial_text'),
+
   // Context at time of message
   phase: varchar('phase', { length: 20 }).notNull(),
   secondsElapsed: integer('seconds_elapsed').notNull(),
