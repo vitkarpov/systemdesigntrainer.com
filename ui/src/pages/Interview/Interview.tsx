@@ -60,9 +60,9 @@ export default function Interview() {
   const { data: session, isLoading: isLoadingSession } = useSessionsControllerGetSession(sessionIdNum, {
     query: {
       enabled: !!sessionId && !isNaN(sessionIdNum),
-      refetchInterval: (data) => {
+      refetchInterval: (query) => {
         // Stop polling if session is not in progress
-        return data?.data?.session?.status === 'in_progress' ? 1000 : false;
+        return query.state.data?.data?.session?.status === 'in_progress' ? 1000 : false;
       },
     },
   });
