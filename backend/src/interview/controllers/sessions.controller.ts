@@ -25,6 +25,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { InterviewSessionService } from '../services/interview-session.service';
+import { InterviewCasesService } from '../services/interview-cases.service';
 import { TranscriptService } from '../services/transcript.service';
 import { PhaseService } from '../services/phase.service';
 import { SignalService } from '../services/signal.service';
@@ -64,6 +65,7 @@ import { User } from '../../db/schema/users.schema';
 export class SessionsController {
   constructor(
     private sessionService: InterviewSessionService,
+    private casesService: InterviewCasesService,
     private transcriptService: TranscriptService,
     private phaseService: PhaseService,
     private signalService: SignalService,
@@ -331,9 +333,13 @@ export class SessionsController {
     await this.verifySessionOwnership(id, user.id);
     const session = await this.sessionService.startSession(id);
 
+    // Fetch interview case data
+    const interviewCase = await this.casesService.getCaseById(session.caseId);
+
     // Generate initial greeting from interviewer
-    const promptContext = await this.promptService.buildPromptContext(
+    const promptContext = this.promptService.buildPromptContext(
       session,
+      interviewCase,
       [], // No conversation history yet
       'Hello', // Simple initial message from candidate to trigger greeting
     );
@@ -473,9 +479,13 @@ export class SessionsController {
           }
         }
 
+        // Fetch interview case data
+        const interviewCase = await this.casesService.getCaseById(session.caseId);
+
         // Build prompt context WITH diagram
-        const promptContext = await this.promptService.buildPromptContext(
+        const promptContext = this.promptService.buildPromptContext(
           session,
+          interviewCase,
           recentMessages,
           text,
           diagram,

@@ -1,8 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../db/db.module';
-import type { db as DbType } from '../../db/db';
-import { eq } from 'drizzle-orm';
-import { interviewCases } from '../../db/schema';
+import { Injectable } from '@nestjs/common';
 import {
   SessionState,
   InterviewPhase,
@@ -14,23 +10,31 @@ export interface PromptContext {
   userMessage: string;
 }
 
+export interface InterviewCaseData {
+  title: string;
+  problemStatement: string;
+}
+
 @Injectable()
 export class PromptService {
-  constructor(
-    @Inject(DATABASE_CONNECTION)
-    private db: typeof DbType,
-  ) {}
+  constructor() {}
 
   /**
    * Build a complete prompt context for the AI interviewer
+   *
+   * @param session - The current session state
+   * @param interviewCase - The interview case data (title and problem statement)
+   * @param recentMessages - Recent conversation history
+   * @param candidateMessage - The current message from the candidate
+   * @param diagramData - Optional diagram data drawn by the candidate
    */
-  async buildPromptContext(
+  buildPromptContext(
     session: SessionState,
+    interviewCase: InterviewCaseData,
     recentMessages: TranscriptMessage[],
     candidateMessage: string,
     diagramData?: { nodes: any[]; edges: any[] } | null,
-  ): Promise<PromptContext> {
-    const interviewCase = await this.getInterviewCase(session.caseId);
+  ): PromptContext {
     const phaseInstructions = this.getPhaseInstructions(
       session.currentPhase as InterviewPhase,
     );
@@ -59,7 +63,7 @@ export class PromptService {
    */
   private buildSystemPrompt(
     session: SessionState,
-    interviewCase: any,
+    interviewCase: InterviewCaseData,
     phaseInstructions: string,
     diagramContext: string,
   ): string {
@@ -227,20 +231,5 @@ When responding, you can reference their diagram naturally if relevant (e.g., "I
     context += `# Your Task\nRespond to the candidate's message as the interviewer. Stay in character and follow the phase instructions above.`;
 
     return context;
-  }
-
-  /**
-   * Get interview case details from database
-   */
-  private async getInterviewCase(caseId: number) {
-    const interviewCase = await this.db.query.interviewCases.findFirst({
-      where: eq(interviewCases.id, caseId),
-    });
-
-    if (!interviewCase) {
-      throw new Error(`Interview case ${caseId} not found`);
-    }
-
-    return interviewCase;
   }
 }
