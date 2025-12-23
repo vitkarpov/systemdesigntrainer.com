@@ -69,7 +69,10 @@ describe('Session Lifecycle (e2e)', () => {
           expect(res.body.data).toHaveProperty('session');
           expect(res.body.data.session).toHaveProperty('id');
           expect(res.body.data.session).toHaveProperty('status', 'not_started');
-          expect(res.body.data.session).toHaveProperty('currentPhase', 'problem');
+          expect(res.body.data.session).toHaveProperty(
+            'currentPhase',
+            'problem',
+          );
           expect(res.body.data.session).toHaveProperty('userId', testUserId);
           expect(res.body.data.session).toHaveProperty('caseId', testCaseId);
           expect(res.body.data.session).toHaveProperty('companyStyle', 'faang');
@@ -179,9 +182,15 @@ describe('Session Lifecycle (e2e)', () => {
       expect(sessionResponse.body.success).toBe(true);
       expect(sessionResponse.body.data).toHaveProperty('session');
       expect(sessionResponse.body.data.session).toHaveProperty('id', sessionId);
-      expect(sessionResponse.body.data.session).toHaveProperty('status', 'in_progress');
+      expect(sessionResponse.body.data.session).toHaveProperty(
+        'status',
+        'in_progress',
+      );
       expect(sessionResponse.body.data.session).toHaveProperty('currentPhase');
-      expect(sessionResponse.body.data.session).toHaveProperty('caseId', testCaseId);
+      expect(sessionResponse.body.data.session).toHaveProperty(
+        'caseId',
+        testCaseId,
+      );
 
       // Get case details separately
       const caseResponse = await request(app.getHttpServer())
@@ -189,7 +198,10 @@ describe('Session Lifecycle (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      expect(caseResponse.body).toHaveProperty('title', 'Design a URL Shortener');
+      expect(caseResponse.body).toHaveProperty(
+        'title',
+        'Design a URL Shortener',
+      );
     });
 
     it('should return 403 for unauthorized access', async () => {
@@ -260,7 +272,10 @@ describe('Session Lifecycle (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect((res) => {
           if (res.status !== 200) {
-            console.log('Phase advance error:', JSON.stringify(res.body, null, 2));
+            console.log(
+              'Phase advance error:',
+              JSON.stringify(res.body, null, 2),
+            );
           }
         })
         .expect(200)

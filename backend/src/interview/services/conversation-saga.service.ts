@@ -7,8 +7,15 @@ import { TranscriptService } from './transcript.service';
 import { SignalService } from './signal.service';
 import { RedFlagService } from './red-flag.service';
 import { AiService } from '../../ai/services/ai.service';
-import { PromptService, InterviewCaseData } from '../../ai/services/prompt.service';
-import { InterviewPhase, MessageRole, SessionState } from '../types/session.types';
+import {
+  PromptService,
+  InterviewCaseData,
+} from '../../ai/services/prompt.service';
+import {
+  InterviewPhase,
+  MessageRole,
+  SessionState,
+} from '../types/session.types';
 
 /**
  * ConversationSaga implements the saga pattern for conversation turns.

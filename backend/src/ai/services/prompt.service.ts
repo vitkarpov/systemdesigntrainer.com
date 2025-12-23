@@ -47,10 +47,7 @@ export class PromptService {
       diagramContext,
     );
 
-    const userMessage = this.buildUserMessage(
-      recentMessages,
-      candidateMessage,
-    );
+    const userMessage = this.buildUserMessage(recentMessages, candidateMessage);
 
     return {
       systemPrompt,

@@ -37,7 +37,8 @@ export class PhaseGuardService {
 
     // Check minimum time requirement
     if (phaseElapsedSeconds < requirements.minimumTimeSeconds) {
-      const remainingSeconds = requirements.minimumTimeSeconds - phaseElapsedSeconds;
+      const remainingSeconds =
+        requirements.minimumTimeSeconds - phaseElapsedSeconds;
       return {
         allowed: false,
         reason: `Please spend at least ${Math.ceil(remainingSeconds)} more second(s) in this phase before advancing.`,
@@ -45,7 +46,10 @@ export class PhaseGuardService {
     }
 
     // Check required signals
-    if (requirements.requiredSignals && requirements.requiredSignals.length > 0) {
+    if (
+      requirements.requiredSignals &&
+      requirements.requiredSignals.length > 0
+    ) {
       const signalNames = new Set(signals.map((s) => s.signalName));
       const missingSignals = requirements.requiredSignals.filter(
         (signal) => !signalNames.has(signal),

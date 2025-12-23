@@ -1,27 +1,38 @@
-import { useState, useRef, useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useRef, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "../contexts/AuthContext";
 import {
   getSessionsControllerGetSessionQueryKey,
   getSessionsControllerGetTranscriptQueryKey,
-} from '../api/hooks.gen';
+} from "../api/hooks.gen";
 
 interface UseConversationStreamOptions {
   sessionId: number;
   onStart?: (data: { candidateMessageId: number }) => void;
   onComplete?: () => void;
-  onError?: (error: Error, errorData?: { candidateMessageId?: number; partialResponse?: string | null }) => void;
+  onError?: (
+    error: Error,
+    errorData?: {
+      candidateMessageId?: number;
+      partialResponse?: string | null;
+    },
+  ) => void;
 }
 
 interface StreamEvent {
-  type: 'start' | 'delta' | 'complete' | 'error';
+  type: "start" | "delta" | "complete" | "error";
   data: any;
 }
 
-export function useConversationStream({ sessionId, onStart, onComplete, onError }: UseConversationStreamOptions) {
+export function useConversationStream({
+  sessionId,
+  onStart,
+  onComplete,
+  onError,
+}: UseConversationStreamOptions) {
   const { accessToken } = useAuth();
   const queryClient = useQueryClient();
-  const [streamingText, setStreamingText] = useState('');
+  const [streamingText, setStreamingText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -30,7 +41,7 @@ export function useConversationStream({ sessionId, onStart, onComplete, onError 
       if (isStreaming) return;
 
       setIsStreaming(true);
-      setStreamingText('');
+      setStreamingText("");
 
       // Cancel any existing request
       if (abortControllerRef.current) {
@@ -50,18 +61,19 @@ export function useConversationStream({ sessionId, onStart, onComplete, onError 
           document.cookie = `diagramData=${encodeURIComponent(diagramJson)}; path=/; SameSite=Lax`;
         } else {
           // Clear diagram cookie if no diagram provided
-          document.cookie = 'diagramData=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          document.cookie =
+            "diagramData=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         }
 
         const url = `/api/sessions/${sessionId}/conversation`;
 
         const response = await fetch(url, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Accept': 'text/event-stream',
-            'Authorization': accessToken ? `Bearer ${accessToken}` : '',
+            Accept: "text/event-stream",
+            Authorization: accessToken ? `Bearer ${accessToken}` : "",
           },
-          credentials: 'include',
+          credentials: "include",
           signal: abortController.signal,
         });
 
@@ -73,11 +85,11 @@ export function useConversationStream({ sessionId, onStart, onComplete, onError 
         const decoder = new TextDecoder();
 
         if (!reader) {
-          throw new Error('Response body is not readable');
+          throw new Error("Response body is not readable");
         }
 
         // Read the stream
-        let buffer = '';
+        let buffer = "";
 
         while (true) {
           const { done, value } = await reader.read();
@@ -85,8 +97,8 @@ export function useConversationStream({ sessionId, onStart, onComplete, onError 
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n\n');
-          buffer = lines.pop() || '';
+          const lines = buffer.split("\n\n");
+          buffer = lines.pop() || "";
 
           for (const line of lines) {
             if (!line.trim() || abortController.signal.aborted) continue;
@@ -95,44 +107,46 @@ export function useConversationStream({ sessionId, onStart, onComplete, onError 
             const dataMatch = line.match(/^data: (.+)$/m);
 
             if (eventMatch && dataMatch) {
-              const eventType = eventMatch[1] as StreamEvent['type'];
+              const eventType = eventMatch[1] as StreamEvent["type"];
               const data = JSON.parse(dataMatch[1]);
 
-              if (eventType === 'start') {
-                console.log('Stream started:', data);
+              if (eventType === "start") {
+                console.log("Stream started:", data);
                 if (onStart) {
                   onStart(data);
                 }
-              } else if (eventType === 'delta') {
+              } else if (eventType === "delta") {
                 setStreamingText((prev) => prev + data.text);
-              } else if (eventType === 'complete') {
-                console.log('Stream complete:', data);
+              } else if (eventType === "complete") {
+                console.log("Stream complete:", data);
 
                 setIsStreaming(false);
-                setStreamingText('');
+                setStreamingText("");
 
                 // Refresh transcript and session data
                 await Promise.all([
                   queryClient.invalidateQueries({
-                    queryKey: getSessionsControllerGetTranscriptQueryKey(sessionId),
+                    queryKey:
+                      getSessionsControllerGetTranscriptQueryKey(sessionId),
                   }),
                   queryClient.invalidateQueries({
-                    queryKey: getSessionsControllerGetSessionQueryKey(sessionId),
+                    queryKey:
+                      getSessionsControllerGetSessionQueryKey(sessionId),
                   }),
                 ]);
 
                 if (onComplete) {
                   onComplete();
                 }
-              } else if (eventType === 'error') {
-                const error = new Error(data.message || 'Stream error');
+              } else if (eventType === "error") {
+                const error = new Error(data.message || "Stream error");
                 const errorData = {
                   candidateMessageId: data.candidateMessageId,
                   partialResponse: data.partialResponse || null,
                 };
 
                 setIsStreaming(false);
-                setStreamingText('');
+                setStreamingText("");
 
                 if (onError) {
                   onError(error, errorData);
@@ -144,26 +158,36 @@ export function useConversationStream({ sessionId, onStart, onComplete, onError 
           }
         }
       } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') {
-          console.log('Request was cancelled');
+        if (err instanceof Error && err.name === "AbortError") {
+          console.log("Request was cancelled");
           return;
         }
 
-        console.error('Failed to send message:', err);
+        console.error("Failed to send message:", err);
         setIsStreaming(false);
-        setStreamingText('');
+        setStreamingText("");
 
         if (onError && err instanceof Error) {
           onError(err);
         }
       } finally {
         // Clean up cookies after request completes
-        document.cookie = 'text=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-        document.cookie = 'diagramData=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie =
+          "text=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie =
+          "diagramData=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         abortControllerRef.current = null;
       }
     },
-    [sessionId, accessToken, isStreaming, queryClient, onStart, onComplete, onError]
+    [
+      sessionId,
+      accessToken,
+      isStreaming,
+      queryClient,
+      onStart,
+      onComplete,
+      onError,
+    ],
   );
 
   const cancel = useCallback(() => {
@@ -171,7 +195,7 @@ export function useConversationStream({ sessionId, onStart, onComplete, onError 
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
       setIsStreaming(false);
-      setStreamingText('');
+      setStreamingText("");
     }
   }, []);
 

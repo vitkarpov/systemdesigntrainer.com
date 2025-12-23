@@ -64,7 +64,11 @@ export class AuthController {
   @Get('user')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user information' })
-  @ApiResponse({ status: 200, description: 'User information', type: UserResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'User information',
+    type: UserResponseDto,
+  })
   async getUser(@CurrentUser() user: User) {
     return {
       id: user.id,

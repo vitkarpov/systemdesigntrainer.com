@@ -20,9 +20,12 @@ export const usersRelations = relations(users, ({ many }) => ({
 }));
 
 // Interview case relations
-export const interviewCasesRelations = relations(interviewCases, ({ many }) => ({
-  sessions: many(interviewSessions),
-}));
+export const interviewCasesRelations = relations(
+  interviewCases,
+  ({ many }) => ({
+    sessions: many(interviewSessions),
+  }),
+);
 
 // Interview session relations
 export const interviewSessionsRelations = relations(

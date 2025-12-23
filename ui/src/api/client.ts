@@ -1,6 +1,6 @@
 export const customInstance = async <T>(config: {
   url: string;
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   params?: any;
   data?: any;
   signal?: AbortSignal;
@@ -9,21 +9,21 @@ export const customInstance = async <T>(config: {
   // Build URL with path parameters
   let url = config.url;
   if (config.params) {
-    Object.keys(config.params).forEach(key => {
+    Object.keys(config.params).forEach((key) => {
       url = url.replace(`{${key}}`, String(config.params[key]));
     });
   }
 
   // Build headers
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...config.headers,
   };
 
   // Add auth token if available
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem("accessToken");
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   // Build fetch options
@@ -34,7 +34,7 @@ export const customInstance = async <T>(config: {
   };
 
   // Add body for POST/PUT/PATCH requests
-  if (config.data && ['POST', 'PUT', 'PATCH'].includes(config.method)) {
+  if (config.data && ["POST", "PUT", "PATCH"].includes(config.method)) {
     fetchOptions.body = JSON.stringify(config.data);
   }
 

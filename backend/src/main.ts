@@ -46,7 +46,10 @@ async function bootstrap() {
 
   // Generate OpenAPI JSON file
   if (process.env.GENERATE_OPENAPI === 'true') {
-    const outputPath = path.resolve(process.cwd(), '../ui/src/api/openapi.json');
+    const outputPath = path.resolve(
+      process.cwd(),
+      '../ui/src/api/openapi.json',
+    );
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     fs.writeFileSync(outputPath, JSON.stringify(document, null, 2));
     console.log(`OpenAPI spec generated at: ${outputPath}`);

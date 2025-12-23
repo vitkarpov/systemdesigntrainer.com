@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useSessionsControllerSaveDiagram, getSessionsControllerGetDiagramQueryKey } from '../api/hooks.gen';
-import type { Node, Edge } from '@xyflow/react';
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useSessionsControllerSaveDiagram,
+  getSessionsControllerGetDiagramQueryKey,
+} from "../api/hooks.gen";
+import type { Node, Edge } from "@xyflow/react";
 
 interface UseDiagramAutoSaveOptions {
   sessionId: number;
@@ -16,7 +19,9 @@ export function useDiagramAutoSave({
   edges,
   enabled,
 }: UseDiagramAutoSaveOptions) {
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
+    "saved",
+  );
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const saveMutation = useSessionsControllerSaveDiagram();
   const queryClient = useQueryClient();
@@ -32,25 +37,25 @@ export function useDiagramAutoSave({
     }
 
     // Mark as unsaved
-    setSaveStatus('unsaved');
+    setSaveStatus("unsaved");
 
     // Set new timeout for save (2 second debounce)
     timeoutRef.current = setTimeout(async () => {
-      setSaveStatus('saving');
+      setSaveStatus("saving");
       try {
         await saveMutation.mutateAsync({
           id: sessionId,
           data: { nodes, edges },
         });
-        setSaveStatus('saved');
+        setSaveStatus("saved");
 
         // Invalidate diagram query to keep cache fresh
         queryClient.invalidateQueries({
           queryKey: getSessionsControllerGetDiagramQueryKey(sessionId),
         });
       } catch (error) {
-        console.error('Failed to save diagram:', error);
-        setSaveStatus('unsaved');
+        console.error("Failed to save diagram:", error);
+        setSaveStatus("unsaved");
       }
     }, 2000);
 

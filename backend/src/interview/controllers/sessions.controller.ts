@@ -106,20 +106,20 @@ export class SessionsController {
   })
   async getDashboard(@CurrentUser() user: User) {
     // Fetch sessions with interview case details and feedback scores in a single query
-    const sessions = await this.sessionService.getUserSessionsWithCases(user.id);
+    const sessions = await this.sessionService.getUserSessionsWithCases(
+      user.id,
+    );
 
     // Calculate stats
-    const completedSessions = sessions.filter(
-      (s) => s.status === 'completed',
-    );
-    const sessionsWithScores = sessions.filter(
-      (s) => s.overallScore !== null,
-    );
+    const completedSessions = sessions.filter((s) => s.status === 'completed');
+    const sessionsWithScores = sessions.filter((s) => s.overallScore !== null);
     const averageScore =
       sessionsWithScores.length > 0
         ? Math.round(
-            sessionsWithScores.reduce((sum, s) => sum + (s.overallScore || 0), 0) /
-              sessionsWithScores.length,
+            sessionsWithScores.reduce(
+              (sum, s) => sum + (s.overallScore || 0),
+              0,
+            ) / sessionsWithScores.length,
           )
         : null;
 
@@ -178,7 +178,11 @@ export class SessionsController {
   @Get(':id/transcript')
   @ApiOperation({ summary: 'Get session transcript' })
   @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({ status: 200, description: 'Transcript retrieved', type: GetTranscriptResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Transcript retrieved',
+    type: GetTranscriptResponseDto,
+  })
   async getTranscript(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -202,7 +206,11 @@ export class SessionsController {
   @Get(':id/phases')
   @ApiOperation({ summary: 'Get all phases with metadata' })
   @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({ status: 200, description: 'Phases retrieved', type: GetPhasesResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Phases retrieved',
+    type: GetPhasesResponseDto,
+  })
   async getPhases(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -295,7 +303,11 @@ export class SessionsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get session details' })
   @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({ status: 200, description: 'Session details retrieved', type: GetSessionResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Session details retrieved',
+    type: GetSessionResponseDto,
+  })
   async getSession(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -329,7 +341,11 @@ export class SessionsController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Start an interview session' })
   @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({ status: 201, description: 'Session started', type: StartSessionResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Session started',
+    type: StartSessionResponseDto,
+  })
   async startSession(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -379,7 +395,11 @@ export class SessionsController {
   @Patch(':id/phase')
   @ApiOperation({ summary: 'Advance to next phase' })
   @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({ status: 200, description: 'Phase advanced', type: AdvancePhaseResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Phase advanced',
+    type: AdvancePhaseResponseDto,
+  })
   async advancePhase(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -409,7 +429,6 @@ export class SessionsController {
     };
   }
 
-
   /**
    * SSE /api/sessions/:id/conversation
    * Handle a conversation turn with the AI interviewer using Server-Sent Events
@@ -427,7 +446,9 @@ export class SessionsController {
    * - 'diagramData' cookie: Optional diagram data as JSON string
    */
   @Sse(':id/conversation')
-  @ApiOperation({ summary: 'Handle conversation turn with streaming (saga pattern)' })
+  @ApiOperation({
+    summary: 'Handle conversation turn with streaming (saga pattern)',
+  })
   @ApiParam({ name: 'id', description: 'Session ID' })
   @ApiResponse({
     status: 200,
@@ -471,19 +492,25 @@ export class SessionsController {
         }
 
         // Fetch interview case data
-        const interviewCase = await this.casesService.getCaseById(session.caseId);
-
-        // SAGA STEP 1: Start conversation turn (save candidate message as 'pending')
-        const { candidateMessageId } = await this.conversationSaga.startConversationTurn(
-          session,
-          interviewCase,
-          text,
-          elapsedSeconds,
-          diagram,
+        const interviewCase = await this.casesService.getCaseById(
+          session.caseId,
         );
 
+        // SAGA STEP 1: Start conversation turn (save candidate message as 'pending')
+        const { candidateMessageId } =
+          await this.conversationSaga.startConversationTurn(
+            session,
+            interviewCase,
+            text,
+            elapsedSeconds,
+            diagram,
+          );
+
         // Get recent conversation history for prompt
-        const recentMessages = await this.transcriptService.getRecentMessages(id, 10);
+        const recentMessages = await this.transcriptService.getRecentMessages(
+          id,
+          10,
+        );
 
         // Build prompt context
         const promptContext = this.promptService.buildPromptContext(
@@ -507,7 +534,13 @@ export class SessionsController {
     // Stream AI response with saga compensation on error
     return preparation$.pipe(
       switchMap(
-        ({ session, candidateMessageId, candidateText, promptContext, elapsedSeconds }) => {
+        ({
+          session,
+          candidateMessageId,
+          candidateText,
+          promptContext,
+          elapsedSeconds,
+        }) => {
           const startEvent: MessageEvent = {
             type: 'start',
             data: JSON.stringify({
@@ -547,15 +580,16 @@ export class SessionsController {
                       const updatedElapsedSeconds =
                         this.sessionService.getElapsedSeconds(session);
 
-                      const result = await this.conversationSaga.completeConversationTurn(
-                        session.id,
-                        candidateMessageId,
-                        fullResponse.fullText,
-                        candidateText,
-                        session.currentPhase as InterviewPhase,
-                        updatedElapsedSeconds,
-                        fullResponse.usage,
-                      );
+                      const result =
+                        await this.conversationSaga.completeConversationTurn(
+                          session.id,
+                          candidateMessageId,
+                          fullResponse.fullText,
+                          candidateText,
+                          session.currentPhase as InterviewPhase,
+                          updatedElapsedSeconds,
+                          fullResponse.usage,
+                        );
 
                       const completeEvent: MessageEvent = {
                         type: 'complete',
@@ -587,7 +621,8 @@ export class SessionsController {
                     const errorEvent: MessageEvent = {
                       type: 'error',
                       data: JSON.stringify({
-                        message: error.message || 'AI response generation failed',
+                        message:
+                          error.message || 'AI response generation failed',
                         partialResponse: partialResponse || null,
                         candidateMessageId, // Client can use this for retry
                       }),
@@ -667,9 +702,8 @@ export class SessionsController {
     const interviewCase = await this.casesService.getCaseById(session.caseId);
 
     // Get recent conversation history (exclude the failed message)
-    const allMessages = await this.transcriptService.getSessionTranscript(
-      sessionId,
-    );
+    const allMessages =
+      await this.transcriptService.getSessionTranscript(sessionId);
     const messagesBeforeFailed = allMessages.filter(
       (m) => m.id < candidateMessage.id && m.status === 'completed',
     );
@@ -740,8 +774,10 @@ export class SessionsController {
   ) {
     await this.verifySessionOwnership(sessionId, user.id);
 
-    const failedMessages = await this.conversationSaga.getFailedMessages(sessionId);
-    const pendingMessages = await this.conversationSaga.getPendingMessages(sessionId);
+    const failedMessages =
+      await this.conversationSaga.getFailedMessages(sessionId);
+    const pendingMessages =
+      await this.conversationSaga.getPendingMessages(sessionId);
 
     return {
       success: true,
@@ -760,7 +796,11 @@ export class SessionsController {
   @Get(':id/signals')
   @ApiOperation({ summary: 'Get detected signals' })
   @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({ status: 200, description: 'Signals retrieved', type: GetSignalsResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Signals retrieved',
+    type: GetSignalsResponseDto,
+  })
   async getSignals(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -788,7 +828,11 @@ export class SessionsController {
   @Get(':id/red-flags')
   @ApiOperation({ summary: 'Get detected red flags' })
   @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({ status: 200, description: 'Red flags retrieved', type: GetRedFlagsResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Red flags retrieved',
+    type: GetRedFlagsResponseDto,
+  })
   async getRedFlags(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -822,7 +866,11 @@ export class SessionsController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Generate feedback report' })
   @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({ status: 201, description: 'Feedback generated', type: GenerateFeedbackResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Feedback generated',
+    type: GenerateFeedbackResponseDto,
+  })
   async generateFeedback(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -858,7 +906,11 @@ export class SessionsController {
   @Get(':id/feedback')
   @ApiOperation({ summary: 'Get feedback report' })
   @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({ status: 200, description: 'Feedback retrieved', type: GetFeedbackResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Feedback retrieved',
+    type: GetFeedbackResponseDto,
+  })
   async getFeedback(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,

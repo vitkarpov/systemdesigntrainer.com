@@ -249,9 +249,13 @@ describe('Feedback Generation (e2e)', () => {
     });
 
     it('should auto-complete session and generate feedback for in-progress session', async () => {
-      const inProgressSession = await createTestSession(testUserId, testCaseId, {
-        status: 'in_progress',
-      });
+      const inProgressSession = await createTestSession(
+        testUserId,
+        testCaseId,
+        {
+          status: 'in_progress',
+        },
+      );
 
       const response = await request(app.getHttpServer())
         .post(`/api/sessions/${inProgressSession.id}/feedback`)

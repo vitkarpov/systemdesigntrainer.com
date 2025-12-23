@@ -18,7 +18,9 @@ export interface PhaseGuard {
   /**
    * Check if the session can advance from this phase
    */
-  canAdvance(context: PhaseContext): Promise<PhaseGuardResult> | PhaseGuardResult;
+  canAdvance(
+    context: PhaseContext,
+  ): Promise<PhaseGuardResult> | PhaseGuardResult;
 
   /**
    * The phase this guard is responsible for

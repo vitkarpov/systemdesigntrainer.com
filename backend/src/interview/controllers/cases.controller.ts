@@ -1,10 +1,5 @@
 import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { InterviewCasesService } from '../services/interview-cases.service';
 import type { InterviewCase } from '../../db/schema/interview-cases.schema';
 

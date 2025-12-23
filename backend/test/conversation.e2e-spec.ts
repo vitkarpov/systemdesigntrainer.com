@@ -86,7 +86,9 @@ describe('Conversation & AI Integration (e2e)', () => {
       await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', [`text=I think we need to handle URL shortening and redirection.`])
+        .set('Cookie', [
+          `text=I think we need to handle URL shortening and redirection.`,
+        ])
         .set('Accept', 'text/event-stream');
 
       // Check transcript
@@ -97,8 +99,12 @@ describe('Conversation & AI Integration (e2e)', () => {
       expect(transcript.body.data.messages.length).toBeGreaterThan(0);
 
       // Should have user message and assistant response
-      const userMessage = transcript.body.data.messages.find((m: any) => m.role === 'candidate');
-      const assistantMessage = transcript.body.data.messages.find((m: any) => m.role === 'interviewer');
+      const userMessage = transcript.body.data.messages.find(
+        (m: any) => m.role === 'candidate',
+      );
+      const assistantMessage = transcript.body.data.messages.find(
+        (m: any) => m.role === 'interviewer',
+      );
 
       expect(userMessage).toBeDefined();
       expect(userMessage.text).toContain('URL shortening');
@@ -165,7 +171,9 @@ describe('Conversation & AI Integration (e2e)', () => {
       await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', [`text=Let me clarify the functional requirements: we need URL shortening, redirection, and basic analytics. For non-functional requirements, we need to handle scale of 1 million users and ensure high availability.`])
+        .set('Cookie', [
+          `text=Let me clarify the functional requirements: we need URL shortening, redirection, and basic analytics. For non-functional requirements, we need to handle scale of 1 million users and ensure high availability.`,
+        ])
         .set('Accept', 'text/event-stream');
 
       // Wait a bit for signal detection to complete
@@ -180,7 +188,9 @@ describe('Conversation & AI Integration (e2e)', () => {
       expect(Array.isArray(signals.body.data.signals)).toBe(true);
 
       // Should have detected multiple signals
-      const signalTypes = signals.body.data.signals.map((s: any) => s.signalName);
+      const signalTypes = signals.body.data.signals.map(
+        (s: any) => s.signalName,
+      );
       expect(signalTypes).toContain('asked_functional_reqs');
     });
 
@@ -188,7 +198,9 @@ describe('Conversation & AI Integration (e2e)', () => {
       await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', [`text=We should design a REST API with POST /shorten endpoint. The system needs to handle 10,000 requests per second.`])
+        .set('Cookie', [
+          `text=We should design a REST API with POST /shorten endpoint. The system needs to handle 10,000 requests per second.`,
+        ])
         .set('Accept', 'text/event-stream');
 
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -197,7 +209,9 @@ describe('Conversation & AI Integration (e2e)', () => {
         .get(`/api/sessions/${sessionId}/signals`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      const signalTypes = signals.body.data.signals.map((s: any) => s.signalName);
+      const signalTypes = signals.body.data.signals.map(
+        (s: any) => s.signalName,
+      );
       expect(signalTypes).toContain('mentioned_scale');
       expect(signalTypes).toContain('proposed_api');
     });
@@ -206,7 +220,9 @@ describe('Conversation & AI Integration (e2e)', () => {
       await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', [`text=There is a trade-off between consistency and availability. We could use SQL vs NoSQL database.`])
+        .set('Cookie', [
+          `text=There is a trade-off between consistency and availability. We could use SQL vs NoSQL database.`,
+        ])
         .set('Accept', 'text/event-stream');
 
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -215,7 +231,9 @@ describe('Conversation & AI Integration (e2e)', () => {
         .get(`/api/sessions/${sessionId}/signals`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      const signalTypes = signals.body.data.signals.map((s: any) => s.signalName);
+      const signalTypes = signals.body.data.signals.map(
+        (s: any) => s.signalName,
+      );
       expect(signalTypes).toContain('discussed_tradeoffs');
     });
   });
@@ -234,7 +252,9 @@ describe('Conversation & AI Integration (e2e)', () => {
       await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
-        .set('Cookie', [`text=I would implement this with a class URLShortener that has a function generateShortUrl() using a for loop to iterate through characters.`])
+        .set('Cookie', [
+          `text=I would implement this with a class URLShortener that has a function generateShortUrl() using a for loop to iterate through characters.`,
+        ])
         .set('Accept', 'text/event-stream');
 
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -261,7 +281,7 @@ describe('Conversation & AI Integration (e2e)', () => {
         .update(interviewSessions)
         .set({
           startedAt: elevenMinutesAgo,
-          currentPhase: 'problem'
+          currentPhase: 'problem',
         })
         .where(require('drizzle-orm').eq(interviewSessions.id, sessionId));
 

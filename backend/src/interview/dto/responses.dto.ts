@@ -30,7 +30,7 @@ export class SignalCoverageDto {
   @ApiProperty({
     description: 'List of signal names not yet detected',
     type: [String],
-    example: ['asked_functional_reqs', 'proposed_api']
+    example: ['asked_functional_reqs', 'proposed_api'],
   })
   missingSignals: string[];
 }
@@ -59,7 +59,9 @@ export class SessionResponseDto {
   @ApiProperty()
   caseId: number;
 
-  @ApiProperty({ enum: ['not_started', 'in_progress', 'completed', 'abandoned'] })
+  @ApiProperty({
+    enum: ['not_started', 'in_progress', 'completed', 'abandoned'],
+  })
   status: string;
 
   @ApiProperty({ nullable: true })
@@ -68,7 +70,16 @@ export class SessionResponseDto {
   @ApiProperty({ nullable: true })
   completedAt: Date | null;
 
-  @ApiProperty({ enum: ['problem', 'requirements', 'high_level', 'deep_dive', 'bottlenecks', 'wrap_up'] })
+  @ApiProperty({
+    enum: [
+      'problem',
+      'requirements',
+      'high_level',
+      'deep_dive',
+      'bottlenecks',
+      'wrap_up',
+    ],
+  })
   currentPhase: string;
 
   @ApiProperty()
@@ -242,14 +253,21 @@ export class GetRedFlagsResponseDto {
 
 export class PhaseWithMetadataDto {
   @ApiProperty({
-    enum: ['problem', 'requirements', 'high_level', 'deep_dive', 'bottlenecks', 'wrap_up'],
-    description: 'Phase identifier'
+    enum: [
+      'problem',
+      'requirements',
+      'high_level',
+      'deep_dive',
+      'bottlenecks',
+      'wrap_up',
+    ],
+    description: 'Phase identifier',
   })
   phase: string;
 
   @ApiProperty({
     type: PhaseMetadataDto,
-    description: 'Phase display information'
+    description: 'Phase display information',
   })
   metadata: PhaseMetadataDto;
 
@@ -442,7 +460,9 @@ export class DashboardSessionDto {
   @ApiProperty()
   id: number;
 
-  @ApiProperty({ enum: ['not_started', 'in_progress', 'completed', 'abandoned'] })
+  @ApiProperty({
+    enum: ['not_started', 'in_progress', 'completed', 'abandoned'],
+  })
   status: string;
 
   @ApiProperty({ nullable: true })
@@ -457,22 +477,40 @@ export class DashboardSessionDto {
   @ApiProperty({ type: InterviewCaseDto })
   interviewCase: InterviewCaseDto;
 
-  @ApiProperty({ nullable: true, description: 'Overall score if feedback exists' })
+  @ApiProperty({
+    nullable: true,
+    description: 'Overall score if feedback exists',
+  })
   overallScore?: number | null;
 
-  @ApiProperty({ nullable: true, description: 'Requirements score if feedback exists' })
+  @ApiProperty({
+    nullable: true,
+    description: 'Requirements score if feedback exists',
+  })
   requirementsScore?: number | null;
 
-  @ApiProperty({ nullable: true, description: 'Design score if feedback exists' })
+  @ApiProperty({
+    nullable: true,
+    description: 'Design score if feedback exists',
+  })
   designScore?: number | null;
 
-  @ApiProperty({ nullable: true, description: 'Communication score if feedback exists' })
+  @ApiProperty({
+    nullable: true,
+    description: 'Communication score if feedback exists',
+  })
   communicationScore?: number | null;
 
-  @ApiProperty({ nullable: true, description: 'Time management score if feedback exists' })
+  @ApiProperty({
+    nullable: true,
+    description: 'Time management score if feedback exists',
+  })
   timeManagementScore?: number | null;
 
-  @ApiProperty({ nullable: true, description: 'Depth score if feedback exists' })
+  @ApiProperty({
+    nullable: true,
+    description: 'Depth score if feedback exists',
+  })
   depthScore?: number | null;
 }
 
@@ -483,7 +521,10 @@ export class DashboardStatsDto {
   @ApiProperty({ description: 'Number of completed sessions' })
   completedSessions: number;
 
-  @ApiProperty({ description: 'Average overall score across completed sessions with feedback' })
+  @ApiProperty({
+    description:
+      'Average overall score across completed sessions with feedback',
+  })
   averageScore: number | null;
 }
 

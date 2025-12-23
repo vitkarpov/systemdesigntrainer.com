@@ -84,19 +84,25 @@ export class FeedbackService {
 
     // Apply signal bonuses
     if (signalNames.has(SignalName.ASKED_FUNCTIONAL_REQS))
-      requirementsScore += SIGNAL_SCORING[SignalName.ASKED_FUNCTIONAL_REQS].requirements;
+      requirementsScore +=
+        SIGNAL_SCORING[SignalName.ASKED_FUNCTIONAL_REQS].requirements;
     if (signalNames.has(SignalName.ASKED_NON_FUNCTIONAL_REQS))
-      requirementsScore += SIGNAL_SCORING[SignalName.ASKED_NON_FUNCTIONAL_REQS].requirements;
+      requirementsScore +=
+        SIGNAL_SCORING[SignalName.ASKED_NON_FUNCTIONAL_REQS].requirements;
     if (signalNames.has(SignalName.CLARIFIED_CONSTRAINTS))
-      requirementsScore += SIGNAL_SCORING[SignalName.CLARIFIED_CONSTRAINTS].requirements;
+      requirementsScore +=
+        SIGNAL_SCORING[SignalName.CLARIFIED_CONSTRAINTS].requirements;
     if (signalNames.has(SignalName.ASKED_CLARIFYING_QUESTIONS))
-      requirementsScore += SIGNAL_SCORING[SignalName.ASKED_CLARIFYING_QUESTIONS].requirements;
+      requirementsScore +=
+        SIGNAL_SCORING[SignalName.ASKED_CLARIFYING_QUESTIONS].requirements;
 
     // Apply red flag penalties
     if (redFlagNames.has(RedFlagName.SKIPPED_REQUIREMENTS))
-      requirementsScore -= RED_FLAG_SCORING[RedFlagName.SKIPPED_REQUIREMENTS].requirements;
+      requirementsScore -=
+        RED_FLAG_SCORING[RedFlagName.SKIPPED_REQUIREMENTS].requirements;
     if (redFlagNames.has(RedFlagName.MISUNDERSTOOD_PROBLEM))
-      requirementsScore -= RED_FLAG_SCORING[RedFlagName.MISUNDERSTOOD_PROBLEM].requirements;
+      requirementsScore -=
+        RED_FLAG_SCORING[RedFlagName.MISUNDERSTOOD_PROBLEM].requirements;
 
     requirementsScore = Math.max(0, Math.min(100, requirementsScore));
 
@@ -124,19 +130,26 @@ export class FeedbackService {
 
     // Apply signal bonuses
     if (signalNames.has(SignalName.STRUCTURED_APPROACH))
-      communicationScore += SIGNAL_SCORING[SignalName.STRUCTURED_APPROACH].communication;
+      communicationScore +=
+        SIGNAL_SCORING[SignalName.STRUCTURED_APPROACH].communication;
     if (signalNames.has(SignalName.DISCUSSED_TRADEOFFS))
-      communicationScore += SIGNAL_SCORING[SignalName.DISCUSSED_TRADEOFFS].communication;
+      communicationScore +=
+        SIGNAL_SCORING[SignalName.DISCUSSED_TRADEOFFS].communication;
     if (signalNames.has(SignalName.ASKED_CLARIFYING_QUESTIONS))
-      communicationScore += SIGNAL_SCORING[SignalName.ASKED_CLARIFYING_QUESTIONS].communication;
+      communicationScore +=
+        SIGNAL_SCORING[SignalName.ASKED_CLARIFYING_QUESTIONS].communication;
 
     // More signals = more communication (up to max bonus)
     const messageCount = signals.length;
-    communicationScore += Math.min(COMMUNICATION_BONUSES.MESSAGE_COUNT_MAX, messageCount);
+    communicationScore += Math.min(
+      COMMUNICATION_BONUSES.MESSAGE_COUNT_MAX,
+      messageCount,
+    );
 
     // Apply red flag penalties
     if (redFlagNames.has(RedFlagName.WENT_TOO_DEEP_EARLY))
-      communicationScore -= RED_FLAG_SCORING[RedFlagName.WENT_TOO_DEEP_EARLY].communication;
+      communicationScore -=
+        RED_FLAG_SCORING[RedFlagName.WENT_TOO_DEEP_EARLY].communication;
 
     communicationScore = Math.max(0, Math.min(100, communicationScore));
 
@@ -145,7 +158,8 @@ export class FeedbackService {
 
     // Apply red flag penalties
     if (redFlagNames.has(RedFlagName.POOR_TIME_MANAGEMENT))
-      timeManagementScore -= RED_FLAG_SCORING[RedFlagName.POOR_TIME_MANAGEMENT].timeManagement;
+      timeManagementScore -=
+        RED_FLAG_SCORING[RedFlagName.POOR_TIME_MANAGEMENT].timeManagement;
 
     // Bonus for completing interview
     if (session.status === 'completed')
@@ -572,8 +586,7 @@ export class FeedbackService {
     }
 
     const reports = await this.db.query.feedbackReports.findMany({
-      where: (reports, { inArray }) =>
-        inArray(reports.sessionId, sessionIds),
+      where: (reports, { inArray }) => inArray(reports.sessionId, sessionIds),
       columns: {
         sessionId: true,
         overallScore: true,
