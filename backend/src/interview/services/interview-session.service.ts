@@ -92,41 +92,53 @@ export class InterviewSessionService {
   }
 
   /**
-   * Get all sessions for a user with interview case details
+   * Get all sessions for a user with interview case details and feedback scores
+   * Uses Drizzle's relational queries to fetch everything in a single query
    */
   async getUserSessionsWithCases(userId: number) {
-    const sessions = await this.getUserSessions(userId);
-
-    // Fetch interview cases for all sessions
-    const caseIds = [...new Set(sessions.map((s) => s.caseId))];
-    const cases = await this.db.query.interviewCases.findMany({
-      where: (interviewCases, { inArray }) =>
-        inArray(interviewCases.id, caseIds),
+    const sessions = await this.db.query.interviewSessions.findMany({
+      where: eq(interviewSessions.userId, userId),
+      with: {
+        interviewCase: {
+          columns: {
+            id: true,
+            title: true,
+            description: true,
+            difficulty: true,
+          },
+        },
+        feedbackReport: {
+          columns: {
+            sessionId: true,
+            overallScore: true,
+            requirementsScore: true,
+            designScore: true,
+            communicationScore: true,
+            timeManagementScore: true,
+            depthScore: true,
+          },
+        },
+      },
+      orderBy: (sessions, { desc }) => [desc(sessions.createdAt)],
     });
 
-    const casesMap = new Map(cases.map((c) => [c.id, c]));
-
-    return sessions.map((session) => {
-      const interviewCase = casesMap.get(session.caseId);
-      return {
-        id: session.id,
-        userId: session.userId,
-        caseId: session.caseId,
-        status: session.status,
-        currentPhase: session.currentPhase,
-        startedAt: session.startedAt,
-        completedAt: session.completedAt,
-        createdAt: session.createdAt,
-        interviewCase: interviewCase
-          ? {
-              id: interviewCase.id,
-              title: interviewCase.title,
-              description: interviewCase.description,
-              difficulty: interviewCase.difficulty,
-            }
-          : null,
-      };
-    });
+    return sessions.map((session) => ({
+      id: session.id,
+      userId: session.userId,
+      caseId: session.caseId,
+      status: session.status,
+      currentPhase: session.currentPhase,
+      startedAt: session.startedAt,
+      completedAt: session.completedAt,
+      createdAt: session.createdAt,
+      interviewCase: session.interviewCase,
+      overallScore: session.feedbackReport?.overallScore ?? null,
+      requirementsScore: session.feedbackReport?.requirementsScore ?? null,
+      designScore: session.feedbackReport?.designScore ?? null,
+      communicationScore: session.feedbackReport?.communicationScore ?? null,
+      timeManagementScore: session.feedbackReport?.timeManagementScore ?? null,
+      depthScore: session.feedbackReport?.depthScore ?? null,
+    }));
   }
 
   /**

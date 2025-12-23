@@ -99,32 +99,14 @@ export class SessionsController {
     type: GetDashboardResponseDto,
   })
   async getDashboard(@CurrentUser() user: User) {
-    // Fetch sessions with interview case details
+    // Fetch sessions with interview case details and feedback scores in a single query
     const sessions = await this.sessionService.getUserSessionsWithCases(user.id);
 
-    // Fetch feedback scores for all sessions
-    const sessionIds = sessions.map((s) => s.id);
-    const feedbackScoresMap = await this.feedbackService.getFeedbackScoresForSessions(sessionIds);
-
-    // Combine sessions with feedback scores
-    const sessionsWithFeedback = sessions.map((session) => {
-      const feedback = feedbackScoresMap.get(session.id);
-      return {
-        ...session,
-        overallScore: feedback?.overallScore ?? null,
-        requirementsScore: feedback?.requirementsScore ?? null,
-        designScore: feedback?.designScore ?? null,
-        communicationScore: feedback?.communicationScore ?? null,
-        timeManagementScore: feedback?.timeManagementScore ?? null,
-        depthScore: feedback?.depthScore ?? null,
-      };
-    });
-
     // Calculate stats
-    const completedSessions = sessionsWithFeedback.filter(
+    const completedSessions = sessions.filter(
       (s) => s.status === 'completed',
     );
-    const sessionsWithScores = sessionsWithFeedback.filter(
+    const sessionsWithScores = sessions.filter(
       (s) => s.overallScore !== null,
     );
     const averageScore =
@@ -138,9 +120,9 @@ export class SessionsController {
     return {
       success: true,
       data: {
-        sessions: sessionsWithFeedback,
+        sessions,
         stats: {
-          totalSessions: sessionsWithFeedback.length,
+          totalSessions: sessions.length,
           completedSessions: completedSessions.length,
           averageScore,
         },
