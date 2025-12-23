@@ -58,13 +58,14 @@ describe('Session Lifecycle (e2e)', () => {
         .expect(201)
         .expect((res) => {
           expect(res.body.success).toBe(true);
-          expect(res.body.data).toHaveProperty('id');
-          expect(res.body.data).toHaveProperty('status', 'not_started');
-          expect(res.body.data).toHaveProperty('currentPhase', 'problem');
-          expect(res.body.data).toHaveProperty('userId', testUserId);
-          expect(res.body.data).toHaveProperty('caseId', testCaseId);
-          expect(res.body.data).toHaveProperty('companyStyle', 'faang');
-          expect(res.body.data).toHaveProperty('level', 'mid');
+          expect(res.body.data).toHaveProperty('session');
+          expect(res.body.data.session).toHaveProperty('id');
+          expect(res.body.data.session).toHaveProperty('status', 'not_started');
+          expect(res.body.data.session).toHaveProperty('currentPhase', 'problem');
+          expect(res.body.data.session).toHaveProperty('userId', testUserId);
+          expect(res.body.data.session).toHaveProperty('caseId', testCaseId);
+          expect(res.body.data.session).toHaveProperty('companyStyle', 'faang');
+          expect(res.body.data.session).toHaveProperty('level', 'mid');
         });
     });
 
@@ -107,9 +108,10 @@ describe('Session Lifecycle (e2e)', () => {
         .expect(201)
         .expect((res) => {
           expect(res.body.success).toBe(true);
-          expect(res.body.data).toHaveProperty('status', 'in_progress');
-          expect(res.body.data).toHaveProperty('startedAt');
-          expect(res.body.data.startedAt).toBeTruthy();
+          expect(res.body.data).toHaveProperty('session');
+          expect(res.body.data.session).toHaveProperty('status', 'in_progress');
+          expect(res.body.data.session).toHaveProperty('startedAt');
+          expect(res.body.data.session.startedAt).toBeTruthy();
         });
     });
 
@@ -166,11 +168,12 @@ describe('Session Lifecycle (e2e)', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
-          expect(res.body.data).toHaveProperty('id', sessionId);
-          expect(res.body.data).toHaveProperty('status', 'in_progress');
-          expect(res.body.data).toHaveProperty('currentPhase');
-          expect(res.body.data).toHaveProperty('case');
-          expect(res.body.data.case).toHaveProperty(
+          expect(res.body.data).toHaveProperty('session');
+          expect(res.body.data.session).toHaveProperty('id', sessionId);
+          expect(res.body.data.session).toHaveProperty('status', 'in_progress');
+          expect(res.body.data.session).toHaveProperty('currentPhase');
+          expect(res.body.data.session).toHaveProperty('case');
+          expect(res.body.data.session.case).toHaveProperty(
             'title',
             'Design a URL Shortener',
           );
@@ -269,13 +272,13 @@ describe('Session Lifecycle (e2e)', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
-          expect(Array.isArray(res.body.data)).toBe(true);
-          expect(res.body.data.length).toBeGreaterThan(0);
+          expect(Array.isArray(res.body.data.phases)).toBe(true);
+          expect(res.body.data.phases.length).toBeGreaterThan(0);
 
-          const firstPhase = res.body.data[0];
+          const firstPhase = res.body.data.phases[0];
           expect(firstPhase).toHaveProperty('phase');
-          expect(firstPhase).toHaveProperty('status');
-          expect(firstPhase).toHaveProperty('order');
+          expect(firstPhase).toHaveProperty('metadata');
+          expect(firstPhase).toHaveProperty('isCurrent');
         });
     });
   });
@@ -297,8 +300,8 @@ describe('Session Lifecycle (e2e)', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
-          expect(Array.isArray(res.body.data)).toBe(true);
-          expect(res.body.data.length).toBe(0);
+          expect(Array.isArray(res.body.data.messages)).toBe(true);
+          expect(res.body.data.messages.length).toBe(0);
         });
     });
 
@@ -309,7 +312,7 @@ describe('Session Lifecycle (e2e)', () => {
 
       await db.insert(transcriptMessages).values({
         sessionId,
-        role: 'user',
+        role: 'candidate',
         text: 'Hello, I have a question about the requirements.',
         phase: 'problem',
         secondsElapsed: 30,
@@ -321,10 +324,10 @@ describe('Session Lifecycle (e2e)', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
-          expect(Array.isArray(res.body.data)).toBe(true);
-          expect(res.body.data.length).toBe(1);
-          expect(res.body.data[0]).toHaveProperty('role', 'user');
-          expect(res.body.data[0]).toHaveProperty(
+          expect(Array.isArray(res.body.data.messages)).toBe(true);
+          expect(res.body.data.messages.length).toBe(1);
+          expect(res.body.data.messages[0]).toHaveProperty('role', 'candidate');
+          expect(res.body.data.messages[0]).toHaveProperty(
             'text',
             'Hello, I have a question about the requirements.',
           );

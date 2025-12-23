@@ -447,6 +447,18 @@ export class SessionsController {
     // Read parameters from cookies
     const text = request.cookies?.text as string;
     const diagramData = request.cookies?.diagramData as string | undefined;
+
+    // Validate required parameter
+    if (!text) {
+      const errorEvent: MessageEvent = {
+        type: 'error',
+        data: JSON.stringify({
+          message: 'text parameter is required',
+        }),
+      };
+      return of(errorEvent);
+    }
+
     // Verify ownership and prepare initial data
     const preparation$ = from(
       (async () => {

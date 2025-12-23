@@ -69,8 +69,8 @@ describe('Conversation & AI Integration (e2e)', () => {
     it('should handle conversation and return AI response', async () => {
       const response = await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
-        .query({ text: 'What are the key functional requirements?' })
         .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', [`text=What are the key functional requirements?`])
         .set('Accept', 'text/event-stream');
 
       expect(response.status).toBe(200);
@@ -83,8 +83,8 @@ describe('Conversation & AI Integration (e2e)', () => {
     it('should save messages to transcript', async () => {
       await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
-        .query({ text: 'I think we need to handle URL shortening and redirection.' })
         .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', [`text=I think we need to handle URL shortening and redirection.`])
         .set('Accept', 'text/event-stream');
 
       // Check transcript
@@ -92,23 +92,27 @@ describe('Conversation & AI Integration (e2e)', () => {
         .get(`/api/sessions/${sessionId}/transcript`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(transcript.body.data.length).toBeGreaterThan(0);
+      expect(transcript.body.data.messages.length).toBeGreaterThan(0);
 
       // Should have user message and assistant response
-      const userMessage = transcript.body.data.find((m: any) => m.role === 'user');
-      const assistantMessage = transcript.body.data.find((m: any) => m.role === 'assistant');
+      const userMessage = transcript.body.data.messages.find((m: any) => m.role === 'candidate');
+      const assistantMessage = transcript.body.data.messages.find((m: any) => m.role === 'interviewer');
 
       expect(userMessage).toBeDefined();
-      expect(userMessage.content).toContain('URL shortening');
+      expect(userMessage.text).toContain('URL shortening');
       expect(assistantMessage).toBeDefined();
     });
 
-    it('should return 400 without text parameter', () => {
-      return request(app.getHttpServer())
+    it('should return 400 without text parameter', async () => {
+      const response = await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
-        .set('Accept', 'text/event-stream')
-        .expect(400);
+        .set('Accept', 'text/event-stream');
+
+      // Should get an error event
+      expect(response.status).toBe(200); // SSE always returns 200
+      expect(response.text).toContain('error');
+      expect(response.text).toContain('text parameter is required');
     });
 
     it('should return 403 for unauthorized session access', async () => {
@@ -140,12 +144,16 @@ describe('Conversation & AI Integration (e2e)', () => {
         })
         .returning();
 
-      return request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get(`/api/sessions/${otherSession.id}/conversation`)
-        .query({ text: 'Hello' })
         .set('Authorization', `Bearer ${authToken}`)
-        .set('Accept', 'text/event-stream')
-        .expect(403);
+        .set('Cookie', [`text=Hello`])
+        .set('Accept', 'text/event-stream');
+
+      // Should get an error event for forbidden access
+      expect(response.status).toBe(200); // SSE always returns 200
+      expect(response.text).toContain('error');
+      expect(response.text).toContain('do not have access');
     });
   });
 
@@ -154,10 +162,8 @@ describe('Conversation & AI Integration (e2e)', () => {
       // Send message with requirement keywords
       await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
-        .query({
-          text: 'Let me clarify the functional requirements: we need URL shortening, redirection, and basic analytics. For non-functional requirements, we need to handle scale of 1 million users and ensure high availability.',
-        })
         .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', [`text=Let me clarify the functional requirements: we need URL shortening, redirection, and basic analytics. For non-functional requirements, we need to handle scale of 1 million users and ensure high availability.`])
         .set('Accept', 'text/event-stream');
 
       // Wait a bit for signal detection to complete
@@ -169,20 +175,18 @@ describe('Conversation & AI Integration (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(signals.body.success).toBe(true);
-      expect(Array.isArray(signals.body.data)).toBe(true);
+      expect(Array.isArray(signals.body.data.signals)).toBe(true);
 
       // Should have detected multiple signals
-      const signalTypes = signals.body.data.map((s: any) => s.signalType);
+      const signalTypes = signals.body.data.signals.map((s: any) => s.signalType);
       expect(signalTypes).toContain('asked_functional_reqs');
     });
 
     it('should detect scale and API signals', async () => {
       await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
-        .query({
-          text: 'We should design a REST API with POST /shorten endpoint. The system needs to handle 10,000 requests per second.',
-        })
         .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', [`text=We should design a REST API with POST /shorten endpoint. The system needs to handle 10,000 requests per second.`])
         .set('Accept', 'text/event-stream');
 
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -191,7 +195,7 @@ describe('Conversation & AI Integration (e2e)', () => {
         .get(`/api/sessions/${sessionId}/signals`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      const signalTypes = signals.body.data.map((s: any) => s.signalType);
+      const signalTypes = signals.body.data.signals.map((s: any) => s.signalType);
       expect(signalTypes).toContain('mentioned_scale');
       expect(signalTypes).toContain('proposed_api');
     });
@@ -199,10 +203,8 @@ describe('Conversation & AI Integration (e2e)', () => {
     it('should detect tradeoffs discussion', async () => {
       await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
-        .query({
-          text: 'There is a trade-off between consistency and availability. We could use SQL vs NoSQL database.',
-        })
         .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', [`text=There is a trade-off between consistency and availability. We could use SQL vs NoSQL database.`])
         .set('Accept', 'text/event-stream');
 
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -211,7 +213,7 @@ describe('Conversation & AI Integration (e2e)', () => {
         .get(`/api/sessions/${sessionId}/signals`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      const signalTypes = signals.body.data.map((s: any) => s.signalType);
+      const signalTypes = signals.body.data.signals.map((s: any) => s.signalType);
       expect(signalTypes).toContain('discussed_tradeoffs');
     });
   });
@@ -229,10 +231,8 @@ describe('Conversation & AI Integration (e2e)', () => {
       // Send message with implementation details
       await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
-        .query({
-          text: 'I would implement this with a class URLShortener that has a function generateShortUrl() using a for loop to iterate through characters.',
-        })
         .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', [`text=I would implement this with a class URLShortener that has a function generateShortUrl() using a for loop to iterate through characters.`])
         .set('Accept', 'text/event-stream');
 
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -243,9 +243,9 @@ describe('Conversation & AI Integration (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(redFlags.body.success).toBe(true);
-      expect(Array.isArray(redFlags.body.data)).toBe(true);
+      expect(Array.isArray(redFlags.body.data.redFlags)).toBe(true);
 
-      const flagTypes = redFlags.body.data.map((f: any) => f.flagType);
+      const flagTypes = redFlags.body.data.redFlags.map((f: any) => f.flagType);
       expect(flagTypes).toContain('went_too_deep_early');
     });
 
@@ -266,8 +266,8 @@ describe('Conversation & AI Integration (e2e)', () => {
       // Trigger red flag check by sending a message
       await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/conversation`)
-        .query({ text: 'Let me continue thinking about this problem...' })
         .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', [`text=Let me continue thinking about this problem...`])
         .set('Accept', 'text/event-stream');
 
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -276,7 +276,7 @@ describe('Conversation & AI Integration (e2e)', () => {
         .get(`/api/sessions/${sessionId}/red-flags`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      const flagTypes = redFlags.body.data.map((f: any) => f.flagType);
+      const flagTypes = redFlags.body.data.redFlags.map((f: any) => f.flagType);
       expect(flagTypes).toContain('poor_time_management');
     });
   });
@@ -289,8 +289,8 @@ describe('Conversation & AI Integration (e2e)', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
-          expect(Array.isArray(res.body.data)).toBe(true);
-          expect(res.body.data.length).toBe(0);
+          expect(Array.isArray(res.body.data.signals)).toBe(true);
+          expect(res.body.data.signals.length).toBe(0);
         });
     });
   });
@@ -303,8 +303,8 @@ describe('Conversation & AI Integration (e2e)', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
-          expect(Array.isArray(res.body.data)).toBe(true);
-          expect(res.body.data.length).toBe(0);
+          expect(Array.isArray(res.body.data.redFlags)).toBe(true);
+          expect(res.body.data.redFlags.length).toBe(0);
         });
     });
   });

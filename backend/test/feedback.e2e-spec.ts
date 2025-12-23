@@ -111,7 +111,7 @@ describe('Feedback Generation (e2e)', () => {
         .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('reportId');
+      expect(response.body.data).toHaveProperty('id');
       expect(response.body.data).toHaveProperty('overallScore');
       expect(response.body.data).toHaveProperty('requirementsScore');
       expect(response.body.data).toHaveProperty('designScore');
@@ -248,15 +248,18 @@ describe('Feedback Generation (e2e)', () => {
       expect(response.body.data.requirementsScore).toBeLessThan(70);
     });
 
-    it('should return 400 for session that is not completed', async () => {
+    it('should auto-complete session and generate feedback for in-progress session', async () => {
       const inProgressSession = await createTestSession(testUserId, testCaseId, {
         status: 'in_progress',
       });
 
-      return request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post(`/api/sessions/${inProgressSession.id}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(400);
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveProperty('overallScore');
     });
 
     it('should return 403 for unauthorized session access', async () => {
@@ -316,16 +319,12 @@ describe('Feedback Generation (e2e)', () => {
       expect(response.body.data).toHaveProperty('communicationScore');
       expect(response.body.data).toHaveProperty('timeManagementScore');
       expect(response.body.data).toHaveProperty('depthScore');
-      expect(response.body.data).toHaveProperty('generatedAt');
-      expect(response.body.data).toHaveProperty('strengths');
-      expect(response.body.data).toHaveProperty('weaknesses');
-      expect(response.body.data).toHaveProperty('suggestions');
+      expect(response.body.data).toHaveProperty('createdAt');
+      expect(response.body.data).toHaveProperty('items');
       expect(response.body.data).toHaveProperty('nextSteps');
 
       // Verify array fields
-      expect(Array.isArray(response.body.data.strengths)).toBe(true);
-      expect(Array.isArray(response.body.data.weaknesses)).toBe(true);
-      expect(Array.isArray(response.body.data.suggestions)).toBe(true);
+      expect(Array.isArray(response.body.data.items)).toBe(true);
       expect(Array.isArray(response.body.data.nextSteps)).toBe(true);
     });
 
@@ -406,20 +405,22 @@ describe('Feedback Generation (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       // Verify feedback has content
-      expect(response.body.data.strengths.length).toBeGreaterThan(0);
+      expect(response.body.data.items.length).toBeGreaterThan(0);
       expect(response.body.data.nextSteps.length).toBeGreaterThan(0);
 
       // Check structure of feedback items
-      if (response.body.data.strengths.length > 0) {
-        const strength = response.body.data.strengths[0];
-        expect(strength).toHaveProperty('category');
-        expect(strength).toHaveProperty('feedback');
+      if (response.body.data.items.length > 0) {
+        const item = response.body.data.items[0];
+        expect(item).toHaveProperty('type');
+        expect(item).toHaveProperty('description');
+        expect(item).toHaveProperty('displayOrder');
+        expect(['strength', 'weakness', 'suggestion']).toContain(item.type);
       }
 
       if (response.body.data.nextSteps.length > 0) {
         const nextStep = response.body.data.nextSteps[0];
-        expect(nextStep).toHaveProperty('step');
-        expect(nextStep).toHaveProperty('priority');
+        expect(nextStep).toHaveProperty('description');
+        expect(nextStep).toHaveProperty('displayOrder');
       }
     });
   });

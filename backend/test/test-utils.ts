@@ -183,9 +183,9 @@ export async function createTestSession(
 export function generateTestToken(userId: number): string {
   const jwt = require('jsonwebtoken');
   const payload = {
-    sub: userId.toString(),
-    workosUserId: `test_user_${userId}`,
-    email: `test${userId}@example.com`,
+    userId: userId,
+    workosUserId: `test_user_123`,
+    email: `test@example.com`,
   };
   return jwt.sign(payload, process.env.JWT_SECRET || 'test-secret', {
     expiresIn: '1h',
