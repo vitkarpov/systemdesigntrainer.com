@@ -1,4 +1,6 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { FeedbackNotFoundException } from '../exceptions/feedback-not-found.exception';
+import { SessionNotFoundException } from '../exceptions/session-not-found.exception';
 import { eq } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../db/db.module';
 import type { db as DbType } from '../../db/db';
@@ -6,11 +8,20 @@ import {
   feedbackReports,
   feedbackItems,
   feedbackNextSteps,
-  interviewSessions,
 } from '../../db/schema';
 import { SignalService, SignalName } from './signal.service';
 import { RedFlagService, RedFlagName } from './red-flag.service';
 import { InterviewSessionService } from './interview-session.service';
+import {
+  BASE_SCORES,
+  SIGNAL_SCORING,
+  RED_FLAG_SCORING,
+  COMMUNICATION_BONUSES,
+  TIME_MANAGEMENT_BONUSES,
+  OVERALL_SCORE_WEIGHTS,
+  SUMMARY_THRESHOLDS,
+  SUGGESTION_THRESHOLDS,
+} from '../config/scoring-rules.config';
 
 export interface FeedbackScores {
   overall: number;
@@ -69,69 +80,107 @@ export class FeedbackService {
     const redFlagNames = new Set(redFlags.map((f) => f.flagName));
 
     // Calculate requirements score (0-100)
-    let requirementsScore = 50; // Base score
+    let requirementsScore = BASE_SCORES.REQUIREMENTS;
+
+    // Apply signal bonuses
     if (signalNames.has(SignalName.ASKED_FUNCTIONAL_REQS))
-      requirementsScore += 15;
+      requirementsScore += SIGNAL_SCORING[SignalName.ASKED_FUNCTIONAL_REQS].requirements;
     if (signalNames.has(SignalName.ASKED_NON_FUNCTIONAL_REQS))
-      requirementsScore += 15;
+      requirementsScore += SIGNAL_SCORING[SignalName.ASKED_NON_FUNCTIONAL_REQS].requirements;
     if (signalNames.has(SignalName.CLARIFIED_CONSTRAINTS))
-      requirementsScore += 10;
+      requirementsScore += SIGNAL_SCORING[SignalName.CLARIFIED_CONSTRAINTS].requirements;
     if (signalNames.has(SignalName.ASKED_CLARIFYING_QUESTIONS))
-      requirementsScore += 10;
+      requirementsScore += SIGNAL_SCORING[SignalName.ASKED_CLARIFYING_QUESTIONS].requirements;
+
+    // Apply red flag penalties
     if (redFlagNames.has(RedFlagName.SKIPPED_REQUIREMENTS))
-      requirementsScore -= 30;
+      requirementsScore -= RED_FLAG_SCORING[RedFlagName.SKIPPED_REQUIREMENTS].requirements;
     if (redFlagNames.has(RedFlagName.MISUNDERSTOOD_PROBLEM))
-      requirementsScore -= 20;
+      requirementsScore -= RED_FLAG_SCORING[RedFlagName.MISUNDERSTOOD_PROBLEM].requirements;
+
     requirementsScore = Math.max(0, Math.min(100, requirementsScore));
 
     // Calculate design score (0-100)
-    let designScore = 50; // Base score
-    if (signalNames.has(SignalName.DREW_HIGH_LEVEL_DIAGRAM)) designScore += 15;
-    if (signalNames.has(SignalName.PROPOSED_API)) designScore += 10;
-    if (signalNames.has(SignalName.DISCUSSED_DATA_MODEL)) designScore += 15;
-    if (signalNames.has(SignalName.ADDRESSED_BOTTLENECKS)) designScore += 10;
-    if (redFlagNames.has(RedFlagName.NO_SCALE_MENTION)) designScore -= 20;
+    let designScore = BASE_SCORES.DESIGN;
+
+    // Apply signal bonuses
+    if (signalNames.has(SignalName.DREW_HIGH_LEVEL_DIAGRAM))
+      designScore += SIGNAL_SCORING[SignalName.DREW_HIGH_LEVEL_DIAGRAM].design;
+    if (signalNames.has(SignalName.PROPOSED_API))
+      designScore += SIGNAL_SCORING[SignalName.PROPOSED_API].design;
+    if (signalNames.has(SignalName.DISCUSSED_DATA_MODEL))
+      designScore += SIGNAL_SCORING[SignalName.DISCUSSED_DATA_MODEL].design;
+    if (signalNames.has(SignalName.ADDRESSED_BOTTLENECKS))
+      designScore += SIGNAL_SCORING[SignalName.ADDRESSED_BOTTLENECKS].design;
+
+    // Apply red flag penalties
+    if (redFlagNames.has(RedFlagName.NO_SCALE_MENTION))
+      designScore -= RED_FLAG_SCORING[RedFlagName.NO_SCALE_MENTION].design;
+
     designScore = Math.max(0, Math.min(100, designScore));
 
     // Calculate communication score (0-100)
-    let communicationScore = 50; // Base score
+    let communicationScore = BASE_SCORES.COMMUNICATION;
+
+    // Apply signal bonuses
     if (signalNames.has(SignalName.STRUCTURED_APPROACH))
-      communicationScore += 15;
+      communicationScore += SIGNAL_SCORING[SignalName.STRUCTURED_APPROACH].communication;
     if (signalNames.has(SignalName.DISCUSSED_TRADEOFFS))
-      communicationScore += 15;
+      communicationScore += SIGNAL_SCORING[SignalName.DISCUSSED_TRADEOFFS].communication;
     if (signalNames.has(SignalName.ASKED_CLARIFYING_QUESTIONS))
-      communicationScore += 10;
-    const messageCount = signals.length; // More signals = more communication
-    communicationScore += Math.min(10, messageCount);
+      communicationScore += SIGNAL_SCORING[SignalName.ASKED_CLARIFYING_QUESTIONS].communication;
+
+    // More signals = more communication (up to max bonus)
+    const messageCount = signals.length;
+    communicationScore += Math.min(COMMUNICATION_BONUSES.MESSAGE_COUNT_MAX, messageCount);
+
+    // Apply red flag penalties
     if (redFlagNames.has(RedFlagName.WENT_TOO_DEEP_EARLY))
-      communicationScore -= 15;
+      communicationScore -= RED_FLAG_SCORING[RedFlagName.WENT_TOO_DEEP_EARLY].communication;
+
     communicationScore = Math.max(0, Math.min(100, communicationScore));
 
     // Calculate time management score (0-100)
-    let timeManagementScore = 70; // Base score (assume decent by default)
+    let timeManagementScore = BASE_SCORES.TIME_MANAGEMENT;
+
+    // Apply red flag penalties
     if (redFlagNames.has(RedFlagName.POOR_TIME_MANAGEMENT))
-      timeManagementScore -= 40;
+      timeManagementScore -= RED_FLAG_SCORING[RedFlagName.POOR_TIME_MANAGEMENT].timeManagement;
+
     // Bonus for completing interview
-    if (session.status === 'completed') timeManagementScore += 10;
+    if (session.status === 'completed')
+      timeManagementScore += TIME_MANAGEMENT_BONUSES.COMPLETED_SESSION;
+
     timeManagementScore = Math.max(0, Math.min(100, timeManagementScore));
 
     // Calculate depth score (0-100)
-    let depthScore = 50; // Base score
-    if (signalNames.has(SignalName.MENTIONED_SCALE)) depthScore += 15;
-    if (signalNames.has(SignalName.DISCUSSED_DATA_MODEL)) depthScore += 10;
-    if (signalNames.has(SignalName.ADDRESSED_BOTTLENECKS)) depthScore += 15;
-    if (signalNames.has(SignalName.DISCUSSED_TRADEOFFS)) depthScore += 10;
-    if (redFlagNames.has(RedFlagName.WENT_TOO_DEEP_EARLY)) depthScore -= 20;
-    if (redFlagNames.has(RedFlagName.NO_SCALE_MENTION)) depthScore -= 15;
+    let depthScore = BASE_SCORES.DEPTH;
+
+    // Apply signal bonuses
+    if (signalNames.has(SignalName.MENTIONED_SCALE))
+      depthScore += SIGNAL_SCORING[SignalName.MENTIONED_SCALE].depth;
+    if (signalNames.has(SignalName.DISCUSSED_DATA_MODEL))
+      depthScore += SIGNAL_SCORING[SignalName.DISCUSSED_DATA_MODEL].depth;
+    if (signalNames.has(SignalName.ADDRESSED_BOTTLENECKS))
+      depthScore += SIGNAL_SCORING[SignalName.ADDRESSED_BOTTLENECKS].depth;
+    if (signalNames.has(SignalName.DISCUSSED_TRADEOFFS))
+      depthScore += SIGNAL_SCORING[SignalName.DISCUSSED_TRADEOFFS].depth;
+
+    // Apply red flag penalties
+    if (redFlagNames.has(RedFlagName.WENT_TOO_DEEP_EARLY))
+      depthScore -= RED_FLAG_SCORING[RedFlagName.WENT_TOO_DEEP_EARLY].depth;
+    if (redFlagNames.has(RedFlagName.NO_SCALE_MENTION))
+      depthScore -= RED_FLAG_SCORING[RedFlagName.NO_SCALE_MENTION].depth;
+
     depthScore = Math.max(0, Math.min(100, depthScore));
 
     // Calculate overall score (weighted average)
     const overallScore = Math.round(
-      requirementsScore * 0.25 +
-        designScore * 0.25 +
-        communicationScore * 0.2 +
-        timeManagementScore * 0.15 +
-        depthScore * 0.15,
+      requirementsScore * OVERALL_SCORE_WEIGHTS.REQUIREMENTS +
+        designScore * OVERALL_SCORE_WEIGHTS.DESIGN +
+        communicationScore * OVERALL_SCORE_WEIGHTS.COMMUNICATION +
+        timeManagementScore * OVERALL_SCORE_WEIGHTS.TIME_MANAGEMENT +
+        depthScore * OVERALL_SCORE_WEIGHTS.DEPTH,
     );
 
     return {
@@ -247,7 +296,7 @@ export class FeedbackService {
     }
 
     // Suggestions
-    if (scores.requirements < 70) {
+    if (scores.requirements < SUGGESTION_THRESHOLDS.REQUIREMENTS) {
       items.push({
         type: 'suggestion',
         description:
@@ -256,7 +305,7 @@ export class FeedbackService {
       });
     }
 
-    if (scores.design < 70) {
+    if (scores.design < SUGGESTION_THRESHOLDS.DESIGN) {
       items.push({
         type: 'suggestion',
         description:
@@ -265,7 +314,7 @@ export class FeedbackService {
       });
     }
 
-    if (scores.communication < 70) {
+    if (scores.communication < SUGGESTION_THRESHOLDS.COMMUNICATION) {
       items.push({
         type: 'suggestion',
         description:
@@ -368,11 +417,11 @@ export class FeedbackService {
   generateSummary(scores: FeedbackScores): string {
     const overall = scores.overall;
 
-    if (overall >= 85) {
+    if (overall >= SUMMARY_THRESHOLDS.EXCELLENT) {
       return "Excellent performance! You demonstrated strong system design skills across all areas. You're well-prepared for real interviews.";
-    } else if (overall >= 70) {
+    } else if (overall >= SUMMARY_THRESHOLDS.GOOD) {
       return "Good performance overall. You covered most key areas but there's room for improvement in a few specific areas highlighted below.";
-    } else if (overall >= 55) {
+    } else if (overall >= SUMMARY_THRESHOLDS.DECENT) {
       return 'Decent attempt with some good moments, but several important areas need work. Focus on the weaknesses identified below.';
     } else {
       return 'This interview showed significant gaps in system design fundamentals. Review the feedback carefully and practice the recommended next steps.';
@@ -383,11 +432,8 @@ export class FeedbackService {
    * Generate complete feedback report for a session
    */
   async generateFeedback(sessionId: number): Promise<GenerateFeedbackResult> {
-    // Check if session exists
+    // Check if session exists (will throw SessionNotFoundException if not found)
     const session = await this.sessionService.getSession(sessionId);
-    if (!session) {
-      throw new NotFoundException(`Session ${sessionId} not found`);
-    }
 
     // Check if feedback already exists
     const existing = await this.db
@@ -487,9 +533,7 @@ export class FeedbackService {
       .limit(1);
 
     if (!report) {
-      throw new NotFoundException(
-        `No feedback report found for session ${sessionId}`,
-      );
+      throw new FeedbackNotFoundException(sessionId);
     }
 
     const items = await this.db

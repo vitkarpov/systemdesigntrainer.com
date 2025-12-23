@@ -86,7 +86,7 @@ describe('Session Lifecycle (e2e)', () => {
         .expect(401);
     });
 
-    it('should return 400 with invalid caseId', () => {
+    it('should return 404 with invalid caseId', () => {
       return request(app.getHttpServer())
         .post('/api/sessions')
         .set('Authorization', `Bearer ${authToken}`)
@@ -95,7 +95,7 @@ describe('Session Lifecycle (e2e)', () => {
           companyStyle: 'faang',
           level: 'mid',
         })
-        .expect(400);
+        .expect(404);
     });
   });
 

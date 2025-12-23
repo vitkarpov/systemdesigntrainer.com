@@ -1,10 +1,5 @@
-import {
-  Injectable,
-  Inject,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { Injectable, Inject } from '@nestjs/common';
+import { eq, sql } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../db/db.module';
 import type { db as DbType } from '../../db/db';
 import { interviewSessions, interviewCases } from '../../db/schema';
@@ -14,6 +9,9 @@ import {
   InterviewPhase,
   SessionState,
 } from '../types/session.types';
+import { InterviewCaseNotFoundException } from '../exceptions/interview-case-not-found.exception';
+import { SessionNotFoundException } from '../exceptions/session-not-found.exception';
+import { InvalidSessionStateException } from '../exceptions/invalid-session-state.exception';
 
 export interface CreateSessionDto {
   userId: number;
@@ -47,7 +45,7 @@ export class InterviewSessionService {
     });
 
     if (!caseExists) {
-      throw new BadRequestException(`Interview case with id ${dto.caseId} not found`);
+      throw new InterviewCaseNotFoundException(dto.caseId, dto.userId);
     }
 
     const [session] = await this.db
@@ -74,7 +72,7 @@ export class InterviewSessionService {
     });
 
     if (!session) {
-      throw new NotFoundException(`Session ${sessionId} not found`);
+      throw new SessionNotFoundException(sessionId);
     }
 
     return this.mapToSessionState(session);
@@ -138,8 +136,11 @@ export class InterviewSessionService {
     const session = await this.getSession(sessionId);
 
     if (session.status !== SessionStatus.NOT_STARTED) {
-      throw new BadRequestException(
-        `Session ${sessionId} is already ${session.status}`,
+      throw new InvalidSessionStateException(
+        sessionId,
+        session.status,
+        'start',
+        [SessionStatus.NOT_STARTED],
       );
     }
 
@@ -147,8 +148,8 @@ export class InterviewSessionService {
       .update(interviewSessions)
       .set({
         status: SessionStatus.IN_PROGRESS,
-        startedAt: new Date(),
-        updatedAt: new Date(),
+        startedAt: sql`NOW()`,
+        updatedAt: sql`NOW()`,
       })
       .where(eq(interviewSessions.id, sessionId))
       .returning();
@@ -163,8 +164,11 @@ export class InterviewSessionService {
     const session = await this.getSession(sessionId);
 
     if (session.status !== SessionStatus.IN_PROGRESS) {
-      throw new BadRequestException(
-        `Cannot advance phase: session is ${session.status}`,
+      throw new InvalidSessionStateException(
+        sessionId,
+        session.status,
+        'advance phase',
+        [SessionStatus.IN_PROGRESS],
       );
     }
 
@@ -190,8 +194,8 @@ export class InterviewSessionService {
       .update(interviewSessions)
       .set({
         currentPhase: nextPhase,
-        phaseStartedAt: new Date(),
-        updatedAt: new Date(),
+        phaseStartedAt: sql`NOW()`,
+        updatedAt: sql`NOW()`,
       })
       .where(eq(interviewSessions.id, sessionId));
 
@@ -210,8 +214,11 @@ export class InterviewSessionService {
     const session = await this.getSession(sessionId);
 
     if (session.status === SessionStatus.COMPLETED) {
-      throw new BadRequestException(
-        `Session ${sessionId} is already completed`,
+      throw new InvalidSessionStateException(
+        sessionId,
+        session.status,
+        'complete',
+        [SessionStatus.IN_PROGRESS],
       );
     }
 
@@ -219,8 +226,8 @@ export class InterviewSessionService {
       .update(interviewSessions)
       .set({
         status: SessionStatus.COMPLETED,
-        completedAt: new Date(),
-        updatedAt: new Date(),
+        completedAt: sql`NOW()`,
+        updatedAt: sql`NOW()`,
       })
       .where(eq(interviewSessions.id, sessionId))
       .returning();

@@ -12,6 +12,16 @@ import { CasesController } from './controllers/cases.controller';
 import { DatabaseModule } from '../db/db.module';
 import { AiModule } from '../ai/ai.module';
 
+/**
+ * InterviewModule depends on AiModule for the following reasons:
+ * - Real-time conversation requires AI response generation (SSE endpoint in SessionsController)
+ * - AI-powered feedback generation uses Claude to analyze interview performance
+ * - Signal detection and red flag analysis benefit from AI-enhanced pattern matching
+ *
+ * Architectural consideration: If AI dependency becomes too invasive or if we need
+ * to support multiple AI providers, consider extracting conversation handling to a
+ * separate ConversationModule that acts as an adapter layer.
+ */
 @Module({
   imports: [DatabaseModule, AiModule],
   controllers: [SessionsController, CasesController],
