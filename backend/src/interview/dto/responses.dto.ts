@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNumber, IsString } from 'class-validator';
 
 export class PhaseMetadataDto {
   @ApiProperty({ description: 'Phase display name' })
@@ -298,7 +299,14 @@ export class AddMessageResponseDto {
 
 export class AiRequestDto {
   @ApiProperty({ description: 'Candidate message text' })
+  @IsString()
   text: string;
+}
+
+export class RetryConversationDto {
+  @ApiProperty({ description: 'ID of the candidate message to retry' })
+  @IsNumber()
+  candidateMessageId: number;
 }
 
 export class FeedbackItemDto {

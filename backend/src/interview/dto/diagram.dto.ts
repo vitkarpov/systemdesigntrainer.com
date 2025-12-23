@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsArray } from 'class-validator';
 
 // Request DTO for saving diagram
 export class SaveDiagramDto {
@@ -7,6 +8,7 @@ export class SaveDiagramDto {
     type: 'array',
     items: { type: 'object' },
   })
+  @IsArray()
   nodes: any[];
 
   @ApiProperty({
@@ -14,6 +16,7 @@ export class SaveDiagramDto {
     type: 'array',
     items: { type: 'object' },
   })
+  @IsArray()
   edges: any[];
 }
 

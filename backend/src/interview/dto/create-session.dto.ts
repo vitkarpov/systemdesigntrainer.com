@@ -1,7 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNumber, IsEnum, IsOptional } from 'class-validator';
 
 export class CreateSessionDto {
   @ApiProperty({ description: 'Interview case ID', example: 1 })
+  @IsNumber()
   caseId: number;
 
   @ApiPropertyOptional({
@@ -10,6 +12,8 @@ export class CreateSessionDto {
     default: 'generic',
     required: false,
   })
+  @IsOptional()
+  @IsEnum(['faang', 'startup', 'generic'])
   companyStyle?: string;
 
   @ApiPropertyOptional({
@@ -18,5 +22,7 @@ export class CreateSessionDto {
     default: 'mid',
     required: false,
   })
+  @IsOptional()
+  @IsEnum(['mid', 'senior', 'staff'])
   level?: string;
 }
