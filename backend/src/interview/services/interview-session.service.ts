@@ -1,9 +1,10 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { eq, sql } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../db/db.module';
 import type { db as DbType } from '../../db/db';
 import { interviewSessions, interviewCases } from '../../db/schema';
 import { PhaseService } from './phase.service';
+import { PhaseGuardService } from './phase-guard.service';
 import {
   SessionStatus,
   InterviewPhase,
@@ -33,6 +34,7 @@ export class InterviewSessionService {
     @Inject(DATABASE_CONNECTION)
     private db: typeof DbType,
     private phaseService: PhaseService,
+    private phaseGuardService: PhaseGuardService,
   ) {}
 
   /**
@@ -185,6 +187,8 @@ export class InterviewSessionService {
     }
 
     const previousPhase = session.currentPhase as InterviewPhase;
+
+    // Check if we can transition to the next phase
     const transitionResult =
       this.phaseService.canTransitionToNext(previousPhase);
 
@@ -198,6 +202,26 @@ export class InterviewSessionService {
         currentPhase: previousPhase,
         isCompleted: true,
       };
+    }
+
+    // Calculate elapsed times
+    const phaseElapsedSeconds = this.getPhaseElapsedSeconds(session);
+    const totalElapsedSeconds = this.getElapsedSeconds(session);
+
+    // Check phase guard requirements
+    const guardResult = await this.phaseGuardService.canAdvancePhase(
+      sessionId,
+      previousPhase,
+      phaseElapsedSeconds,
+      totalElapsedSeconds,
+    );
+
+    if (!guardResult.allowed) {
+      throw new BadRequestException({
+        message: 'Cannot advance to next phase',
+        reason: guardResult.reason,
+        errorCode: 'PHASE_REQUIREMENTS_NOT_MET',
+      });
     }
 
     // Transition to next phase

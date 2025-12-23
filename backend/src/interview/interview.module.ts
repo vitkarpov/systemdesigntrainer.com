@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { InterviewSessionService } from './services/interview-session.service';
 import { InterviewCasesService } from './services/interview-cases.service';
 import { PhaseService } from './services/phase.service';
+import { PhaseGuardService } from './services/phase-guard.service';
 import { TranscriptService } from './services/transcript.service';
 import { SignalService } from './services/signal.service';
 import { RedFlagService } from './services/red-flag.service';
@@ -29,6 +30,7 @@ import { AiModule } from '../ai/ai.module';
     InterviewSessionService,
     InterviewCasesService,
     PhaseService,
+    PhaseGuardService,
     TranscriptService,
     SignalService,
     RedFlagService,
@@ -39,6 +41,7 @@ import { AiModule } from '../ai/ai.module';
     InterviewSessionService,
     InterviewCasesService,
     PhaseService,
+    PhaseGuardService,
     TranscriptService,
     SignalService,
     RedFlagService,

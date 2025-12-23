@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import * as cookieParser from 'cookie-parser';
+import { eq } from 'drizzle-orm';
 import { AppModule } from '../src/app.module';
 import {
   cleanDatabase,
@@ -13,6 +14,7 @@ import { getTestDb } from '../src/db/test-db';
 import { DATABASE_CONNECTION, DATABASE_POOL } from '../src/db/db.module';
 import { AiService } from '../src/ai/services/ai.service';
 import { MockAiService } from './mocks/ai.service.mock';
+import { interviewSessions, interviewSignals } from '../src/db/schema';
 
 describe('Session Lifecycle (e2e)', () => {
   let app: INestApplication;
@@ -234,12 +236,33 @@ describe('Session Lifecycle (e2e)', () => {
         currentPhase: 'problem',
       });
       sessionId = session.id;
+
+      // Update phaseStartedAt to 2 minutes ago to meet minimum time requirement
+      const { db } = getTestDb();
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+      await db
+        .update(interviewSessions)
+        .set({ phaseStartedAt: twoMinutesAgo })
+        .where(eq(interviewSessions.id, sessionId));
+
+      // Add required signal for PROBLEM phase
+      await db.insert(interviewSignals).values({
+        sessionId,
+        signalName: 'asked_clarifying_questions',
+        secondsElapsed: 30,
+        phase: 'problem',
+      });
     });
 
     it('should advance to next phase', () => {
       return request(app.getHttpServer())
         .patch(`/api/sessions/${sessionId}/phase`)
         .set('Authorization', `Bearer ${authToken}`)
+        .expect((res) => {
+          if (res.status !== 200) {
+            console.log('Phase advance error:', JSON.stringify(res.body, null, 2));
+          }
+        })
         .expect(200)
         .expect((res) => {
           expect(res.body.success).toBe(true);
