@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
 import { Card } from '../../components/ui/card';
@@ -28,7 +29,6 @@ export default function Interview() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [inputValue, setInputValue] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [optimisticMessage, setOptimisticMessage] = useState<{ text: string; timestamp: number } | null>(null);
@@ -48,7 +48,8 @@ export default function Interview() {
       setOptimisticMessage(null);
     },
     onError: (error, errorData) => {
-      setError(error.message || 'Failed to send message. Please try again.');
+      const errorMessage = error.message || 'Failed to send message. Please try again.';
+      toast.error(errorMessage);
       setOptimisticMessage(null);
       // Show retry banner if we have error data
       if (errorData?.candidateMessageId) {
@@ -119,7 +120,6 @@ export default function Interview() {
 
     const messageContent = inputValue.trim();
     setInputValue('');
-    setError(null);
 
     // Show optimistic message immediately
     setOptimisticMessage({
@@ -144,9 +144,15 @@ export default function Interview() {
       await queryClient.invalidateQueries({
         queryKey: getSessionsControllerGetSessionQueryKey(sessionIdNum),
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to advance phase:', err);
-      setError('Failed to advance phase');
+      // Extract error message from various possible error structures
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to advance phase. Please try again.';
+
+      toast.error(errorMessage);
     }
   };
 
@@ -158,9 +164,15 @@ export default function Interview() {
         id: sessionIdNum,
       });
       navigate(`/feedback/${sessionId}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to generate feedback:', err);
-      setError('Failed to generate feedback');
+      // Extract error message from various possible error structures
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to end interview. Please try again.';
+
+      toast.error(errorMessage);
     }
   };
 
@@ -181,7 +193,6 @@ export default function Interview() {
 
   const handleRetrySuccess = () => {
     setShowRetryBanner(false);
-    setError(null);
     // Invalidate failed messages query
     queryClient.invalidateQueries({
       queryKey: getSessionsControllerGetFailedMessagesQueryKey(sessionIdNum),
@@ -194,16 +205,6 @@ export default function Interview() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading interview...</div>
-      </div>
-    );
-  }
-
-  if (error && !session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="p-6">
-          <p className="text-destructive">{error}</p>
-        </Card>
       </div>
     );
   }
@@ -335,7 +336,9 @@ export default function Interview() {
                   sessionId={sessionIdNum}
                   candidateMessageId={message.id}
                   onRetrySuccess={handleRetrySuccess}
-                  onRetryError={(error) => setError(error.message)}
+                  onRetryError={(error) => {
+                    toast.error(error.message);
+                  }}
                 />
               )}
             </div>
@@ -371,9 +374,6 @@ export default function Interview() {
 
           {/* Input */}
           <div className="border-t px-6 py-4 bg-card">
-        {error && (
-          <div className="mb-2 text-sm text-destructive">{error}</div>
-        )}
         {session?.data.session.status !== 'in_progress' && (
           <div className="mb-2 text-sm text-muted-foreground">
             This interview has ended. You can review the transcript but cannot send new messages.

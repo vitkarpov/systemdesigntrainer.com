@@ -67,12 +67,7 @@ export async function seedTestData() {
       description:
         'Design a scalable URL shortening service like bit.ly or TinyURL',
       difficulty: 'medium',
-      problemStatement: `Design a URL shortening service that allows users to:
-- Submit long URLs and receive short, unique codes
-- Redirect users from short URLs to the original long URLs
-- Track basic analytics (click counts)
-
-You can discuss any relevant system design aspects as you see fit.`,
+      problemStatement: "",
       estimatedDuration: 45,
       isActive: true,
     })
