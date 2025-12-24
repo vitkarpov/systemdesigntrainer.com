@@ -20,7 +20,7 @@ import {
   getSessionsControllerGetSessionQueryKey,
   getSessionsControllerGetFailedMessagesQueryKey,
 } from '../../api/hooks.gen';
-import { formatElapsedTime } from '../../lib/utils';
+import { formatElapsedTime, parseErrorMessage } from '../../lib/utils';
 import { useConversationStream } from '../../hooks/useConversationStream';
 
 export default function Interview() {
@@ -61,7 +61,7 @@ export default function Interview() {
       setOptimisticMessage(null);
     },
     onError: (error, errorData) => {
-      const errorMessage = error.message || 'Failed to send message. Please try again.';
+      const errorMessage = parseErrorMessage(error, 'Failed to send message. Please try again.');
       toast.error(errorMessage);
       setOptimisticMessage(null);
       // Show retry banner if we have error data
@@ -164,8 +164,8 @@ export default function Interview() {
         queryKey: getSessionsControllerGetSessionQueryKey(sessionIdNum),
       });
     } catch (err: any) {
-      console.error('Failed to advance phase:', err);
-      toast.error(err?.reason || 'Failed to advance phase. Please try again.');
+      const errorMessage = parseErrorMessage(err, 'Failed to advance phase. Please try again.');
+      toast.error(errorMessage);
     }
   };
 
@@ -178,13 +178,7 @@ export default function Interview() {
       });
       navigate(`/feedback/${sessionId}`);
     } catch (err: any) {
-      console.error('Failed to generate feedback:', err);
-      // Extract error message from various possible error structures
-      const errorMessage =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to end interview. Please try again.';
-
+      const errorMessage = parseErrorMessage(err, 'Failed to end interview. Please try again.');
       toast.error(errorMessage);
     }
   };
@@ -215,10 +209,6 @@ export default function Interview() {
   // Determine phase-based display
   const currentPhase = session?.data.session.currentPhase;
   const isHighLevelPhase = currentPhase === 'high_level';
-  const shouldShowDiagram =
-    isHighLevelPhase ||
-    currentPhase === 'deep_dive' ||
-    currentPhase === 'bottlenecks';
 
   const isLoading = isLoadingSession || isLoadingMessages;
 
@@ -278,18 +268,16 @@ export default function Interview() {
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Diagram Canvas (conditional) */}
-        {shouldShowDiagram && (
-          <div className={isHighLevelPhase ? 'w-2/3 border-r border-border' : 'w-1/2 border-r border-border'}>
-            <DiagramCanvas
-              sessionId={sessionIdNum}
-              isReadOnly={!isHighLevelPhase}
-            />
-          </div>
-        )}
+        {/* Diagram Canvas */}
+        <div className={isHighLevelPhase ? 'w-2/3 border-r border-border' : 'w-1/2 border-r border-border'}>
+          <DiagramCanvas
+            sessionId={sessionIdNum}
+            isReadOnly={!isHighLevelPhase}
+          />
+        </div>
 
         {/* Chat Area (Messages + Input) */}
-        <div className={`flex flex-col ${shouldShowDiagram ? (isHighLevelPhase ? 'w-1/3' : 'w-1/2') : 'w-full'}`}>
+        <div className={`flex flex-col ${isHighLevelPhase ? 'w-1/3' : 'w-1/2'}`}>
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         {/* Failed Messages Banner */}
@@ -345,7 +333,8 @@ export default function Interview() {
                   candidateMessageId={message.id}
                   onRetrySuccess={handleRetrySuccess}
                   onRetryError={(error) => {
-                    toast.error(error.message);
+                    const errorMessage = parseErrorMessage(error, 'Failed to retry message. Please try again.');
+                    toast.error(errorMessage);
                   }}
                 />
               )}
