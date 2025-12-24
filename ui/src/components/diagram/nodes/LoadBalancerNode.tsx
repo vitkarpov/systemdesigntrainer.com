@@ -1,10 +1,10 @@
 import { memo } from 'react';
 import { Activity } from 'lucide-react';
 import type { NodeProps } from '@xyflow/react';
-import { BaseNode, type BaseNodeData } from './BaseNode';
+import { BaseNode, type BaseNodeType } from './BaseNode';
 
-export const LoadBalancerNode = memo<NodeProps<BaseNodeData>>((props) => {
-  return <BaseNode {...props} data={{ ...(props.data as BaseNodeData), icon: Activity }} />;
+export const LoadBalancerNode = memo(({ data, ...rest }: NodeProps<BaseNodeType>) => {
+  return <BaseNode {...rest} data={{ ...data, icon: Activity }} />;
 });
 
 LoadBalancerNode.displayName = 'LoadBalancerNode';

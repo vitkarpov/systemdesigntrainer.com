@@ -5,6 +5,7 @@ import { renderWithProviders, setupInterviewMocks, createMockSession, createMock
 import Interview from '../Interview'
 import { useInterviewStore, useStreamingStore, useDiagramStore } from '../../../stores'
 import { toast } from 'sonner'
+import type { UseConversationStreamOptions } from '../../../hooks/useConversationStream'
 
 // Mock API hooks
 vi.mock('../../../api/hooks.gen', () => ({
@@ -41,12 +42,12 @@ vi.mock('react-router-dom', async () => {
 // Mock SSE streaming hook
 const mockSendMessage = vi.fn()
 const mockCancel = vi.fn()
-const mockUseConversationStreamImpl = vi.fn((...args: any[]) => ({
+const mockUseConversationStreamImpl = vi.fn((_config: UseConversationStreamOptions) => ({
   sendMessage: mockSendMessage,
   cancel: mockCancel,
 }))
 vi.mock('../../../hooks/useConversationStream', () => ({
-  useConversationStream: (...args: any[]) => mockUseConversationStreamImpl(...args),
+  useConversationStream: (...args: Parameters<typeof mockUseConversationStreamImpl>) => mockUseConversationStreamImpl(...args),
 }))
 
 // Mock toast
@@ -79,7 +80,7 @@ describe('Interview Page', () => {
     useStreamingStore.getState().clearStream(123)
 
     // Restore the useConversationStream mock implementation after clearAllMocks
-    mockUseConversationStreamImpl.mockImplementation((...args: any[]) => ({
+    mockUseConversationStreamImpl.mockImplementation(() => ({
       sendMessage: mockSendMessage,
       cancel: mockCancel,
     }))
@@ -390,7 +391,7 @@ describe('Interview Page', () => {
       // Set up a mock that captures the hook configuration
       let capturedOnComplete: (() => void) | undefined
 
-      mockUseConversationStreamImpl.mockImplementationOnce((config: any) => {
+      mockUseConversationStreamImpl.mockImplementationOnce((config) => {
         capturedOnComplete = config.onComplete
         return {
           sendMessage: mockSendMessage,
@@ -424,7 +425,7 @@ describe('Interview Page', () => {
       // Set up a mock that captures the hook configuration
       let capturedOnError: ((error: Error) => void) | undefined
 
-      mockUseConversationStreamImpl.mockImplementationOnce((config: any) => {
+      mockUseConversationStreamImpl.mockImplementationOnce((config) => {
         capturedOnError = config.onError
         return {
           sendMessage: mockSendMessage,

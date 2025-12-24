@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { PageHeader } from '../../components/PageHeader';
 import { useSessionsControllerGetFeedback } from '../../api/hooks.gen';
 
 export default function Feedback() {
@@ -56,24 +56,13 @@ export default function Feedback() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
-            </Button>
-            <h1 className="text-3xl font-bold">Interview Feedback</h1>
-          </div>
-          <Button onClick={() => navigate('/')}>New Interview</Button>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <PageHeader
+        title="Interview Feedback"
+        onBack={() => navigate('/')}
+        rightContent={<Button onClick={() => navigate('/')}>New Interview</Button>}
+      />
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
 
         {/* Overall Score */}
         <Card>

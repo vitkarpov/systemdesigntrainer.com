@@ -3,7 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { DiagramCanvas } from '../../components/diagram/DiagramCanvas';
-import { InterviewHeader, MessageList, InterviewInput } from './components';
+import { PageHeader } from '../../components/PageHeader';
+import { PhaseDisplay } from '../../components/PhaseDisplay';
+import { MessageList, InterviewInput } from './components';
+import { Button } from '../../components/ui/button';
+import { formatElapsedTime } from '../../lib/utils';
 import { useInterviewStore, useDiagramStore, useStreamingStore } from '../../stores';
 import {
   useSessionsControllerGetSession,
@@ -199,20 +203,55 @@ export default function Interview() {
     );
   }
 
+  const sessionStatus = (session?.data.session.status as 'in_progress' | 'completed') || 'in_progress';
+
   return (
     <div className="h-screen flex flex-col bg-background">
-      <InterviewHeader
-        sessionTitle={session?.data.session.interviewCase?.title || ''}
-        elapsedTime={elapsedTime}
-        sessionStatus={(session?.data.session.status as 'in_progress' | 'completed') || 'in_progress'}
-        currentPhase={currentPhase || ''}
-        phaseMetadata={session?.data.phaseMetadata}
-        phaseElapsedSeconds={session?.data.phaseElapsedSeconds}
-        isAdvancing={advancePhaseMutation.isPending}
-        isEnding={generateFeedbackMutation.isPending}
+      <PageHeader
+        title={session?.data.session.interviewCase?.title || ''}
         onBack={() => navigate('/')}
-        onAdvancePhase={handleAdvancePhase}
-        onEndInterview={handleEndInterview}
+        rightContent={
+          <>
+            <div className="text-sm text-muted-foreground font-medium">
+              Total: {formatElapsedTime(elapsedTime)}
+            </div>
+            {sessionStatus === 'in_progress' && (
+              <>
+                {currentPhase !== 'wrap_up' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAdvancePhase}
+                    disabled={advancePhaseMutation.isPending}
+                  >
+                    Next Phase
+                  </Button>
+                )}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleEndInterview}
+                  disabled={generateFeedbackMutation.isPending}
+                >
+                  {generateFeedbackMutation.isPending ? 'Ending...' : 'End Interview'}
+                </Button>
+              </>
+            )}
+            {sessionStatus === 'completed' && (
+              <div className="text-sm font-medium text-muted-foreground">
+                Interview Completed
+              </div>
+            )}
+          </>
+        }
+        bottomContent={
+          session?.data.phaseMetadata ? (
+            <PhaseDisplay
+              phaseMetadata={session.data.phaseMetadata}
+              phaseElapsedSeconds={session.data.phaseElapsedSeconds ?? 0}
+            />
+          ) : null
+        }
       />
 
       {/* Main Content */}

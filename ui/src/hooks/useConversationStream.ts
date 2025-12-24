@@ -6,7 +6,7 @@ import {
   getSessionsControllerGetTranscriptQueryKey,
 } from "../api/hooks.gen";
 
-interface UseConversationStreamOptions {
+export interface UseConversationStreamOptions {
   sessionId: number;
   onStart?: (data: { candidateMessageId: number }) => void;
   onComplete?: () => void;

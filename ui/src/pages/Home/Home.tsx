@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { PageHeader } from '../../components/PageHeader';
 import { UserMenu } from '../../components/UserMenu';
 import {
   useCasesControllerGetAllCases,
@@ -61,12 +62,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center justify-between px-4">
-          <h1 className="text-lg font-semibold">SD Interview Simulator</h1>
-          <UserMenu />
-        </div>
-      </header>
+      <PageHeader
+        title="SD Interview Simulator"
+        onBack={() => navigate('/')}
+        rightContent={<UserMenu />}
+      />
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-3.5rem)]">
         <Card className="w-full max-w-2xl">
           <CardHeader className="text-center">

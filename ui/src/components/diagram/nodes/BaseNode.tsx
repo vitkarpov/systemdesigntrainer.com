@@ -1,14 +1,16 @@
 import { memo } from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position, type NodeProps, type Node } from '@xyflow/react';
 import type { LucideIcon } from 'lucide-react';
 
-export interface BaseNodeData {
+export type BaseNodeData = {
   label: string;
   icon?: LucideIcon;
-}
+} & Record<string, unknown>;
 
-export const BaseNode = memo<NodeProps<BaseNodeData>>(({ data, isConnectable, selected }) => {
-  const Icon = data?.icon;
+export type BaseNodeType = Node<BaseNodeData>;
+
+export const BaseNode = memo(({ data, isConnectable, selected }: NodeProps<BaseNodeType>) => {
+  const Icon = data.icon;
 
   return (
     <div
@@ -28,7 +30,7 @@ export const BaseNode = memo<NodeProps<BaseNodeData>>(({ data, isConnectable, se
       <div className="flex flex-col items-center justify-center h-full gap-2">
         {Icon && <Icon className="w-7 h-7 text-primary" />}
         <div className="text-xs font-medium text-center text-foreground leading-tight">
-          {data?.label}
+          {data.label}
         </div>
       </div>
       <Handle

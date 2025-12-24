@@ -1,10 +1,10 @@
 import { memo } from 'react';
 import { Box } from 'lucide-react';
 import type { NodeProps } from '@xyflow/react';
-import { BaseNode, type BaseNodeData } from './BaseNode';
+import { BaseNode, type BaseNodeType } from './BaseNode';
 
-export const QueueNode = memo<NodeProps<BaseNodeData>>((props) => {
-  return <BaseNode {...props} data={{ ...(props.data as BaseNodeData), icon: Box }} />;
+export const QueueNode = memo(({ data, ...rest }: NodeProps<BaseNodeType>) => {
+  return <BaseNode {...rest} data={{ ...data, icon: Box }} />;
 });
 
 QueueNode.displayName = 'QueueNode';

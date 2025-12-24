@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSessionsControllerSaveDiagram } from "../api/hooks.gen";
+import type { Node, Edge } from "@xyflow/react";
+import {
+  useSessionsControllerSaveDiagram,
+  type NodeDto,
+  type EdgeDto,
+} from "../api/hooks.gen";
 import { useDiagramStore } from "../stores";
 
 interface UseDiagramAutoSaveOptions {

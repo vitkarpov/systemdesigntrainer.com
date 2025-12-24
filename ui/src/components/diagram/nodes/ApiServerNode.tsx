@@ -1,10 +1,10 @@
 import { memo } from 'react';
 import { Server } from 'lucide-react';
 import type { NodeProps } from '@xyflow/react';
-import { BaseNode, type BaseNodeData } from './BaseNode';
+import { BaseNode, type BaseNodeType } from './BaseNode';
 
-export const ApiServerNode = memo<NodeProps<BaseNodeData>>((props) => {
-  return <BaseNode {...props} data={{ ...(props.data as BaseNodeData), icon: Server }} />;
+export const ApiServerNode = memo(({ data, ...rest }: NodeProps<BaseNodeType>) => {
+  return <BaseNode {...rest} data={{ ...data, icon: Server }} />;
 });
 
 ApiServerNode.displayName = 'ApiServerNode';
