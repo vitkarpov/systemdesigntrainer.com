@@ -85,8 +85,7 @@ export default function Interview() {
   const failedData = failedMessagesData as any;
   const retryableCount = failedData?.data?.retryableCount || 0;
   const failedMessageIds = new Set([
-    ...(failedData?.data?.failedMessages || []).map((m: any) => m.id),
-    ...(failedData?.data?.pendingMessages || []).map((m: any) => m.id),
+    ...(failedData?.data?.failedMessages || []).map((m: any) => m.id)
   ]);
 
   const advancePhaseMutation = useSessionsControllerAdvancePhase();
@@ -297,9 +296,8 @@ export default function Interview() {
         )}
         {messages.map((message) => {
           const isFailed = failedMessageIds.has(message.id);
-          // Get the actual failed/pending message data to access status and partialText
-          const failedMessage = [...(failedData?.data?.failedMessages || []), ...(failedData?.data?.pendingMessages || [])].find((m: any) => m.id === message.id);
-          const messageStatus = failedMessage?.status || 'completed';
+          // Get the actual failed message data to access partialText
+          const failedMessage = (failedData?.data?.failedMessages || []).find((m: any) => m.id === message.id);
 
           return (
             <div
@@ -322,11 +320,8 @@ export default function Interview() {
                     {message.role === 'candidate' ? 'You' : 'Interviewer'} •{' '}
                     {formatElapsedTime(message.secondsElapsed)}
                   </span>
-                  {isFailed && messageStatus === 'failed' && (
+                  {isFailed && (
                     <Badge variant="destructive" className="text-xs">Failed</Badge>
-                  )}
-                  {isFailed && messageStatus === 'pending' && (
-                    <Badge variant="outline" className="text-xs">Pending</Badge>
                   )}
                 </div>
                 <div className="whitespace-pre-wrap">{message.text}</div>
