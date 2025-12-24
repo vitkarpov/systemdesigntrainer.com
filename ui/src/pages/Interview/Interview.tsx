@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
-import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { PhaseDisplay } from '../../components/PhaseDisplay';
 import { DiagramCanvas } from '../../components/diagram/DiagramCanvas';
@@ -146,13 +145,7 @@ export default function Interview() {
       });
     } catch (err: any) {
       console.error('Failed to advance phase:', err);
-      // Extract error message from various possible error structures
-      const errorMessage =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to advance phase. Please try again.';
-
-      toast.error(errorMessage);
+      toast.error(err?.reason || 'Failed to advance phase. Please try again.');
     }
   };
 
@@ -199,6 +192,20 @@ export default function Interview() {
     });
   };
 
+  // Determine phase-based display
+  const currentPhase = session?.data.session.currentPhase;
+  const isHighLevelPhase = currentPhase === 'high_level';
+  const shouldShowDiagram =
+    isHighLevelPhase ||
+    currentPhase === 'deep_dive' ||
+    currentPhase === 'bottlenecks';
+
+  const handleDiagramChange = useCallback((nodes: Node[], edges: Edge[]) => {
+    if (isHighLevelPhase) {
+      setDiagramData({ nodes, edges });
+    }
+  }, [isHighLevelPhase]);
+
   const isLoading = isLoadingSession || isLoadingMessages;
 
   if (isLoading) {
@@ -208,14 +215,6 @@ export default function Interview() {
       </div>
     );
   }
-
-  // Determine phase-based display
-  const currentPhase = session?.data.session.currentPhase;
-  const isHighLevelPhase = currentPhase === 'high_level';
-  const shouldShowDiagram =
-    isHighLevelPhase ||
-    currentPhase === 'deep_dive' ||
-    currentPhase === 'bottlenecks';
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -271,11 +270,7 @@ export default function Interview() {
             <DiagramCanvas
               sessionId={sessionIdNum}
               isReadOnly={!isHighLevelPhase}
-              onDiagramChange={(nodes, edges) => {
-                if (isHighLevelPhase) {
-                  setDiagramData({ nodes, edges });
-                }
-              }}
+              onDiagramChange={handleDiagramChange}
             />
           </div>
         )}

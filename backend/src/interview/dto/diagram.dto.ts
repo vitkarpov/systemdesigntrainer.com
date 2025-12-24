@@ -6,6 +6,7 @@ import {
   IsString,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -16,6 +17,17 @@ export class PositionDto {
 
   @IsNumber()
   y: number;
+}
+
+// Measured DTO (optional React Flow property)
+export class MeasuredDto {
+  @IsOptional()
+  @IsNumber()
+  width?: number;
+
+  @IsOptional()
+  @IsNumber()
+  height?: number;
 }
 
 // Node data DTO
@@ -42,6 +54,25 @@ export class NodeDto {
   @ValidateNested()
   @Type(() => NodeDataDto)
   data: NodeDataDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MeasuredDto)
+  measured?: MeasuredDto;
+
+  @IsOptional()
+  @IsNumber()
+  width?: number;
+
+  @IsOptional()
+  @IsNumber()
+  height?: number;
+
+  @IsOptional()
+  selected?: boolean;
+
+  @IsOptional()
+  dragging?: boolean;
 }
 
 // Edge DTO for validation
@@ -57,6 +88,27 @@ export class EdgeDto {
   @IsString()
   @IsNotEmpty()
   target: string;
+
+  @IsOptional()
+  sourceHandle?: string;
+
+  @IsOptional()
+  targetHandle?: string;
+
+  @IsOptional()
+  selected?: boolean;
+
+  @IsOptional()
+  type?: string;
+
+  @IsOptional()
+  animated?: boolean;
+
+  @IsOptional()
+  style?: any;
+
+  @IsOptional()
+  markerEnd?: any;
 }
 
 // Request DTO for saving diagram

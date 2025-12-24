@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  useSessionsControllerSaveDiagram,
-  getSessionsControllerGetDiagramQueryKey,
-} from "../api/hooks.gen";
+import { useSessionsControllerSaveDiagram } from "../api/hooks.gen";
 import type { Node, Edge } from "@xyflow/react";
 
 interface UseDiagramAutoSaveOptions {
@@ -26,8 +23,18 @@ export function useDiagramAutoSave({
   const saveMutation = useSessionsControllerSaveDiagram();
   const queryClient = useQueryClient();
 
+  // Keep refs for stable access in timeout
+  const saveMutationRef = useRef(saveMutation);
+  const queryClientRef = useRef(queryClient);
+
+  // Update refs when they change
   useEffect(() => {
-    if (!enabled || (nodes.length === 0 && edges.length === 0)) {
+    saveMutationRef.current = saveMutation;
+    queryClientRef.current = queryClient;
+  }, [saveMutation, queryClient]);
+
+  useEffect(() => {
+    if (!enabled) {
       return;
     }
 
@@ -43,16 +50,14 @@ export function useDiagramAutoSave({
     timeoutRef.current = setTimeout(async () => {
       setSaveStatus("saving");
       try {
-        await saveMutation.mutateAsync({
+        await saveMutationRef.current.mutateAsync({
           id: sessionId,
           data: { nodes, edges },
         });
         setSaveStatus("saved");
 
-        // Invalidate diagram query to keep cache fresh
-        queryClient.invalidateQueries({
-          queryKey: getSessionsControllerGetDiagramQueryKey(sessionId),
-        });
+        // Don't invalidate queries - it causes a refetch loop
+        // The saved data is already in the mutation response
       } catch (error) {
         console.error("Failed to save diagram:", error);
         setSaveStatus("unsaved");
@@ -64,7 +69,9 @@ export function useDiagramAutoSave({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [nodes, edges, sessionId, enabled, saveMutation, queryClient]);
+    // Only depend on nodes, edges, sessionId, and enabled
+    // nodes and edges are new references from react-flow when they change
+  }, [nodes, edges, sessionId, enabled]);
 
   return { saveStatus };
 }
