@@ -24,7 +24,13 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+System Design Interview Simulator API - Backend service built with [Nest](https://github.com/nestjs/nest) framework.
+
+## Prerequisites
+
+- Node.js 20+
+- PostgreSQL 14+
+- npm or Docker
 
 ## Installation
 
@@ -32,17 +38,128 @@
 $ npm install
 ```
 
-## Running the app
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
 
 ```bash
-# development
-$ npm run start
+cp .env.example .env
+```
 
+Required environment variables:
+- `DATABASE_URL` - PostgreSQL connection string
+- `ANTHROPIC_API_KEY` - Anthropic API key for AI features
+- `WORKOS_CLIENT_ID`, `WORKOS_API_KEY` - WorkOS authentication
+- `JWT_SECRET` - JWT secret key (minimum 32 characters)
+
+## Running the app
+
+### Development
+
+```bash
 # watch mode
 $ npm run start:dev
 
-# production mode
+# debug mode
+$ npm run start:debug
+```
+
+### Production
+
+```bash
+# build
+$ npm run build
+
+# run production
 $ npm run start:prod
+```
+
+## Docker
+
+### Build the Docker image
+
+```bash
+docker build -t sd-sim-backend .
+```
+
+### Run the container
+
+```bash
+docker run -d \
+  --name sd-sim-backend \
+  -p 3000:3000 \
+  --env-file .env \
+  sd-sim-backend
+```
+
+Or with environment variables:
+
+```bash
+docker run -d \
+  --name sd-sim-backend \
+  -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e DATABASE_URL=postgresql://user:password@host:5432/dbname \
+  -e ANTHROPIC_API_KEY=your_key \
+  -e WORKOS_CLIENT_ID=your_client_id \
+  -e WORKOS_API_KEY=your_api_key \
+  -e WORKOS_REDIRECT_URI=https://yourdomain.com/api/auth/callback \
+  -e JWT_SECRET=your_secret \
+  sd-sim-backend
+```
+
+### Docker Compose (recommended)
+
+A `docker-compose.yml` file is available at the project root that includes the backend, PostgreSQL, and pgAdmin services.
+
+From the project root directory:
+
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f backend
+
+# Stop all services
+docker-compose down
+
+# Rebuild and restart
+docker-compose up -d --build
+```
+
+The compose file uses environment variables from your `.env` file. Make sure all required variables are set before starting.
+
+### Container Management
+
+```bash
+# View logs
+docker logs sd-sim-backend
+
+# Stop container
+docker stop sd-sim-backend
+
+# Remove container
+docker rm sd-sim-backend
+
+# Remove image
+docker rmi sd-sim-backend
+```
+
+## Database
+
+```bash
+# Generate migrations
+$ npm run db:generate
+
+# Push schema to database
+$ npm run db:push
+
+# Seed database
+$ npm run db:seed
+
+# Open Drizzle Studio
+$ npm run db:studio
 ```
 
 ## Test
