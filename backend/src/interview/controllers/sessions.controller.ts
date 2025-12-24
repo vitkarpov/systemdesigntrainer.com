@@ -53,6 +53,7 @@ import {
   GenerateFeedbackResponseDto,
   GetFeedbackResponseDto,
   GetDashboardResponseDto,
+  GetFailedMessagesResponseDto,
 } from '../dto/responses.dto';
 import {
   SaveDiagramDto,
@@ -770,24 +771,22 @@ export class SessionsController {
   @ApiResponse({
     status: 200,
     description: 'Failed messages retrieved',
+    type: GetFailedMessagesResponseDto,
   })
   async getFailedMessages(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) sessionId: number,
-  ) {
+  ): Promise<GetFailedMessagesResponseDto> {
     await this.verifySessionOwnership(sessionId, user.id);
 
     const failedMessages =
       await this.conversationSaga.getFailedMessages(sessionId);
-    const pendingMessages =
-      await this.conversationSaga.getPendingMessages(sessionId);
 
     return {
       success: true,
       data: {
         failedMessages,
-        pendingMessages,
-        retryableCount: failedMessages.length + pendingMessages.length,
+        retryableCount: failedMessages.length,
       },
     };
   }

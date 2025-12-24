@@ -81,12 +81,8 @@ export default function Interview() {
   });
 
   const messages = transcriptData?.data.messages || [];
-  // Type assertion needed because API types not yet regenerated
-  const failedData = failedMessagesData as any;
-  const retryableCount = failedData?.data?.retryableCount || 0;
-  const failedMessageIds = new Set([
-    ...(failedData?.data?.failedMessages || []).map((m: any) => m.id)
-  ]);
+  const retryableCount = failedMessagesData?.data?.retryableCount || 0;
+  const failedMessageIds = new Set((failedMessagesData?.data?.failedMessages || []).map((m) => m.id));
 
   const advancePhaseMutation = useSessionsControllerAdvancePhase();
   const generateFeedbackMutation = useSessionsControllerGenerateFeedback();
@@ -296,8 +292,7 @@ export default function Interview() {
         )}
         {messages.map((message) => {
           const isFailed = failedMessageIds.has(message.id);
-          // Get the actual failed message data to access partialText
-          const failedMessage = (failedData?.data?.failedMessages || []).find((m: any) => m.id === message.id);
+          const failedMessage = (failedMessagesData?.data?.failedMessages || []).find((m) => m.id === message.id);
 
           return (
             <div

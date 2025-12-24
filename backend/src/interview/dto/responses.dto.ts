@@ -538,3 +538,43 @@ export class GetDashboardResponseDto {
     stats: DashboardStatsDto;
   };
 }
+
+export class FailedMessageDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  sessionId: number;
+
+  @ApiProperty({ enum: ['candidate'] })
+  role: string;
+
+  @ApiProperty()
+  text: string;
+
+  @ApiProperty({ enum: ['failed'] })
+  status: string;
+
+  @ApiProperty({ nullable: true, required: false })
+  partialText?: string | null;
+
+  @ApiProperty()
+  phase: string;
+
+  @ApiProperty()
+  secondsElapsed: number;
+
+  @ApiProperty()
+  createdAt: Date;
+}
+
+export class GetFailedMessagesResponseDto {
+  @ApiProperty({ default: true })
+  success: boolean;
+
+  @ApiProperty()
+  data: {
+    failedMessages: FailedMessageDto[];
+    retryableCount: number;
+  };
+}
