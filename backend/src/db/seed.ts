@@ -40,9 +40,9 @@ async function seed() {
   const [testUser] = await db
     .insert(users)
     .values({
-      workosUserId: 'test_user_dev',
-      email: 'test@example.com',
-      name: 'Test User',
+      workosUserId: 'user_01KCSHQ4NNV3YBRK3KX53N5QQY',
+      email: 'viktor@usesky.ai',
+      name: 'Viktor Kovacevic',
       avatarUrl: null,
       subscriptionStatus: 'free',
       interviewsCompleted: 0,

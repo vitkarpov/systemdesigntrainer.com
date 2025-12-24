@@ -28,7 +28,7 @@
     "db:test:generate": "NODE_ENV=test DB_NAME=sd_sim_test drizzle-kit generate",
     "db:test:push": "NODE_ENV=test DB_NAME=sd_sim_test drizzle-kit push",
     "db:test:studio": "NODE_ENV=test DB_NAME=sd_sim_test drizzle-kit studio",
-    "db:test:seed": "NODE_ENV=test ts-node src/db/seed.ts",
+    "db:test:seed": "NODE_ENV=test DB_NAME=sd_sim_test ts-node src/db/seed.ts",
     "db:test:setup": "npm run db:test:push && npm run db:test:seed",
     "openapi:generate": "GENERATE_OPENAPI=true nest start"
   },
