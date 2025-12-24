@@ -208,6 +208,7 @@ export default function Interview() {
     <div className="h-screen flex flex-col bg-background">
       <PageHeader
         title={session?.data.session.interviewCase?.title || ''}
+        backLabel="Back to Dashboard"
         onBack={() => navigate('/')}
         rightContent={
           <>
