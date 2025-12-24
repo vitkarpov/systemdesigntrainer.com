@@ -2,7 +2,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Badge } from '../../components/ui/badge';
 import { useSessionsControllerGetFeedback } from '../../api/hooks.gen';
 
 export default function Feedback() {
@@ -93,11 +92,6 @@ export default function Feedback() {
                 <div className="text-muted-foreground">out of 100</div>
               </div>
             </div>
-            {feedback.overallSummary && (
-              <p className="mt-4 text-sm text-muted-foreground">
-                {feedback.overallSummary}
-              </p>
-            )}
           </CardContent>
         </Card>
 
@@ -136,7 +130,7 @@ export default function Feedback() {
         </Card>
 
         {/* Strengths */}
-        {feedback.items && feedback.items.filter(item => item.type === 'strength').length > 0 && (
+        {feedback.items && feedback.items.filter(item => item.itemType === 'strength').length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -145,7 +139,7 @@ export default function Feedback() {
             </CardHeader>
             <CardContent className="space-y-3">
               {feedback.items
-                .filter(item => item.type === 'strength')
+                .filter(item => item.itemType === 'strength')
                 .map((item, idx) => (
                   <div key={idx} className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
                     <p className="text-sm text-muted-foreground">{item.description}</p>
@@ -156,7 +150,7 @@ export default function Feedback() {
         )}
 
         {/* Weaknesses */}
-        {feedback.items && feedback.items.filter(item => item.type === 'weakness').length > 0 && (
+        {feedback.items && feedback.items.filter(item => item.itemType === 'weakness').length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -165,7 +159,7 @@ export default function Feedback() {
             </CardHeader>
             <CardContent className="space-y-3">
               {feedback.items
-                .filter(item => item.type === 'weakness')
+                .filter(item => item.itemType === 'weakness')
                 .map((item, idx) => (
                   <div key={idx} className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg">
                     <p className="text-sm text-muted-foreground">{item.description}</p>
@@ -176,7 +170,7 @@ export default function Feedback() {
         )}
 
         {/* Suggestions */}
-        {feedback.items && feedback.items.filter(item => item.type === 'suggestion').length > 0 && (
+        {feedback.items && feedback.items.filter(item => item.itemType === 'suggestion').length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -185,7 +179,7 @@ export default function Feedback() {
             </CardHeader>
             <CardContent className="space-y-3">
               {feedback.items
-                .filter(item => item.type === 'suggestion')
+                .filter(item => item.itemType === 'suggestion')
                 .map((item, idx) => (
                   <div key={idx} className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
                     <p className="text-sm text-muted-foreground">{item.description}</p>
@@ -205,7 +199,7 @@ export default function Feedback() {
             <CardContent className="space-y-3">
               {feedback.nextSteps.map((step, idx) => (
                 <div key={idx} className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">{step.description}</p>
+                  <p className="text-sm text-muted-foreground">{step.stepText}</p>
                 </div>
               ))}
             </CardContent>
