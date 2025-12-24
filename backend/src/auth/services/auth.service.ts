@@ -27,6 +27,12 @@ export class AuthService {
       throw new Error('JWT_SECRET is not set');
     }
 
+    if (this.jwtSecret.length < 32) {
+      throw new Error(
+        'JWT_SECRET must be at least 32 characters. Generate one with: openssl rand -base64 32',
+      );
+    }
+
     if (!this.redirectUri) {
       throw new Error('WORKOS_REDIRECT_URI is not set');
     }
