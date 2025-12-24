@@ -19,7 +19,7 @@ export function PhaseDisplay({ phaseMetadata, phaseElapsedSeconds }: PhaseDispla
   const isOverTime = phaseElapsedMinutes >= phaseMetadata.recommendedMinutes;
 
   return (
-    <div className="bg-muted/50 rounded-lg px-4 py-3 flex-1">
+    <div className="px-4 flex-1">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <Badge variant="secondary" className="text-xs font-medium shrink-0">

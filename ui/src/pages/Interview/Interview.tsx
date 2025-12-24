@@ -205,7 +205,7 @@ export default function Interview() {
   const sessionStatus = (session?.data.session.status as 'in_progress' | 'completed') || 'in_progress';
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col">
       <PageHeader
         title={session?.data.session.interviewCase?.title || ''}
         backLabel="Back to Dashboard"
