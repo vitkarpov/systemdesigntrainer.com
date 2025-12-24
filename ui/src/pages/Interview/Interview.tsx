@@ -22,21 +22,17 @@ export default function Interview() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Interview store
   const inputValue = useInterviewStore((state) => state.inputValue);
   const setInputValue = useInterviewStore((state) => state.setInputValue);
   const clearInput = useInterviewStore((state) => state.clearInput);
   const optimisticMessage = useInterviewStore((state) => state.optimisticMessage);
   const setOptimisticMessage = useInterviewStore((state) => state.setOptimisticMessage);
-  const showRetryBanner = useInterviewStore((state) => state.showRetryBanner);
-  const setShowRetryBanner = useInterviewStore((state) => state.setShowRetryBanner);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
 
   const sessionIdNum = Number(sessionId);
 
-  // Streaming store
   const streamingText = useStreamingStore(
     (state) => state.streams[sessionIdNum]?.streamingText || ''
   );
@@ -44,24 +40,15 @@ export default function Interview() {
     (state) => state.streams[sessionIdNum]?.isStreaming ?? false
   );
 
-  // Streaming hook
   const { sendMessage, cancel } = useConversationStream({
     sessionId: sessionIdNum,
-    onStart: () => {
-      // Keep the optimistic message visible until complete
-    },
     onComplete: () => {
-      // Clear optimistic message once real data is fetched
       setOptimisticMessage(null);
     },
-    onError: (error, errorData) => {
+    onError: (error) => {
       const errorMessage = parseErrorMessage(error, 'Failed to send message. Please try again.');
       toast.error(errorMessage);
       setOptimisticMessage(null);
-      // Show retry banner if we have error data
-      if (errorData?.candidateMessageId) {
-        setShowRetryBanner(true);
-      }
     },
   });
 
@@ -69,7 +56,6 @@ export default function Interview() {
     query: {
       enabled: !!sessionId && !isNaN(sessionIdNum),
       refetchInterval: (query) => {
-        // Stop polling if session is not in progress
         return query.state.data?.data?.session?.status === 'in_progress' ? 1000 : false;
       },
     },
@@ -84,7 +70,7 @@ export default function Interview() {
   const { data: failedMessagesData } = useSessionsControllerGetFailedMessages(sessionIdNum, {
     query: {
       enabled: !!sessionId && !isNaN(sessionIdNum),
-      refetchInterval: 5000, // Poll every 5 seconds for failed messages
+      refetchInterval: 5000,
     },
   });
 
@@ -193,8 +179,7 @@ export default function Interview() {
   };
 
   const handleRetrySuccess = () => {
-    setShowRetryBanner(false);
-    // Invalidate failed messages query
+    // Invalidate failed messages query to refresh the count
     queryClient.invalidateQueries({
       queryKey: getSessionsControllerGetFailedMessagesQueryKey(sessionIdNum),
     });
@@ -253,7 +238,6 @@ export default function Interview() {
             isStreaming={isStreaming}
             sessionId={sessionIdNum}
             elapsedTime={elapsedTime}
-            showRetryBanner={showRetryBanner}
             onViewRetry={handleViewRetry}
             onRetrySuccess={handleRetrySuccess}
             onRetryError={(error) => {

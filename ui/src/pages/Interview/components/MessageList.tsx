@@ -26,7 +26,6 @@ interface MessageListProps {
   isStreaming: boolean;
   sessionId: number;
   elapsedTime: number;
-  showRetryBanner: boolean;
   onViewRetry: () => void;
   onRetrySuccess: () => void;
   onRetryError: (error: Error) => void;
@@ -44,7 +43,6 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
       isStreaming,
       sessionId,
       elapsedTime,
-      showRetryBanner,
       onViewRetry,
       onRetrySuccess,
       onRetryError,
@@ -54,7 +52,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
     return (
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         {/* Failed Messages Banner */}
-        {(retryableCount > 0 || showRetryBanner) && (
+        {retryableCount > 0 && (
           <FailedMessageBanner
             retryableCount={retryableCount}
             onViewRetry={onViewRetry}

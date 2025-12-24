@@ -2,6 +2,7 @@ import { render, type RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import type { ReactElement, ReactNode } from 'react'
+import { vi } from 'vitest'
 
 // Create a test query client with no retries
 export function createTestQueryClient() {
@@ -107,6 +108,56 @@ export function createMockTranscript(messages: any[] = []) {
   return {
     data: {
       messages,
+    },
+  }
+}
+
+// Interview test helpers
+export function createMockStreamingState(sessionId: number, overrides: any = {}) {
+  return {
+    [sessionId]: {
+      streamingText: '',
+      isStreaming: false,
+      abortController: null,
+      ...overrides,
+    },
+  }
+}
+
+export function setupInterviewMocks() {
+  const mockNavigate = vi.fn()
+  const mockSendMessage = vi.fn()
+  const mockCancel = vi.fn()
+  const mockAdvancePhaseMutate = vi.fn().mockResolvedValue({})
+  const mockGenerateFeedbackMutate = vi.fn().mockResolvedValue({})
+
+  return {
+    mockNavigate,
+    mockSendMessage,
+    mockCancel,
+    mockAdvancePhaseMutate,
+    mockGenerateFeedbackMutate,
+    mockSessionQuery: {
+      data: createMockSession(),
+      isLoading: false,
+      refetch: vi.fn(),
+    },
+    mockTranscriptQuery: {
+      data: createMockTranscript(createMockMessages(3)),
+      isLoading: false,
+      refetch: vi.fn(),
+    },
+    mockFailedMessagesQuery: {
+      data: createMockFailedMessagesData(),
+      refetch: vi.fn(),
+    },
+    mockAdvancePhase: {
+      mutateAsync: mockAdvancePhaseMutate,
+      isPending: false,
+    },
+    mockGenerateFeedback: {
+      mutateAsync: mockGenerateFeedbackMutate,
+      isPending: false,
     },
   }
 }
