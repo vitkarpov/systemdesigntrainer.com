@@ -12,9 +12,9 @@ interface UseDiagramAutoSaveOptions {
 function nodeToDto(node: Node): NodeDto {
   return {
     id: node.id,
-    type: node.type || 'default',
+    type: node.type || "default",
     position: node.position,
-    data: { label: (node.data as { label?: string })?.label || '' },
+    data: { label: (node.data as { label?: string })?.label || "" },
     measured: node.measured,
     width: node.width,
     height: node.height,
@@ -83,7 +83,7 @@ export function useDiagramAutoSave({
           id: sessionId,
           data: {
             nodes: nodes.map(nodeToDto),
-            edges: edges.map(edgeToDto)
+            edges: edges.map(edgeToDto),
           },
         });
         setSaveStatus("saved");
