@@ -186,7 +186,7 @@
 - [x] Tailwind CSS + Shadcn/ui setup
 - [x] React Router navigation
 - [x] API client integration
-- [ ] Whiteboard (basic canvas) - deferred
+- [x] Whiteboard (react-flow)
 
 ### Landing Page
 - [ ] Hero section
