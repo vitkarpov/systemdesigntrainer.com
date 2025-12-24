@@ -16,9 +16,16 @@ async function bootstrap() {
   // Enable global validation
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
+      whitelist: true, // Strip non-whitelisted properties
+      forbidNonWhitelisted: true, // Throw error on non-whitelisted properties
+      transform: true, // Automatically transform payloads to DTO instances
+      transformOptions: {
+        enableImplicitConversion: true, // Convert primitive types
+      },
+      validationError: {
+        target: false, // Don't expose target class in errors
+        value: false, // Don't expose value in errors (prevents data leaks)
+      },
     }),
   );
 

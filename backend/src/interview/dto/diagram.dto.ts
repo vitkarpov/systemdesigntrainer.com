@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray } from 'class-validator';
+import { IsArray, ArrayMaxSize } from 'class-validator';
 
 // Request DTO for saving diagram
 export class SaveDiagramDto {
@@ -9,6 +9,7 @@ export class SaveDiagramDto {
     items: { type: 'object' },
   })
   @IsArray()
+  @ArrayMaxSize(1000, { message: 'Diagram cannot have more than 1000 nodes' })
   nodes: any[];
 
   @ApiProperty({
@@ -17,6 +18,7 @@ export class SaveDiagramDto {
     items: { type: 'object' },
   })
   @IsArray()
+  @ArrayMaxSize(2000, { message: 'Diagram cannot have more than 2000 edges' })
   edges: any[];
 }
 
