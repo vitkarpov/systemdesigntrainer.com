@@ -20,17 +20,12 @@ export const customInstance = async <T>(config: {
     ...config.headers,
   };
 
-  // Add auth token if available
-  const token = localStorage.getItem("accessToken");
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   // Build fetch options
   const fetchOptions: RequestInit = {
     method: config.method,
     headers,
     signal: config.signal,
+    credentials: "include", // Send cookies with requests
   };
 
   // Add body for POST/PUT/PATCH requests

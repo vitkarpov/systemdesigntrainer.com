@@ -1,27 +1,21 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 
 const Callback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { setAccessToken } = useAuth();
 
   useEffect(() => {
-    const token = searchParams.get('token');
+    // Token is now stored in HTTP-only cookie by backend
+    // Just handle the redirect based on state parameter
     const state = searchParams.get('state');
+    const redirectTo = state || '/';
 
-    if (token) {
-      setAccessToken(token);
-
-      // Redirect to the original page or home
-      const redirectTo = state || '/';
+    // Wait a moment for the cookie to be set and then redirect
+    setTimeout(() => {
       navigate(redirectTo, { replace: true });
-    } else {
-      // No token, redirect to error page
-      navigate('/auth/error', { replace: true });
-    }
-  }, [searchParams, setAccessToken, navigate]);
+    }, 100);
+  }, [searchParams, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

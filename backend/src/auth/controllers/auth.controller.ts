@@ -50,8 +50,18 @@ export class AuthController {
     try {
       const { accessToken } = await this.authService.handleCallback(code);
 
+      // Set HTTP-only cookie (SECURITY: token not in URL)
+      res.cookie('access_token', accessToken, {
+        httpOnly: true, // Prevents JavaScript access
+        secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
+        sameSite: 'lax', // CSRF protection
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/',
+      });
+
+      // Redirect without token in URL
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      const redirectUrl = `${frontendUrl}/auth/callback?token=${accessToken}&state=${state || ''}`;
+      const redirectUrl = `${frontendUrl}/auth/callback?state=${state || ''}`;
 
       return res.redirect(redirectUrl);
     } catch (error) {
@@ -85,10 +95,18 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout current user' })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
-  async logout() {
-    return {
+  async logout(@Res() res: Response) {
+    // Clear the access_token cookie
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    return res.json({
       message: 'Logged out successfully',
-    };
+    });
   }
 
   @Public()

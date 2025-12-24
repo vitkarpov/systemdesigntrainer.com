@@ -26,7 +26,7 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const token = this.extractTokenFromHeader(request);
+    const token = this.extractToken(request);
 
     if (!token) {
       throw new UnauthorizedException('No token provided');
@@ -41,13 +41,17 @@ export class JwtAuthGuard implements CanActivate {
     }
   }
 
-  private extractTokenFromHeader(request: any): string | undefined {
+  private extractToken(request: any): string | undefined {
+    // Try Authorization header first (for backward compatibility and API testing)
     const authHeader = request.headers.authorization;
-    if (!authHeader) {
-      return undefined;
+    if (authHeader) {
+      const [type, token] = authHeader.split(' ');
+      if (type === 'Bearer' && token) {
+        return token;
+      }
     }
 
-    const [type, token] = authHeader.split(' ');
-    return type === 'Bearer' ? token : undefined;
+    // Fall back to HTTP-only cookie
+    return request.cookies?.access_token;
   }
 }

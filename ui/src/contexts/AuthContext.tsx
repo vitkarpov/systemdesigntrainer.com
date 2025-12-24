@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { useAuthControllerGetUser, useAuthControllerLogout, type UserResponseDto } from '../api/hooks.gen';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -12,8 +12,6 @@ interface AuthContextType {
   login: () => void;
   logout: () => void;
   isAuthenticated: boolean;
-  accessToken: string | null;
-  setAccessToken: (token: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,13 +30,10 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const queryClient = useQueryClient();
-  const [accessToken, setAccessTokenState] = useState<string | null>(
-    localStorage.getItem('accessToken')
-  );
 
-  const { data: user, isLoading, error } = useAuthControllerGetUser({
+  // Token now stored in HTTP-only cookie, attempt to fetch user to check auth status
+  const { data: user, isLoading } = useAuthControllerGetUser({
     query: {
-      enabled: !!accessToken,
       retry: false,
     },
   });
@@ -46,19 +41,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logoutMutation = useAuthControllerLogout();
 
   const loading = isLoading;
-
-  useEffect(() => {
-    if (error && accessToken) {
-      console.error('Failed to fetch user:', error);
-      localStorage.removeItem('accessToken');
-      setAccessTokenState(null);
-    }
-  }, [error, accessToken]);
-
-  const setAccessToken = (token: string) => {
-    localStorage.setItem('accessToken', token);
-    setAccessTokenState(token);
-  };
 
   const login = () => {
     window.location.href = `${API_URL}/api/auth/login`;
@@ -70,9 +52,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('accessToken');
-      setAccessTokenState(null);
       queryClient.clear();
+      // Redirect to home after logout
+      window.location.href = '/';
     }
   };
 
@@ -82,8 +64,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     login,
     logout,
     isAuthenticated: !!user,
-    accessToken,
-    setAccessToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
