@@ -15,7 +15,6 @@ import { useDiagramAutoSave } from '../../hooks/useDiagramAutoSave';
 import { useSessionsControllerGetDiagram } from '../../api/hooks.gen';
 import { useDiagramStore } from '../../stores';
 
-// Import custom nodes
 import { DatabaseNode } from './nodes/DatabaseNode';
 import { CacheNode } from './nodes/CacheNode';
 import { LoadBalancerNode } from './nodes/LoadBalancerNode';
@@ -34,6 +33,9 @@ const nodeTypes = {
   storage: StorageNode,
 };
 
+const EMPTY_NODES: Node[] = [];
+const EMPTY_EDGES: Edge[] = [];
+
 interface DiagramCanvasProps {
   sessionId: number;
   isReadOnly?: boolean;
@@ -43,9 +45,8 @@ export function DiagramCanvas({
   sessionId,
   isReadOnly = false,
 }: DiagramCanvasProps) {
-  // Read from store
-  const nodes = useDiagramStore((state) => state.getDiagram(sessionId)?.nodes || []);
-  const edges = useDiagramStore((state) => state.getDiagram(sessionId)?.edges || []);
+  const nodes = useDiagramStore((state) => state.getDiagram(sessionId)?.nodes ?? EMPTY_NODES);
+  const edges = useDiagramStore((state) => state.getDiagram(sessionId)?.edges ?? EMPTY_EDGES);
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
