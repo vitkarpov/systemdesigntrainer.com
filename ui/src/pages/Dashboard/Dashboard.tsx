@@ -124,15 +124,13 @@ export default function Dashboard() {
                     </div>
 
                     <div className="flex gap-2">
-                      {session.status === 'in_progress' && (
                         <Button
                           onClick={() => navigate(`/interview/${session.id}`)}
                           variant="default"
                           size="sm"
                         >
-                          Continue
+                          {session.status === 'in_progress' ? 'Continue' : 'View Session'}
                         </Button>
-                      )}
                       {session.overallScore !== null && (
                         <Button
                           onClick={() => navigate(`/feedback/${session.id}`)}
