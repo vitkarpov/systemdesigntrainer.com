@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { DiagramCanvas } from '../../components/diagram/DiagramCanvas';
-import { PageHeader } from '../../components/PageHeader';
-import { PhaseDisplay } from '../../components/PhaseDisplay';
+import { DiagramCanvas } from '@/components/diagram/DiagramCanvas';
+import { PageHeader } from '@/components/PageHeader';
+import { PhaseDisplay } from '@/components/PhaseDisplay';
 import { MessageList, InterviewInput } from './components';
-import { Button } from '../../components/ui/button';
-import { formatElapsedTime } from '../../lib/utils';
-import { useInterviewStore, useDiagramStore, useStreamingStore } from '../../stores';
+import { Button } from '@/components/ui/button';
+import { formatElapsedTime, parseErrorMessage } from '@/lib/utils';
+import { useInterviewStore, useDiagramStore, useStreamingStore } from '@/stores';
 import {
   useSessionsControllerGetSession,
   useSessionsControllerGetTranscript,
@@ -17,9 +17,8 @@ import {
   useSessionsControllerGetFailedMessages,
   getSessionsControllerGetSessionQueryKey,
   getSessionsControllerGetFailedMessagesQueryKey,
-} from '../../api/hooks.gen';
-import { parseErrorMessage } from '../../lib/utils';
-import { useConversationStream } from '../../hooks/useConversationStream';
+} from '@/api/hooks.gen';
+import { useConversationStream } from '@/hooks/useConversationStream';
 
 export default function Interview() {
   const { sessionId } = useParams<{ sessionId: string }>();

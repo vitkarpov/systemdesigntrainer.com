@@ -1,6 +1,6 @@
-import type { SessionResponseDtoStatus } from '../../../api/hooks.gen';
-import { Button } from '../../../components/ui/button';
-import { Textarea } from '../../../components/ui/textarea';
+import type { SessionResponseDtoStatus } from '@/api/hooks.gen';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 interface InterviewInputProps {
   value: string;

@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { renderWithProviders, setupInterviewMocks, createMockSession, createMockFailedMessagesData, createMockFailedMessage, createTestQueryClient } from '../../../tests/utils'
-import Interview from '../Interview'
-import { useInterviewStore, useStreamingStore, useDiagramStore } from '../../../stores'
+import { renderWithProviders, setupInterviewMocks, createMockSession, createMockFailedMessagesData, createMockFailedMessage, createTestQueryClient } from '@/tests/utils'
+import Interview from '@/pages/Interview/Interview'
+import { useInterviewStore, useStreamingStore, useDiagramStore } from '@/stores'
 import { toast } from 'sonner'
-import type { UseConversationStreamOptions } from '../../../hooks/useConversationStream'
+import type { UseConversationStreamOptions } from '@/hooks/useConversationStream'
 
 // Mock API hooks
-vi.mock('../../../api/hooks.gen', () => ({
+vi.mock('@/api/hooks.gen', () => ({
   useSessionsControllerGetSession: vi.fn(),
   useSessionsControllerGetTranscript: vi.fn(),
   useSessionsControllerGetFailedMessages: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock('../../../api/hooks.gen', () => ({
 }))
 
 // Import the mocked functions after the mock is defined
-import * as apiHooks from '../../../api/hooks.gen'
+import * as apiHooks from '@/api/hooks.gen'
 const mockUseSessionsControllerGetSession = apiHooks.useSessionsControllerGetSession as ReturnType<typeof vi.fn>
 const mockUseSessionsControllerGetTranscript = apiHooks.useSessionsControllerGetTranscript as ReturnType<typeof vi.fn>
 const mockUseSessionsControllerGetFailedMessages = apiHooks.useSessionsControllerGetFailedMessages as ReturnType<typeof vi.fn>

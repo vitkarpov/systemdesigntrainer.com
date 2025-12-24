@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { RefreshCcw } from 'lucide-react';
-import { Button } from './ui/button';
-import { useSessionsControllerRetryConversation } from '../api/hooks.gen';
+import { Button } from '@/components/ui/button';
+import { useSessionsControllerRetryConversation } from '@/api/hooks.gen';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getSessionsControllerGetTranscriptQueryKey,
   getSessionsControllerGetSessionQueryKey,
-} from '../api/hooks.gen';
+} from '@/api/hooks.gen';
 
 interface RetryButtonProps {
   sessionId: number;

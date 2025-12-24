@@ -11,9 +11,9 @@ import {
 } from '@xyflow/react';
 import { ComponentPalette } from './ComponentPalette';
 import { SaveIndicator } from './SaveIndicator';
-import { useDiagramAutoSave } from '../../hooks/useDiagramAutoSave';
-import { useSessionsControllerGetDiagram } from '../../api/hooks.gen';
-import { useDiagramStore } from '../../stores';
+import { useDiagramAutoSave } from '@/hooks/useDiagramAutoSave';
+import { useSessionsControllerGetDiagram } from '@/api/hooks.gen';
+import { useDiagramStore } from '@/stores';
 
 import { DatabaseNode } from './nodes/DatabaseNode';
 import { CacheNode } from './nodes/CacheNode';

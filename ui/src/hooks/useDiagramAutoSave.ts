@@ -5,8 +5,8 @@ import {
   useSessionsControllerSaveDiagram,
   type NodeDto,
   type EdgeDto,
-} from "../api/hooks.gen";
-import { useDiagramStore } from "../stores";
+} from "@/api/hooks.gen";
+import { useDiagramStore } from "@/stores";
 
 interface UseDiagramAutoSaveOptions {
   sessionId: number;

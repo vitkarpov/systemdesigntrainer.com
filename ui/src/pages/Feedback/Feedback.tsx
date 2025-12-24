@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { PageHeader } from '../../components/PageHeader';
-import { useSessionsControllerGetFeedback } from '../../api/hooks.gen';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/PageHeader';
+import { useSessionsControllerGetFeedback } from '@/api/hooks.gen';
 
 export default function Feedback() {
   const { sessionId } = useParams<{ sessionId: string }>();

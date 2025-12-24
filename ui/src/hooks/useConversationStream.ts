@@ -1,10 +1,10 @@
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useStreamingStore } from "../stores";
+import { useStreamingStore } from "@/stores";
 import {
   getSessionsControllerGetSessionQueryKey,
   getSessionsControllerGetTranscriptQueryKey,
-} from "../api/hooks.gen";
+} from "@/api/hooks.gen";
 
 export interface UseConversationStreamOptions {
   sessionId: number;

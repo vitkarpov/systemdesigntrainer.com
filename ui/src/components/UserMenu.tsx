@@ -1,7 +1,7 @@
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { useAuthControllerGetUser } from '../api/hooks.gen';
-import { useAuth } from '../contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useAuthControllerGetUser } from '@/api/hooks.gen';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function UserMenu() {
   const { logout } = useAuth();

@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/ui/button';
-import { Card } from '../../components/ui/card';
-import { PageHeader } from '../../components/PageHeader';
-import { useSessionsControllerGetDashboard } from '../../api/hooks.gen';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/PageHeader';
+import { useSessionsControllerGetDashboard } from '@/api/hooks.gen';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function Dashboard() {

@@ -7,7 +7,7 @@ import Login from './pages/Auth/Login';
 import Callback from './pages/Auth/Callback';
 import AuthError from './pages/Auth/Error';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { Toaster } from './components/ui/sonner';
+import { Toaster } from '@/components/ui/sonner';
 
 function App() {
   return (

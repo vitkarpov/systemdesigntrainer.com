@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { useAuthControllerGetUser, useAuthControllerLogout, type UserResponseDto } from '../api/hooks.gen';
+import { useAuthControllerGetUser, useAuthControllerLogout, type UserResponseDto } from '@/api/hooks.gen';
 import { useQueryClient } from '@tanstack/react-query';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';

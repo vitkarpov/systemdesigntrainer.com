@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
-import { FailedMessageBanner } from '../../../components/FailedMessageBanner';
+import { FailedMessageBanner } from '@/components/FailedMessageBanner';
 import { MessageItem } from './MessageItem';
-import { formatElapsedTime } from '../../../lib/utils';
+import { formatElapsedTime } from '@/lib/utils';
 
 interface OptimisticMessage {
   text: string;

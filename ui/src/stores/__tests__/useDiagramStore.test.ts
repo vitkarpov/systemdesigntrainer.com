@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { useDiagramStore } from "../useDiagramStore";
+import { useDiagramStore } from "@/stores/useDiagramStore";
 import type { Node, Edge } from "@xyflow/react";
 
 describe("useDiagramStore", () => {

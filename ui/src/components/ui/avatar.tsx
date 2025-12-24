@@ -1,63 +1,48 @@
-import * as React from "react";
+import * as React from "react"
+import * as AvatarPrimitive from "@radix-ui/react-avatar"
 
-interface AvatarProps {
-  children?: React.ReactNode;
-  className?: string;
-}
+import { cn } from "@/lib/utils"
 
-interface AvatarImageProps {
-  src?: string;
-  alt?: string;
-}
+const Avatar = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Root
+    ref={ref}
+    className={cn(
+      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+      className
+    )}
+    {...props}
+  />
+))
+Avatar.displayName = AvatarPrimitive.Root.displayName
 
-interface AvatarFallbackProps {
-  children: React.ReactNode;
-}
+const AvatarImage = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Image>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Image
+    ref={ref}
+    className={cn("aspect-square h-full w-full", className)}
+    {...props}
+  />
+))
+AvatarImage.displayName = AvatarPrimitive.Image.displayName
 
-const AvatarContext = React.createContext<{
-  imageLoaded: boolean;
-  setImageLoaded: (loaded: boolean) => void;
-}>({
-  imageLoaded: false,
-  setImageLoaded: () => {},
-});
+const AvatarFallback = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Fallback>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Fallback
+    ref={ref}
+    className={cn(
+      "flex h-full w-full items-center justify-center rounded-full bg-muted",
+      className
+    )}
+    {...props}
+  />
+))
+AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
 
-export function Avatar({ children, className = "" }: AvatarProps) {
-  const [imageLoaded, setImageLoaded] = React.useState(false);
-
-  return (
-    <AvatarContext.Provider value={{ imageLoaded, setImageLoaded }}>
-      <div className={`relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ${className}`}>
-        {children}
-      </div>
-    </AvatarContext.Provider>
-  );
-}
-
-export function AvatarImage({ src, alt }: AvatarImageProps) {
-  const { setImageLoaded } = React.useContext(AvatarContext);
-
-  if (!src) return null;
-
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className="aspect-square h-full w-full object-cover"
-      onLoad={() => setImageLoaded(true)}
-      onError={() => setImageLoaded(false)}
-    />
-  );
-}
-
-export function AvatarFallback({ children }: AvatarFallbackProps) {
-  const { imageLoaded } = React.useContext(AvatarContext);
-
-  if (imageLoaded) return null;
-
-  return (
-    <div className="flex h-full w-full items-center justify-center rounded-full bg-muted text-sm font-medium">
-      {children}
-    </div>
-  );
-}
+export { Avatar, AvatarImage, AvatarFallback }

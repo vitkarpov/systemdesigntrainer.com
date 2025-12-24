@@ -1,6 +1,6 @@
-import { Badge } from '../../../components/ui/badge';
-import { RetryButton } from '../../../components/RetryButton';
-import { formatElapsedTime } from '../../../lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { RetryButton } from '@/components/RetryButton';
+import { formatElapsedTime } from '@/lib/utils';
 
 interface MessageItemProps {
   message: {

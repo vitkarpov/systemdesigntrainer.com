@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { useStreamingStore } from "../useStreamingStore";
+import { useStreamingStore } from "@/stores/useStreamingStore";
 
 describe("useStreamingStore", () => {
   const sessionId = 123;
