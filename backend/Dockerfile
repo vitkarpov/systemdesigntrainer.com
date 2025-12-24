@@ -6,7 +6,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install production dependencies (build dependencies are now in dependencies)
 RUN npm ci --only=production && \
     npm cache clean --force
 
@@ -39,6 +39,10 @@ RUN npm ci --only=production && \
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/public ./public
 
+# Copy startup script
+COPY --chown=nestjs:nodejs docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
 # Switch to non-root user
 USER nestjs
 
@@ -48,5 +52,5 @@ EXPOSE 3000
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application
-CMD ["node", "dist/main"]
+# Start the application with migrations
+CMD ["./docker-entrypoint.sh"]
