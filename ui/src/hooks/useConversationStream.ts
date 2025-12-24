@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback } from "react";
+import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "../contexts/AuthContext";
+import { useStreamingStore } from "../stores";
 import {
   getSessionsControllerGetSessionQueryKey,
   getSessionsControllerGetTranscriptQueryKey,
@@ -30,26 +30,21 @@ export function useConversationStream({
   onComplete,
   onError,
 }: UseConversationStreamOptions) {
-  const { accessToken } = useAuth();
   const queryClient = useQueryClient();
-  const [streamingText, setStreamingText] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   const sendMessage = useCallback(
     async (text: string, diagram?: { nodes: any[]; edges: any[] } | null) => {
+      // Check if already streaming
+      const isStreaming = useStreamingStore
+        .getState()
+        .isStreamingForSession(sessionId);
       if (isStreaming) return;
 
-      setIsStreaming(true);
-      setStreamingText("");
-
-      // Cancel any existing request
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      // Cancel any existing stream and start new one
+      useStreamingStore.getState().cancelStreaming(sessionId);
 
       const abortController = new AbortController();
-      abortControllerRef.current = abortController;
+      useStreamingStore.getState().startStreaming(sessionId, abortController);
 
       try {
         // Set parameters as cookies to avoid URL length limitations
@@ -71,7 +66,6 @@ export function useConversationStream({
           method: "GET",
           headers: {
             Accept: "text/event-stream",
-            Authorization: accessToken ? `Bearer ${accessToken}` : "",
           },
           credentials: "include",
           signal: abortController.signal,
@@ -116,12 +110,13 @@ export function useConversationStream({
                   onStart(data);
                 }
               } else if (eventType === "delta") {
-                setStreamingText((prev) => prev + data.text);
+                useStreamingStore
+                  .getState()
+                  .appendStreamText(sessionId, data.text);
               } else if (eventType === "complete") {
                 console.log("Stream complete:", data);
 
-                setIsStreaming(false);
-                setStreamingText("");
+                useStreamingStore.getState().completeStreaming(sessionId);
 
                 // Refresh transcript and session data
                 await Promise.all([
@@ -145,8 +140,7 @@ export function useConversationStream({
                   partialResponse: data.partialResponse || null,
                 };
 
-                setIsStreaming(false);
-                setStreamingText("");
+                useStreamingStore.getState().errorStreaming(sessionId);
 
                 if (onError) {
                   onError(error, errorData);
@@ -164,8 +158,7 @@ export function useConversationStream({
         }
 
         console.error("Failed to send message:", err);
-        setIsStreaming(false);
-        setStreamingText("");
+        useStreamingStore.getState().errorStreaming(sessionId);
 
         if (onError && err instanceof Error) {
           onError(err);
@@ -176,33 +169,17 @@ export function useConversationStream({
           "text=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         document.cookie =
           "diagramData=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-        abortControllerRef.current = null;
       }
     },
-    [
-      sessionId,
-      accessToken,
-      isStreaming,
-      queryClient,
-      onStart,
-      onComplete,
-      onError,
-    ],
+    [sessionId, queryClient, onStart, onComplete, onError],
   );
 
   const cancel = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-      setIsStreaming(false);
-      setStreamingText("");
-    }
-  }, []);
+    useStreamingStore.getState().cancelStreaming(sessionId);
+  }, [sessionId]);
 
   return {
     sendMessage,
     cancel,
-    streamingText,
-    isStreaming,
   };
 }

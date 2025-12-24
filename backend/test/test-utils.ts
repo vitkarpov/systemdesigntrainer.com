@@ -67,7 +67,7 @@ export async function seedTestData() {
       description:
         'Design a scalable URL shortening service like bit.ly or TinyURL',
       difficulty: 'medium',
-      problemStatement: "",
+      problemStatement: '',
       estimatedDuration: 45,
       isActive: true,
     })

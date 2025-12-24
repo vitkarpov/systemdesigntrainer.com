@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
@@ -10,7 +10,7 @@ import { PhaseDisplay } from '../../components/PhaseDisplay';
 import { DiagramCanvas } from '../../components/diagram/DiagramCanvas';
 import { FailedMessageBanner } from '../../components/FailedMessageBanner';
 import { RetryButton } from '../../components/RetryButton';
-import type { Node, Edge } from '@xyflow/react';
+import { useInterviewStore, useDiagramStore, useStreamingStore } from '../../stores';
 import {
   useSessionsControllerGetSession,
   useSessionsControllerGetTranscript,
@@ -27,17 +27,31 @@ export default function Interview() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [inputValue, setInputValue] = useState('');
+
+  // Interview store
+  const inputValue = useInterviewStore((state) => state.inputValue);
+  const setInputValue = useInterviewStore((state) => state.setInputValue);
+  const clearInput = useInterviewStore((state) => state.clearInput);
+  const optimisticMessage = useInterviewStore((state) => state.optimisticMessage);
+  const setOptimisticMessage = useInterviewStore((state) => state.setOptimisticMessage);
+  const showRetryBanner = useInterviewStore((state) => state.showRetryBanner);
+  const setShowRetryBanner = useInterviewStore((state) => state.setShowRetryBanner);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [optimisticMessage, setOptimisticMessage] = useState<{ text: string; timestamp: number } | null>(null);
-  const [diagramData, setDiagramData] = useState<{ nodes: Node[]; edges: Edge[] } | null>(null);
-  const [showRetryBanner, setShowRetryBanner] = useState(false);
 
   const sessionIdNum = Number(sessionId);
 
+  // Streaming store
+  const streamingText = useStreamingStore(
+    (state) => state.getStream(sessionIdNum)?.streamingText || ''
+  );
+  const isStreaming = useStreamingStore(
+    (state) => state.isStreamingForSession(sessionIdNum)
+  );
+
   // Streaming hook
-  const { sendMessage, streamingText, isStreaming, cancel } = useConversationStream({
+  const { sendMessage, cancel } = useConversationStream({
     sessionId: sessionIdNum,
     onStart: () => {
       // Keep the optimistic message visible until complete
@@ -111,14 +125,17 @@ export default function Interview() {
   useEffect(() => {
     return () => {
       cancel();
+      useInterviewStore.getState().reset();
+      useDiagramStore.getState().clearDiagram(sessionIdNum);
+      useStreamingStore.getState().clearStream(sessionIdNum);
     };
-  }, [cancel]);
+  }, [cancel, sessionIdNum]);
 
   const handleSendMessage = () => {
     if (!inputValue.trim() || isStreaming || session?.data.session.status !== 'in_progress') return;
 
     const messageContent = inputValue.trim();
-    setInputValue('');
+    clearInput();
 
     // Show optimistic message immediately
     setOptimisticMessage({
@@ -129,6 +146,9 @@ export default function Interview() {
     // Determine if we should send diagram data (only in HIGH_LEVEL phase)
     const currentPhase = session?.data.session.currentPhase;
     const isHighLevelPhase = currentPhase === 'high_level';
+
+    // Get diagram data from store
+    const diagramData = useDiagramStore.getState().getDiagram(sessionIdNum);
 
     sendMessage(messageContent, isHighLevelPhase ? diagramData : null);
   };
@@ -200,12 +220,6 @@ export default function Interview() {
     currentPhase === 'deep_dive' ||
     currentPhase === 'bottlenecks';
 
-  const handleDiagramChange = useCallback((nodes: Node[], edges: Edge[]) => {
-    if (isHighLevelPhase) {
-      setDiagramData({ nodes, edges });
-    }
-  }, [isHighLevelPhase]);
-
   const isLoading = isLoadingSession || isLoadingMessages;
 
   if (isLoading) {
@@ -270,7 +284,6 @@ export default function Interview() {
             <DiagramCanvas
               sessionId={sessionIdNum}
               isReadOnly={!isHighLevelPhase}
-              onDiagramChange={handleDiagramChange}
             />
           </div>
         )}

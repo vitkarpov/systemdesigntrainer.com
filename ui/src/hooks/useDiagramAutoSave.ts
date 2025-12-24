@@ -1,21 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSessionsControllerSaveDiagram } from "../api/hooks.gen";
-import type { Node, Edge } from "@xyflow/react";
+import { useDiagramStore } from "../stores";
 
 interface UseDiagramAutoSaveOptions {
   sessionId: number;
-  nodes: Node[];
-  edges: Edge[];
   enabled: boolean;
 }
 
 export function useDiagramAutoSave({
   sessionId,
-  nodes,
-  edges,
   enabled,
 }: UseDiagramAutoSaveOptions) {
+  // Read from store
+  const diagram = useDiagramStore((state) => state.getDiagram(sessionId));
+  const nodes = diagram?.nodes || [];
+  const edges = diagram?.edges || [];
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
     "saved",
   );
