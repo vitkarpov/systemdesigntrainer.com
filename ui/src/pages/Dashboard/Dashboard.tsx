@@ -32,7 +32,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <PageHeader
-        title="Dashboard"
+        title="SD Interview Simulator"
         onBack={() => navigate('/')}
         rightContent={
           <Button onClick={() => navigate('/home')}>

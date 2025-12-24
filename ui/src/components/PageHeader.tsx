@@ -13,23 +13,24 @@ interface PageHeaderProps {
 export function PageHeader({
   title,
   onBack,
-  backLabel = 'Back to Dashboard',
+  backLabel,
   rightContent,
   centerContent,
 }: PageHeaderProps) {
   return (
-    <div className="border-b px-6 py-4 bg-card space-y-3">
-      <div className="flex items-center">
+    <div className="border-b px-6 py-4 bg-card space-y-3 h-19">
+      <div className="flex items-center max-w-6xl mx-auto px-6">
         <div className="flex items-center gap-3 flex-1">
-          <Button
+          {backLabel && <Button
             variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {backLabel}
-          </Button>
+              size="sm"
+              onClick={onBack}
+              className="gap-2 -ml-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {backLabel}
+            </Button>
+          }
           <h1 className="text-lg font-semibold">{title}</h1>
           {centerContent}
         </div>
