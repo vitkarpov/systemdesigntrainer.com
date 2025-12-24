@@ -16,6 +16,7 @@ import {
   Inject,
   Req,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Observable, from, concat, of } from 'rxjs';
 import { switchMap, map, catchError } from 'rxjs/operators';
 import { Request } from 'express';
@@ -141,6 +142,7 @@ export class SessionsController {
    * Create a new interview session
    */
   @Post()
+  @Throttle({ default: { limit: 20, ttl: 60000 } }) // 20 requests per minute
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new interview session' })
   @ApiResponse({
@@ -446,6 +448,7 @@ export class SessionsController {
    * - 'diagramData' cookie: Optional diagram data as JSON string
    */
   @Sse(':id/conversation')
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 conversations per minute
   @ApiOperation({
     summary: 'Handle conversation turn with streaming (saga pattern)',
   })

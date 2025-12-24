@@ -13,6 +13,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
@@ -30,6 +31,7 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @Get('login')
   login(@Query('state') state: string, @Res() res: Response) {
     const authorizationUrl = this.authService.getAuthorizationUrl(state);
@@ -37,6 +39,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @Get('callback')
   async callback(
     @Query('code') code: string,
