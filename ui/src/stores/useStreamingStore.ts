@@ -12,10 +12,6 @@ interface StreamingState {
   streams: Record<number, StreamData>;
 
   // Selectors
-  getStream: (
-    sessionId: number,
-  ) => { streamingText: string; isStreaming: boolean } | null;
-  isStreamingForSession: (sessionId: number) => boolean;
   getAbortController: (sessionId: number) => AbortController | null;
 
   // Actions
@@ -39,19 +35,6 @@ export const useStreamingStore = create<StreamingState>()(
       streams: {},
 
       // Selectors
-      getStream: (sessionId) => {
-        const stream = get().streams[sessionId];
-        if (!stream) return null;
-        return {
-          streamingText: stream.streamingText,
-          isStreaming: stream.isStreaming,
-        };
-      },
-
-      isStreamingForSession: (sessionId) => {
-        return get().streams[sessionId]?.isStreaming ?? false;
-      },
-
       getAbortController: (sessionId) => {
         return get().streams[sessionId]?.abortController ?? null;
       },

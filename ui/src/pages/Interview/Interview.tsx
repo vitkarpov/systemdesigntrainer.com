@@ -44,10 +44,10 @@ export default function Interview() {
 
   // Streaming store
   const streamingText = useStreamingStore(
-    (state) => state.getStream(sessionIdNum)?.streamingText || ''
+    (state) => state.streams[sessionIdNum]?.streamingText || ''
   );
   const isStreaming = useStreamingStore(
-    (state) => state.isStreamingForSession(sessionIdNum)
+    (state) => state.streams[sessionIdNum]?.isStreaming ?? false
   );
 
   // Streaming hook

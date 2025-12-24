@@ -35,9 +35,8 @@ export function useConversationStream({
   const sendMessage = useCallback(
     async (text: string, diagram?: { nodes: any[]; edges: any[] } | null) => {
       // Check if already streaming
-      const isStreaming = useStreamingStore
-        .getState()
-        .isStreamingForSession(sessionId);
+      const isStreaming =
+        useStreamingStore.getState().streams[sessionId]?.isStreaming ?? false;
       if (isStreaming) return;
 
       // Cancel any existing stream and start new one
