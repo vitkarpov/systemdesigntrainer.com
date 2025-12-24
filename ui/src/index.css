@@ -96,7 +96,7 @@ body {
 
 .react-flow__handle:hover {
   background: hsl(var(--primary));
-  transform: scale(1.2);
+  cursor: pointer;
 }
 
 .react-flow__controls {

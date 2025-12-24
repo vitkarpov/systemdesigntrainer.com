@@ -280,7 +280,7 @@ export default function Interview() {
       <div className="flex-1 flex overflow-hidden">
         {/* Diagram Canvas (conditional) */}
         {shouldShowDiagram && (
-          <div className={isHighLevelPhase ? 'w-2/3 border-r border-border' : 'w-80 border-r border-border'}>
+          <div className={isHighLevelPhase ? 'w-2/3 border-r border-border' : 'w-1/2 border-r border-border'}>
             <DiagramCanvas
               sessionId={sessionIdNum}
               isReadOnly={!isHighLevelPhase}
@@ -289,7 +289,7 @@ export default function Interview() {
         )}
 
         {/* Chat Area (Messages + Input) */}
-        <div className={`flex flex-col ${shouldShowDiagram ? (isHighLevelPhase ? 'w-1/3' : 'flex-1') : 'w-full'}`}>
+        <div className={`flex flex-col ${shouldShowDiagram ? (isHighLevelPhase ? 'w-1/3' : 'w-1/2') : 'w-full'}`}>
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         {/* Failed Messages Banner */}
