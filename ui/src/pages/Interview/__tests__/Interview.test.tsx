@@ -369,18 +369,24 @@ describe('Interview Page', () => {
 
     it('should clear optimistic message after streaming completes', async () => {
       // Set optimistic message
-      useInterviewStore.getState().setOptimisticMessage({
-        text: 'My question',
-        timestamp: Date.now(),
+      act(() => {
+        useInterviewStore.getState().setOptimisticMessage({
+          text: 'My question',
+          timestamp: Date.now(),
+        })
       })
 
       renderWithProviders(<Interview />, { queryClient })
 
       // Verify optimistic message is shown
-      expect(screen.getByText('My question')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText('My question')).toBeInTheDocument()
+      })
 
       // Clear optimistic message (simulating completion)
-      useInterviewStore.getState().setOptimisticMessage(null)
+      act(() => {
+        useInterviewStore.getState().setOptimisticMessage(null)
+      })
 
       await waitFor(() => {
         expect(screen.queryByText('My question')).not.toBeInTheDocument()
