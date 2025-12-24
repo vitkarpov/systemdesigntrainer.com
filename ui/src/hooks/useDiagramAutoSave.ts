@@ -8,6 +8,35 @@ interface UseDiagramAutoSaveOptions {
   enabled: boolean;
 }
 
+// Convert React Flow Node to NodeDto
+function nodeToDto(node: Node): NodeDto {
+  return {
+    id: node.id,
+    type: node.type || 'default',
+    position: node.position,
+    data: { label: (node.data as { label?: string })?.label || '' },
+    measured: node.measured,
+    width: node.width,
+    height: node.height,
+    selected: node.selected,
+    dragging: node.dragging,
+  };
+}
+
+// Convert React Flow Edge to EdgeDto
+function edgeToDto(edge: Edge): EdgeDto {
+  return {
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+    sourceHandle: edge.sourceHandle ?? undefined,
+    targetHandle: edge.targetHandle ?? undefined,
+    selected: edge.selected,
+    type: edge.type,
+    animated: edge.animated,
+  };
+}
+
 export function useDiagramAutoSave({
   sessionId,
   enabled,
@@ -52,7 +81,10 @@ export function useDiagramAutoSave({
       try {
         await saveMutationRef.current.mutateAsync({
           id: sessionId,
-          data: { nodes, edges },
+          data: {
+            nodes: nodes.map(nodeToDto),
+            edges: edges.map(edgeToDto)
+          },
         });
         setSaveStatus("saved");
 

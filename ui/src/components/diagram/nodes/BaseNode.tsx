@@ -8,7 +8,7 @@ export interface BaseNodeData {
 }
 
 export const BaseNode = memo<NodeProps<BaseNodeData>>(({ data, isConnectable, selected }) => {
-  const Icon = data.icon;
+  const Icon = data?.icon;
 
   return (
     <div
@@ -28,7 +28,7 @@ export const BaseNode = memo<NodeProps<BaseNodeData>>(({ data, isConnectable, se
       <div className="flex flex-col items-center justify-center h-full gap-2">
         {Icon && <Icon className="w-7 h-7 text-primary" />}
         <div className="text-xs font-medium text-center text-foreground leading-tight">
-          {data.label}
+          {data?.label}
         </div>
       </div>
       <Handle

@@ -26,6 +26,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { InterviewSessionService } from '../services/interview-session.service';
 import { InterviewCasesService } from '../services/interview-cases.service';
@@ -50,6 +51,7 @@ import {
   GetPhasesResponseDto,
   AdvancePhaseResponseDto,
   AiRequestDto,
+  RetryConversationDto,
   GenerateFeedbackResponseDto,
   GetFeedbackResponseDto,
   GetDashboardResponseDto,
@@ -666,6 +668,7 @@ export class SessionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Retry a failed conversation turn' })
   @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiBody({ type: RetryConversationDto })
   @ApiResponse({
     status: 200,
     description: 'Conversation turn retried successfully',
@@ -673,7 +676,7 @@ export class SessionsController {
   async retryConversation(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) sessionId: number,
-    @Body() body: { candidateMessageId: number },
+    @Body() body: RetryConversationDto,
   ) {
     await this.verifySessionOwnership(sessionId, user.id);
 

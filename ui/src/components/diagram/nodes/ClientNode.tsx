@@ -4,7 +4,7 @@ import type { NodeProps } from '@xyflow/react';
 import { BaseNode, type BaseNodeData } from './BaseNode';
 
 export const ClientNode = memo<NodeProps<BaseNodeData>>((props) => {
-  return <BaseNode {...props} data={{ ...props.data, icon: Users }} />;
+  return <BaseNode {...props} data={{ ...(props.data as BaseNodeData), icon: Users }} />;
 });
 
 ClientNode.displayName = 'ClientNode';
