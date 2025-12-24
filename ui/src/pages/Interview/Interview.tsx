@@ -244,7 +244,7 @@ export default function Interview() {
             )}
           </>
         }
-        bottomContent={
+        centerContent={
           session?.data.phaseMetadata ? (
             <PhaseDisplay
               phaseMetadata={session.data.phaseMetadata}

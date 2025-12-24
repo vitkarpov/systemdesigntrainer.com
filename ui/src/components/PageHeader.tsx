@@ -7,7 +7,7 @@ interface PageHeaderProps {
   onBack: () => void;
   backLabel?: string;
   rightContent?: ReactNode;
-  bottomContent?: ReactNode;
+  centerContent?: ReactNode;
 }
 
 export function PageHeader({
@@ -15,12 +15,12 @@ export function PageHeader({
   onBack,
   backLabel = 'Back to Dashboard',
   rightContent,
-  bottomContent,
+  centerContent,
 }: PageHeaderProps) {
   return (
     <div className="border-b px-6 py-4 bg-card space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center">
+        <div className="flex items-center gap-3 flex-1">
           <Button
             variant="ghost"
             size="sm"
@@ -31,12 +31,12 @@ export function PageHeader({
             {backLabel}
           </Button>
           <h1 className="text-lg font-semibold">{title}</h1>
+          {centerContent}
         </div>
         <div className="flex items-center gap-3">
           {rightContent}
         </div>
       </div>
-      {bottomContent}
     </div>
   );
 }
