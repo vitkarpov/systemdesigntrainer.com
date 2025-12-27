@@ -9,10 +9,12 @@ import { SpaController } from './spa.controller';
 import { DatabaseModule } from './db/db.module';
 import { InterviewModule } from './interview/interview.module';
 import { AuthModule } from './auth/auth.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    RedisModule,
     AuthModule,
     InterviewModule,
     // Rate limiting: 100 requests per minute per IP

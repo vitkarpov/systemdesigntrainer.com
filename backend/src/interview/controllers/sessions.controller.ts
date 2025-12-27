@@ -13,12 +13,11 @@ import {
   BadRequestException,
   Sse,
   MessageEvent,
-  Inject,
   Req,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Observable, from, concat, of } from 'rxjs';
-import { switchMap, map, catchError } from 'rxjs/operators';
+import { switchMap, catchError, finalize } from 'rxjs/operators';
 import { Request } from 'express';
 import {
   ApiTags,
@@ -37,6 +36,7 @@ import { RedFlagService } from '../services/red-flag.service';
 import { FeedbackService } from '../services/feedback.service';
 import { DiagramService } from '../services/diagram.service';
 import { ConversationSagaService } from '../services/conversation-saga.service';
+import { StreamingLimiterService } from '../services/streaming-limiter.service';
 import { AiService } from '../../ai/services/ai.service';
 import { PromptService } from '../../ai/services/prompt.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
@@ -50,7 +50,6 @@ import {
   GetRedFlagsResponseDto,
   GetPhasesResponseDto,
   AdvancePhaseResponseDto,
-  AiRequestDto,
   RetryConversationDto,
   GenerateFeedbackResponseDto,
   GetFeedbackResponseDto,
@@ -80,6 +79,7 @@ export class SessionsController {
     private feedbackService: FeedbackService,
     private diagramService: DiagramService,
     private conversationSaga: ConversationSagaService,
+    private streamLimiter: StreamingLimiterService,
     private aiService: AiService,
     private promptService: PromptService,
   ) {}
@@ -95,6 +95,24 @@ export class SessionsController {
     if (session.userId !== userId) {
       throw new ForbiddenException('You do not have access to this session');
     }
+  }
+
+  /**
+   * GET /api/sessions/metrics/streaming
+   * Get streaming concurrency metrics
+   */
+  @Get('metrics/streaming')
+  @ApiOperation({ summary: 'Get streaming concurrency metrics' })
+  @ApiResponse({
+    status: 200,
+    description: 'Streaming metrics retrieved',
+  })
+  async getStreamingMetrics() {
+    const metrics = await this.streamLimiter.getMetrics();
+    return {
+      success: true,
+      data: metrics,
+    };
   }
 
   /**
@@ -484,6 +502,10 @@ export class SessionsController {
     const preparation$ = from(
       (async () => {
         await this.verifySessionOwnership(id, user.id);
+
+        // Acquire stream slot (throws if limits exceeded)
+        await this.streamLimiter.acquireStreamSlot(user.id);
+
         const session = await this.sessionService.getSession(id);
         const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
 
@@ -645,6 +667,9 @@ export class SessionsController {
       ),
       catchError((error) => {
         // Early failure before streaming started
+        // Release stream slot on error
+        this.streamLimiter.releaseStreamSlot(user.id);
+
         const errorEvent: MessageEvent = {
           type: 'error',
           data: JSON.stringify({
@@ -652,6 +677,10 @@ export class SessionsController {
           }),
         };
         return of(errorEvent);
+      }),
+      finalize(() => {
+        // Always release stream slot when stream completes or errors
+        this.streamLimiter.releaseStreamSlot(user.id);
       }),
     );
   }

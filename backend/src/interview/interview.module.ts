@@ -9,6 +9,7 @@ import { RedFlagService } from './services/red-flag.service';
 import { FeedbackService } from './services/feedback.service';
 import { DiagramService } from './services/diagram.service';
 import { ConversationSagaService } from './services/conversation-saga.service';
+import { StreamingLimiterService } from './services/streaming-limiter.service';
 import { SessionsController } from './controllers/sessions.controller';
 import { CasesController } from './controllers/cases.controller';
 import { DatabaseModule } from '../db/db.module';
@@ -38,6 +39,7 @@ import { AiModule } from '../ai/ai.module';
     FeedbackService,
     DiagramService,
     ConversationSagaService,
+    StreamingLimiterService,
   ],
   exports: [
     InterviewSessionService,
