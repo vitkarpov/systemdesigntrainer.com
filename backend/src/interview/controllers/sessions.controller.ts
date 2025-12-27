@@ -919,8 +919,9 @@ export class SessionsController {
     await this.verifySessionOwnership(id, user.id);
 
     // Check if feedback already exists
-    const existing = await this.feedbackService.getFeedback(id);
-    if (existing) {
+    const feedbackExists = await this.feedbackService.feedbackExists(id);
+    if (feedbackExists) {
+      const existing = await this.feedbackService.getFeedback(id);
       return {
         success: true,
         message: 'Feedback already exists',
@@ -992,8 +993,9 @@ export class SessionsController {
     await this.verifySessionOwnership(id, user.id);
 
     // First, check if feedback already exists in the database
-    const feedback = await this.feedbackService.getFeedback(id);
-    if (feedback) {
+    const feedbackExists = await this.feedbackService.feedbackExists(id);
+    if (feedbackExists) {
+      const feedback = await this.feedbackService.getFeedback(id);
       return {
         success: true,
         data: {
@@ -1061,13 +1063,14 @@ export class SessionsController {
   /**
    * GET /api/sessions/:id/feedback
    * Get existing feedback report for a session
+   * Returns null if feedback doesn't exist yet (still generating)
    */
   @Get(':id/feedback')
   @ApiOperation({ summary: 'Get feedback report' })
   @ApiParam({ name: 'id', description: 'Session ID' })
   @ApiResponse({
     status: 200,
-    description: 'Feedback retrieved',
+    description: 'Feedback retrieved (or null if not generated yet)',
     type: GetFeedbackResponseDto,
   })
   async getFeedback(
@@ -1075,6 +1078,17 @@ export class SessionsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     await this.verifySessionOwnership(id, user.id);
+
+    // Check if feedback exists before trying to get it
+    const feedbackExists = await this.feedbackService.feedbackExists(id);
+    if (!feedbackExists) {
+      return {
+        success: true,
+        data: null,
+        message: 'Feedback not generated yet',
+      };
+    }
+
     const feedback = await this.feedbackService.getFeedback(id);
 
     return {
