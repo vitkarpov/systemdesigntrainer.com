@@ -34,9 +34,7 @@ export class StreamingLimiterService implements OnModuleDestroy {
   private readonly MAX_GLOBAL_STREAMS = 50;
   private readonly STREAM_TTL = 300; // 5 minutes in seconds
 
-  constructor(
-    @Inject(REDIS_CONNECTION) private readonly redis: Redis,
-  ) {}
+  constructor(@Inject(REDIS_CONNECTION) private readonly redis: Redis) {}
 
   onModuleDestroy() {
     // Redis connection is managed by RedisModule, no cleanup needed here
@@ -112,7 +110,10 @@ export class StreamingLimiterService implements OnModuleDestroy {
    */
   async getMetrics() {
     const globalKey = 'stream:global';
-    const globalStreams = parseInt((await this.redis.get(globalKey)) || '0', 10);
+    const globalStreams = parseInt(
+      (await this.redis.get(globalKey)) || '0',
+      10,
+    );
 
     // Count active users by scanning for user stream keys
     const keys = await this.redis.keys('stream:user:*');
