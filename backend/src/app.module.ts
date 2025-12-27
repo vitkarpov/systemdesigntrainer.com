@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { BullModule } from '@nestjs/bull';
 import { APP_GUARD } from '@nestjs/core';
 import { join } from 'path';
 import { AppController } from './app.controller';
@@ -16,6 +17,13 @@ import { RedisModule } from './redis/redis.module';
     DatabaseModule,
     RedisModule,
     AuthModule,
+    // Bull Queue - Uses Redis for job processing
+    BullModule.forRoot({
+      redis: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+      },
+    }),
     InterviewModule,
     // Rate limiting: 100 requests per minute per IP
     ThrottlerModule.forRoot([

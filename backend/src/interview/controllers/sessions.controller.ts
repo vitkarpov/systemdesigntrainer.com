@@ -16,6 +16,8 @@ import {
   Req,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 import { Observable, from, concat, of } from 'rxjs';
 import { switchMap, catchError, finalize } from 'rxjs/operators';
 import { Request } from 'express';
@@ -51,8 +53,9 @@ import {
   GetPhasesResponseDto,
   AdvancePhaseResponseDto,
   RetryConversationDto,
-  GenerateFeedbackResponseDto,
   GetFeedbackResponseDto,
+  GetFeedbackStatusResponseDto,
+  StartFeedbackGenerationResponseDto,
   GetDashboardResponseDto,
   GetFailedMessagesResponseDto,
 } from '../dto/responses.dto';
@@ -82,6 +85,7 @@ export class SessionsController {
     private streamLimiter: StreamingLimiterService,
     private aiService: AiService,
     private promptService: PromptService,
+    @InjectQueue('feedback') private feedbackQueue: Queue,
   ) {}
 
   /**
@@ -888,28 +892,44 @@ export class SessionsController {
 
   /**
    * POST /api/sessions/:id/feedback
-   * Generate feedback report for a completed session
+   * Enqueue feedback generation job for a completed session
+   * Returns immediately with job ID for status polling
+   *
    * This endpoint:
-   * 1. Calculates scores based on detected signals and red flags
-   * 2. Generates strengths, weaknesses, and suggestions
-   * 3. Creates actionable next steps
-   * 4. Stores everything in the database
-   * 5. Returns the complete feedback report
+   * 1. Validates session ownership
+   * 2. Completes the session if not already completed
+   * 3. Enqueues a background job for feedback generation
+   * 4. Returns job ID for status checking
+   *
+   * Note: Feedback generation now happens asynchronously to avoid blocking HTTP requests
    */
   @Post(':id/feedback')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Generate feedback report' })
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: 'Start feedback generation (async)' })
   @ApiParam({ name: 'id', description: 'Session ID' })
   @ApiResponse({
-    status: 201,
-    description: 'Feedback generated',
-    type: GenerateFeedbackResponseDto,
+    status: 202,
+    description: 'Feedback generation job started',
+    type: StartFeedbackGenerationResponseDto,
   })
   async generateFeedback(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
   ) {
     await this.verifySessionOwnership(id, user.id);
+
+    // Check if feedback already exists
+    const existing = await this.feedbackService.getFeedback(id);
+    if (existing) {
+      return {
+        success: true,
+        message: 'Feedback already exists',
+        data: {
+          status: 'completed',
+          feedback: existing,
+        },
+      };
+    }
 
     // Complete the session (mark as terminal status)
     // If already completed, this will gracefully handle it
@@ -924,12 +944,117 @@ export class SessionsController {
       }
     }
 
-    const feedback = await this.feedbackService.generateFeedback(id);
+    // Enqueue feedback generation job
+    const job = await this.feedbackQueue.add(
+      'generate',
+      {
+        sessionId: id,
+        userId: user.id,
+      },
+      {
+        attempts: 3, // Retry up to 3 times on failure
+        backoff: {
+          type: 'exponential',
+          delay: 2000, // Start with 2 second delay, doubles each retry
+        },
+        removeOnComplete: 100, // Keep last 100 completed jobs
+        removeOnFail: 1000, // Keep last 1000 failed jobs for debugging
+      },
+    );
 
     return {
       success: true,
-      message: 'Feedback generated successfully',
-      data: feedback,
+      message: 'Feedback generation started',
+      data: {
+        jobId: job.id,
+        status: 'processing',
+        estimatedTime: '5-10 seconds',
+      },
+    };
+  }
+
+  /**
+   * GET /api/sessions/:id/feedback/status
+   * Check the status of feedback generation job
+   */
+  @Get(':id/feedback/status')
+  @ApiOperation({ summary: 'Get feedback generation status' })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Feedback status retrieved',
+    type: GetFeedbackStatusResponseDto,
+  })
+  async getFeedbackStatus(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.verifySessionOwnership(id, user.id);
+
+    // First, check if feedback already exists in the database
+    const feedback = await this.feedbackService.getFeedback(id);
+    if (feedback) {
+      return {
+        success: true,
+        data: {
+          status: 'completed',
+          feedback,
+        },
+      };
+    }
+
+    // Check for active jobs for this session
+    const jobs = await this.feedbackQueue.getJobs([
+      'active',
+      'waiting',
+      'delayed',
+    ]);
+    const activeJob = jobs.find((job) => job.data.sessionId === id);
+
+    if (!activeJob) {
+      // No active job and no feedback = not started
+      return {
+        success: true,
+        data: {
+          status: 'not_started',
+          message: 'Feedback generation has not been started',
+        },
+      };
+    }
+
+    // Check job status
+    const state = await activeJob.getState();
+    const progress = activeJob.progress();
+
+    if (state === 'completed') {
+      const result = activeJob.returnvalue;
+      return {
+        success: true,
+        data: {
+          status: 'completed',
+          feedback: result,
+        },
+      };
+    }
+
+    if (state === 'failed') {
+      return {
+        success: true,
+        data: {
+          status: 'failed',
+          error: activeJob.failedReason || 'Unknown error',
+          message: 'Feedback generation failed. You can try again.',
+        },
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        status: 'processing',
+        progress,
+        jobId: activeJob.id,
+      },
     };
   }
 

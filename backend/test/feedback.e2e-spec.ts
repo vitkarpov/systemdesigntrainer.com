@@ -68,8 +68,36 @@ describe('Feedback Generation (e2e)', () => {
       .where(eq(interviewSessions.id, sessionId));
   });
 
+  // Helper function to wait for feedback job completion
+  async function waitForFeedbackCompletion(
+    sessionId: number,
+    authToken: string,
+    maxAttempts = 20,
+  ): Promise<any> {
+    for (let i = 0; i < maxAttempts; i++) {
+      const statusResponse = await request(app.getHttpServer())
+        .get(`/api/sessions/${sessionId}/feedback/status`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      if (statusResponse.body.data.status === 'completed') {
+        return statusResponse.body.data.feedback;
+      }
+
+      if (statusResponse.body.data.status === 'failed') {
+        throw new Error(
+          `Feedback generation failed: ${statusResponse.body.data.error}`,
+        );
+      }
+
+      // Wait 500ms before next check
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    throw new Error('Feedback generation timed out');
+  }
+
   describe('POST /api/sessions/:id/feedback', () => {
-    it('should generate feedback report for completed session', async () => {
+    it('should start async feedback generation for completed session', async () => {
       // Add some signals to make feedback more meaningful
       const { db } = getTestDb();
       const { interviewSignals } = await import('../src/db/schema');
@@ -105,25 +133,32 @@ describe('Feedback Generation (e2e)', () => {
         },
       ]);
 
+      // Start feedback generation (async)
       const response = await request(app.getHttpServer())
         .post(`/api/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(201);
+        .expect(202);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('id');
-      expect(response.body.data).toHaveProperty('overallScore');
-      expect(response.body.data).toHaveProperty('requirementsScore');
-      expect(response.body.data).toHaveProperty('designScore');
-      expect(response.body.data).toHaveProperty('communicationScore');
-      expect(response.body.data).toHaveProperty('timeManagementScore');
-      expect(response.body.data).toHaveProperty('depthScore');
+      expect(response.body.data).toHaveProperty('jobId');
+      expect(response.body.data.status).toBe('processing');
+
+      // Wait for completion and verify feedback
+      const feedback = await waitForFeedbackCompletion(sessionId, authToken);
+
+      expect(feedback).toHaveProperty('id');
+      expect(feedback).toHaveProperty('overallScore');
+      expect(feedback).toHaveProperty('requirementsScore');
+      expect(feedback).toHaveProperty('designScore');
+      expect(feedback).toHaveProperty('communicationScore');
+      expect(feedback).toHaveProperty('timeManagementScore');
+      expect(feedback).toHaveProperty('depthScore');
 
       // Scores should be numbers between 0 and 100
-      expect(response.body.data.overallScore).toBeGreaterThanOrEqual(0);
-      expect(response.body.data.overallScore).toBeLessThanOrEqual(100);
-      expect(response.body.data.requirementsScore).toBeGreaterThanOrEqual(0);
-      expect(response.body.data.requirementsScore).toBeLessThanOrEqual(100);
+      expect(feedback.overallScore).toBeGreaterThanOrEqual(0);
+      expect(feedback.overallScore).toBeLessThanOrEqual(100);
+      expect(feedback.requirementsScore).toBeGreaterThanOrEqual(0);
+      expect(feedback.requirementsScore).toBeLessThanOrEqual(100);
     });
 
     it('should calculate higher scores with more positive signals', async () => {
@@ -204,15 +239,18 @@ describe('Feedback Generation (e2e)', () => {
         },
       ]);
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post(`/api/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(201);
+        .expect(202);
+
+      // Wait for completion
+      const feedback = await waitForFeedbackCompletion(sessionId, authToken);
 
       // With comprehensive signals, scores should be reasonably high
-      expect(response.body.data.overallScore).toBeGreaterThan(50);
-      expect(response.body.data.requirementsScore).toBeGreaterThan(50);
-      expect(response.body.data.designScore).toBeGreaterThan(50);
+      expect(feedback.overallScore).toBeGreaterThan(50);
+      expect(feedback.requirementsScore).toBeGreaterThan(50);
+      expect(feedback.designScore).toBeGreaterThan(50);
     });
 
     it('should penalize scores with red flags', async () => {
@@ -239,13 +277,16 @@ describe('Feedback Generation (e2e)', () => {
         },
       ]);
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post(`/api/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(201);
+        .expect(202);
+
+      // Wait for completion
+      const feedback = await waitForFeedbackCompletion(sessionId, authToken);
 
       // Scores should be lower with red flags
-      expect(response.body.data.requirementsScore).toBeLessThan(70);
+      expect(feedback.requirementsScore).toBeLessThan(70);
     });
 
     it('should auto-complete session and generate feedback for in-progress session', async () => {
@@ -260,10 +301,17 @@ describe('Feedback Generation (e2e)', () => {
       const response = await request(app.getHttpServer())
         .post(`/api/sessions/${inProgressSession.id}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(201);
+        .expect(202);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('overallScore');
+      expect(response.body.data).toHaveProperty('jobId');
+
+      // Wait for completion
+      const feedback = await waitForFeedbackCompletion(
+        inProgressSession.id,
+        authToken,
+      );
+      expect(feedback).toHaveProperty('overallScore');
     });
 
     it('should return 403 for unauthorized session access', async () => {
@@ -399,11 +447,16 @@ describe('Feedback Generation (e2e)', () => {
         },
       ]);
 
-      // Generate and retrieve feedback
+      // Generate feedback (async)
       await request(app.getHttpServer())
         .post(`/api/sessions/${sessionId}/feedback`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(202);
 
+      // Wait for completion
+      await waitForFeedbackCompletion(sessionId, authToken);
+
+      // Retrieve feedback
       const response = await request(app.getHttpServer())
         .get(`/api/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`);

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bull';
 import { InterviewSessionService } from './services/interview-session.service';
 import { InterviewCasesService } from './services/interview-cases.service';
 import { PhaseService } from './services/phase.service';
@@ -10,6 +11,7 @@ import { FeedbackService } from './services/feedback.service';
 import { DiagramService } from './services/diagram.service';
 import { ConversationSagaService } from './services/conversation-saga.service';
 import { StreamingLimiterService } from './services/streaming-limiter.service';
+import { FeedbackProcessor } from './processors/feedback.processor';
 import { SessionsController } from './controllers/sessions.controller';
 import { CasesController } from './controllers/cases.controller';
 import { DatabaseModule } from '../db/db.module';
@@ -26,7 +28,14 @@ import { AiModule } from '../ai/ai.module';
  * separate ConversationModule that acts as an adapter layer.
  */
 @Module({
-  imports: [DatabaseModule, AiModule],
+  imports: [
+    DatabaseModule,
+    AiModule,
+    // Register feedback queue
+    BullModule.registerQueue({
+      name: 'feedback',
+    }),
+  ],
   controllers: [SessionsController, CasesController],
   providers: [
     InterviewSessionService,
@@ -40,6 +49,7 @@ import { AiModule } from '../ai/ai.module';
     DiagramService,
     ConversationSagaService,
     StreamingLimiterService,
+    FeedbackProcessor,
   ],
   exports: [
     InterviewSessionService,
