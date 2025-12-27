@@ -1,11 +1,9 @@
+import type { FeedbackNextStepDto } from '@/api/hooks.gen';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface NextStep {
-  stepText: string;
-}
 
 interface NextStepsCardProps {
-  steps: NextStep[];
+  steps: FeedbackNextStepDto[];
 }
 
 export function NextStepsCard({ steps }: NextStepsCardProps) {
@@ -22,7 +20,7 @@ export function NextStepsCard({ steps }: NextStepsCardProps) {
       <CardContent className="space-y-3">
         {steps.map((step, idx) => (
           <div key={idx} className="p-4 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground">{step.stepText}</p>
+            <p className="text-sm text-muted-foreground">{step.description}</p>
           </div>
         ))}
       </CardContent>

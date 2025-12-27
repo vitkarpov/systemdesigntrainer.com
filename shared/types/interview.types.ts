@@ -292,7 +292,7 @@ export interface FeedbackItem {
 export interface FeedbackNextStep {
   id: number;
   reportId: number;
-  stepText: string;
+  description: string;
   priority: number;
   createdAt: Date;
 }

@@ -364,7 +364,7 @@ export class FeedbackNextStepDto {
   reportId: number;
 
   @ApiProperty()
-  stepText: string;
+  description: string;
 
   @ApiProperty()
   priority: number;
