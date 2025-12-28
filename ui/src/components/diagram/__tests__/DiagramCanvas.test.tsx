@@ -7,12 +7,28 @@ import type { Node, Edge } from '@xyflow/react'
 
 // Mock ReactFlow components
 vi.mock('@xyflow/react', () => ({
-  ReactFlow: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="react-flow">{children}</div>
-  ),
+  ReactFlow: (props: any) => {
+    // Extract only serializable props for testing
+    const testableProps = {
+      defaultEdgeOptions: props.defaultEdgeOptions,
+      onDrop: props.onDrop ? 'function' : undefined,
+      onDragOver: props.onDragOver ? 'function' : undefined,
+    }
+    return (
+      <div data-testid="react-flow" data-props={JSON.stringify(testableProps)}>
+        {props.children}
+      </div>
+    )
+  },
   Background: () => <div data-testid="background" />,
   Controls: () => <div data-testid="controls" />,
   MiniMap: () => <div data-testid="minimap" />,
+  Position: {
+    Top: 'top',
+    Bottom: 'bottom',
+    Left: 'left',
+    Right: 'right',
+  },
 }))
 
 // Mock ComponentPalette
@@ -332,6 +348,68 @@ describe('DiagramCanvas', () => {
 
       // Component palette should show (since default is not read-only)
       expect(screen.getByTestId('component-palette')).toBeInTheDocument()
+    })
+  })
+
+  describe('Visual Regression Prevention', () => {
+    it('should configure default edge options to ensure edges are visible', () => {
+      renderWithProviders(
+        <DiagramCanvas
+          sessionId={sessionId}
+          isReadOnly={false}
+          sessionStatus="in_progress"
+        />
+      )
+
+      const reactFlow = screen.getByTestId('react-flow')
+      const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
+
+      // Verify defaultEdgeOptions are configured
+      expect(props.defaultEdgeOptions).toBeDefined()
+      expect(props.defaultEdgeOptions.style).toBeDefined()
+      expect(props.defaultEdgeOptions.style.stroke).toBe('#333333')
+      expect(props.defaultEdgeOptions.style.strokeWidth).toBe(2)
+      expect(props.defaultEdgeOptions.type).toBe('default')
+    })
+
+    it('should place drag and drop handlers on parent wrapper, not on ReactFlow', () => {
+      renderWithProviders(
+        <DiagramCanvas
+          sessionId={sessionId}
+          isReadOnly={false}
+          sessionStatus="in_progress"
+        />
+      )
+
+      const reactFlow = screen.getByTestId('react-flow')
+      const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
+
+      // ReactFlow should NOT have onDrop and onDragOver handlers
+      expect(props.onDrop).toBeUndefined()
+      expect(props.onDragOver).toBeUndefined()
+
+      // The parent wrapper div should have the handlers
+      const wrapper = reactFlow.parentElement
+      expect(wrapper).toBeTruthy()
+      // Note: Testing actual event handlers requires integration tests,
+      // but we verify they're not on ReactFlow itself which was the bug
+    })
+
+    it('should not add drag and drop handlers in read-only mode', () => {
+      renderWithProviders(
+        <DiagramCanvas
+          sessionId={sessionId}
+          isReadOnly={true}
+          sessionStatus="in_progress"
+        />
+      )
+
+      const reactFlow = screen.getByTestId('react-flow')
+      const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
+
+      // ReactFlow should NOT have onDrop and onDragOver handlers in read-only mode
+      expect(props.onDrop).toBeUndefined()
+      expect(props.onDragOver).toBeUndefined()
     })
   })
 })

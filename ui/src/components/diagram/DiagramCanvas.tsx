@@ -127,7 +127,11 @@ export function DiagramCanvas({
   return (
     <div className="flex h-full relative" ref={reactFlowWrapper}>
       {!isReadOnly && <ComponentPalette />}
-      <div className="flex-1 relative">
+      <div
+        className="flex-1 relative"
+        onDrop={isReadOnly ? undefined : onDrop}
+        onDragOver={isReadOnly ? undefined : onDragOver}
+      >
         {!isReadOnly && (
           <div className="absolute top-4 right-4 z-10 bg-card/95 backdrop-blur-sm px-3 py-2 rounded-md border border-border shadow-sm">
             <SaveIndicator status={saveStatus} />
@@ -148,9 +152,11 @@ export function DiagramCanvas({
           }
           onConnect={isReadOnly ? undefined : onConnect}
           onInit={(instance) => useDiagramStore.getState().setReactFlowInstance(sessionId, instance)}
-          onDrop={isReadOnly ? undefined : onDrop}
-          onDragOver={isReadOnly ? undefined : onDragOver}
           nodeTypes={nodeTypes}
+          defaultEdgeOptions={{
+            style: { stroke: '#333333', strokeWidth: 2 },
+            type: 'default',
+          }}
           fitView
           nodesDraggable={!isReadOnly}
           nodesConnectable={!isReadOnly}

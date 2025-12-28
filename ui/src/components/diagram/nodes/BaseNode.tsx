@@ -25,7 +25,7 @@ export const BaseNode = memo(({ data, isConnectable, selected }: NodeProps<BaseN
         type="target"
         position={Position.Top}
         isConnectable={isConnectable}
-        className="w-3 h-3 border-2 border-background"
+        className="w-3 h-3 border-2 border-background !bg-primary"
       />
       <div className="flex flex-col items-center justify-center h-full gap-2">
         {Icon && <Icon className="w-7 h-7 text-primary" />}
@@ -37,7 +37,7 @@ export const BaseNode = memo(({ data, isConnectable, selected }: NodeProps<BaseN
         type="source"
         position={Position.Bottom}
         isConnectable={isConnectable}
-        className="w-3 h-3 border-2 border-background"
+        className="w-3 h-3 border-2 border-background !bg-primary"
       />
     </div>
   );
