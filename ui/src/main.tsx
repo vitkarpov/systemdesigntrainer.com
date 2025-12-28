@@ -1,3 +1,12 @@
+import * as Sentry from "@sentry/react";
+
+if (import.meta.env.PROD) {
+  Sentry.init({
+    dsn: "https://7ab342feb99b15de49cec223fe44b584@o4510612969881600.ingest.de.sentry.io/4510613028339792",
+    sendDefaultPii: true
+  });
+}
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
