@@ -43,6 +43,7 @@
     "@nestjs/serve-static": "^5.0.4",
     "@nestjs/swagger": "^11.2.3",
     "@nestjs/throttler": "^6.5.0",
+    "@sentry/nestjs": "^10.32.1",
     "@workos-inc/node": "^7.77.0",
     "bull": "^4.16.5",
     "class-transformer": "^0.5.1",
