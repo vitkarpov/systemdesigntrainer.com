@@ -24,4 +24,7 @@ if (!process.env.JWT_SECRET) {
 // Close database connection after all tests
 afterAll(async () => {
   await closeTestDb();
+
+  // Give async operations time to complete
+  await new Promise((resolve) => setTimeout(resolve, 500));
 });

@@ -39,6 +39,28 @@ export async function cleanDatabase() {
 }
 
 /**
+ * Clean Bull queue jobs
+ * Call this before cleanDatabase to prevent race conditions with background jobs
+ */
+export async function cleanQueue(queue: any) {
+  if (!queue) return;
+
+  try {
+    // Remove all jobs from the queue
+    await queue.empty();
+    // Clean completed and failed jobs
+    await queue.clean(0, 'completed');
+    await queue.clean(0, 'failed');
+    await queue.clean(0, 'active');
+    await queue.clean(0, 'delayed');
+    await queue.clean(0, 'wait');
+  } catch (error) {
+    // Queue might not exist or be initialized, ignore errors
+    console.warn('Failed to clean queue:', error.message);
+  }
+}
+
+/**
  * Seed minimal test data for tests
  */
 export async function seedTestData() {

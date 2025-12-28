@@ -4,6 +4,7 @@ import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import {
   cleanDatabase,
+  cleanQueue,
   seedTestData,
   generateTestToken,
   createTestSession,
@@ -11,6 +12,8 @@ import {
 import { getTestDb } from '../src/db/test-db';
 import { DATABASE_CONNECTION, DATABASE_POOL } from '../src/db/db.module';
 import { eq } from 'drizzle-orm';
+import { getQueueToken } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 describe('Feedback Generation (e2e)', () => {
   let app: INestApplication;
@@ -18,6 +21,7 @@ describe('Feedback Generation (e2e)', () => {
   let testCaseId: number;
   let authToken: string;
   let sessionId: number;
+  let feedbackQueue: Queue;
 
   beforeAll(async () => {
     const { db, pool } = getTestDb();
@@ -33,6 +37,9 @@ describe('Feedback Generation (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+
+    // Get the feedback queue
+    feedbackQueue = app.get<Queue>(getQueueToken('feedback'));
   });
 
   afterAll(async () => {
@@ -40,6 +47,8 @@ describe('Feedback Generation (e2e)', () => {
   });
 
   beforeEach(async () => {
+    // Clean queue BEFORE cleaning database to prevent race conditions
+    await cleanQueue(feedbackQueue);
     await cleanDatabase();
     const { testUser, testCase } = await seedTestData();
     testUserId = testUser.id;
@@ -358,6 +367,9 @@ describe('Feedback Generation (e2e)', () => {
         .post(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`);
 
+      // Wait for feedback generation to complete
+      await waitForFeedbackCompletion(sessionId, authToken);
+
       // Then retrieve it
       const response = await request(app.getHttpServer())
         .get(`/sessions/${sessionId}/feedback`)
@@ -380,11 +392,18 @@ describe('Feedback Generation (e2e)', () => {
       expect(Array.isArray(response.body.data.nextSteps)).toBe(true);
     });
 
-    it('should return 404 when feedback does not exist', () => {
-      return request(app.getHttpServer())
+    it('should return null when feedback does not exist', async () => {
+      // Clean queue to make sure no feedback job is running
+      await cleanQueue(feedbackQueue);
+
+      const response = await request(app.getHttpServer())
         .get(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(404);
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toBeNull();
+      expect(response.body.message).toBe('Feedback not generated yet');
     });
 
     it('should return 403 for unauthorized session access', async () => {
