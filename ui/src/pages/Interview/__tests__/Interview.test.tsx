@@ -60,8 +60,13 @@ vi.mock('sonner', () => ({
 
 // Mock DiagramCanvas
 vi.mock('../../../components/diagram/DiagramCanvas', () => ({
-  DiagramCanvas: ({ sessionId, isReadOnly }: any) => (
-    <div data-testid="diagram-canvas" data-readonly={isReadOnly} data-session-id={sessionId}>
+  DiagramCanvas: ({ sessionId, isReadOnly, sessionStatus }: any) => (
+    <div
+      data-testid="diagram-canvas"
+      data-readonly={isReadOnly}
+      data-session-id={sessionId}
+      data-session-status={sessionStatus}
+    >
       Diagram Canvas
     </div>
   ),
@@ -172,6 +177,27 @@ describe('Interview Page', () => {
       // Check layout classes (w-1/2 for both)
       const diagramContainer = diagramCanvas.parentElement
       expect(diagramContainer).toHaveClass('w-1/2')
+    })
+
+    it('should pass sessionStatus prop to DiagramCanvas for in_progress session', () => {
+      renderWithProviders(<Interview />, { queryClient })
+
+      const diagramCanvas = screen.getByTestId('diagram-canvas')
+      expect(diagramCanvas).toHaveAttribute('data-session-status', 'in_progress')
+    })
+
+    it('should pass sessionStatus prop to DiagramCanvas for completed session', () => {
+      mockUseSessionsControllerGetSession.mockReturnValue({
+        ...mocks.mockSessionQuery,
+        data: createMockSession({
+          session: { status: 'completed' },
+        }),
+      })
+
+      renderWithProviders(<Interview />, { queryClient })
+
+      const diagramCanvas = screen.getByTestId('diagram-canvas')
+      expect(diagramCanvas).toHaveAttribute('data-session-status', 'completed')
     })
 
     it('should poll session data when status is in_progress', () => {
