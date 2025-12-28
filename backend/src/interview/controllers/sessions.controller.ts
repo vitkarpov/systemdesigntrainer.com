@@ -41,6 +41,7 @@ import { ConversationSagaService } from '../services/conversation-saga.service';
 import { StreamingLimiterService } from '../services/streaming-limiter.service';
 import { AiService } from '../../ai/services/ai.service';
 import { PromptService } from '../../ai/services/prompt.service';
+import { PaymentGuardService } from '../../auth/services/payment-guard.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
 import {
   CreateSessionResponseDto,
@@ -85,6 +86,7 @@ export class SessionsController {
     private streamLimiter: StreamingLimiterService,
     private aiService: AiService,
     private promptService: PromptService,
+    private paymentGuard: PaymentGuardService,
     @InjectQueue('feedback') private feedbackQueue: Queue,
   ) {}
 
@@ -378,6 +380,10 @@ export class SessionsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     await this.verifySessionOwnership(id, user.id);
+
+    // Check if user has available interviews before starting
+    await this.paymentGuard.checkCanStartInterview(user.id);
+
     const session = await this.sessionService.startSession(id);
 
     // Fetch interview case data
@@ -407,6 +413,9 @@ export class SessionsController {
       phase: session.currentPhase as InterviewPhase,
       secondsElapsed: elapsedSeconds,
     });
+
+    // Consume one interview credit (unless user has unlimited subscription)
+    await this.paymentGuard.consumeInterview(user.id);
 
     return {
       success: true,

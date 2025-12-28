@@ -8,6 +8,7 @@ import { DatabaseModule } from './db/db.module';
 import { InterviewModule } from './interview/interview.module';
 import { AuthModule } from './auth/auth.module';
 import { RedisModule } from './redis/redis.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { RedisModule } from './redis/redis.module';
       },
     }),
     InterviewModule,
+    PaymentsModule,
     // Rate limiting: 100 requests per minute per IP
     ThrottlerModule.forRoot([
       {

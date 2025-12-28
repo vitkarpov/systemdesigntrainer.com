@@ -13,10 +13,12 @@ import {
   feedbackNextSteps,
 } from './feedback.schema';
 import { diagramSnapshots } from './diagrams.schema';
+import { purchases } from './purchases.schema';
 
 // User relations
 export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(interviewSessions),
+  purchases: many(purchases),
 }));
 
 // Interview case relations
@@ -122,3 +124,11 @@ export const diagramSnapshotsRelations = relations(
     }),
   }),
 );
+
+// Purchase relations
+export const purchasesRelations = relations(purchases, ({ one }) => ({
+  user: one(users, {
+    fields: [purchases.userId],
+    references: [users.id],
+  }),
+}));

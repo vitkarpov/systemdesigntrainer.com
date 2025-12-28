@@ -3,6 +3,8 @@ import Home from './pages/Home/Home';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Interview from './pages/Interview/Interview';
 import Feedback from './pages/Feedback/Feedback';
+import Pricing from './pages/Pricing/Pricing';
+import PaymentSuccess from './pages/Payment/Success';
 import Login from './pages/Auth/Login';
 import Callback from './pages/Auth/Callback';
 import AuthError from './pages/Auth/Error';
@@ -45,6 +47,22 @@ function App() {
           element={
             <ProtectedRoute>
               <Feedback />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pricing"
+          element={
+            <ProtectedRoute>
+              <Pricing />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment/success"
+          element={
+            <ProtectedRoute>
+              <PaymentSuccess />
             </ProtectedRoute>
           }
         />

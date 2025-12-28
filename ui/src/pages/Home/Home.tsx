@@ -4,10 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/PageHeader';
 import { UserMenu } from '@/components/UserMenu';
+import { InterviewCounter } from '@/components/InterviewCounter';
+import { PaywallModal } from '@/components/PaywallModal';
 import {
   useCasesControllerGetAllCases,
   useSessionsControllerCreateSession,
   useSessionsControllerStartSession,
+  useAuthControllerGetUser,
   type InterviewCaseDto,
 } from '@/api/hooks.gen';
 
@@ -15,7 +18,9 @@ export default function Home() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [selectedCase, setSelectedCase] = useState<InterviewCaseDto | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
 
+  const { data: user } = useAuthControllerGetUser();
   const { data: cases = [], isLoading: isLoadingCases, error: casesError } = useCasesControllerGetAllCases();
   const createSessionMutation = useSessionsControllerCreateSession();
   const startSessionMutation = useSessionsControllerStartSession();
@@ -38,6 +43,12 @@ export default function Home() {
       return;
     }
 
+    // Check if user has interviews remaining
+    if (user?.subscriptionStatus !== 'unlimited' && (!user?.interviewsRemaining || user.interviewsRemaining <= 0)) {
+      setShowPaywall(true);
+      return;
+    }
+
     setError(null);
 
     try {
@@ -56,7 +67,14 @@ export default function Home() {
       navigate(`/interview/${sessionResponse.data.session.id}`);
     } catch (err) {
       console.error('Failed to start interview:', err);
-      setError('Failed to start interview. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start interview. Please try again.';
+
+      // Check if error is about no interviews remaining
+      if (errorMessage.includes('no interviews remaining') || errorMessage.includes('403')) {
+        setShowPaywall(true);
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 
@@ -66,7 +84,12 @@ export default function Home() {
         title="SD Interview Simulator"
         backLabel="Back to Dashboard"
         onBack={() => navigate('/')}
-        rightContent={<UserMenu />}
+        rightContent={
+          <div className="flex items-center gap-3">
+            <InterviewCounter />
+            <UserMenu />
+          </div>
+        }
       />
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-3.5rem)]">
         <Card className="w-full max-w-2xl">
@@ -119,6 +142,8 @@ export default function Home() {
           </CardContent>
         </Card>
       </div>
+
+      <PaywallModal open={showPaywall} onOpenChange={setShowPaywall} />
     </div>
   );
 }

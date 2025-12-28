@@ -12,7 +12,9 @@ import * as path from 'path';
 import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true, // Enable raw body for webhook signature verification
+  });
 
   // Enable global validation
   app.useGlobalPipes(

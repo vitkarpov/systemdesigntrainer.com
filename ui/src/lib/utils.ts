@@ -11,9 +11,21 @@ export function formatElapsedTime(seconds: number): string {
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
-export function parseErrorMessage(error: unknown, fallback: string): string {
-  if (error && typeof error === "object" && "message" in error) {
-    return error.message as string;
+export function parseErrorMessage(error: Error, fallback: string): string {
+  if (!error.message) {
+    return fallback;
   }
-  return fallback;
+
+  // Try to parse the error message as JSON
+  try {
+    const parsed = JSON.parse(error.message);
+    // If it's an object with a message field, use that
+    if (parsed && typeof parsed === "object" && "message" in parsed) {
+      return parsed.message;
+    }
+  } catch {
+    // If parsing fails, just return the original message
+  }
+
+  return error.message;
 }

@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/PageHeader';
+import { InterviewCounter } from '@/components/InterviewCounter';
 import { useSessionsControllerGetDashboard } from '@/api/hooks.gen';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -34,9 +35,12 @@ export default function Dashboard() {
       <PageHeader
         title="SD Interview Simulator"
         rightContent={
-          <Button onClick={() => navigate('/home')}>
-            New Interview
-          </Button>
+          <div className="flex items-center gap-3">
+            <InterviewCounter />
+            <Button onClick={() => navigate('/home')}>
+              New Interview
+            </Button>
+          </div>
         }
       />
       <div className="max-w-6xl mx-auto p-6 space-y-6">

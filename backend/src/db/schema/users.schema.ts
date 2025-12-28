@@ -30,6 +30,7 @@ export const users = pgTable(
       .default('free'),
     subscriptionExpiresAt: timestamp('subscription_expires_at'),
     stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+    stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
 
     // Usage tracking
     interviewsCompleted: integer('interviews_completed').notNull().default(0),
