@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import { Button } from './ui/button';
+import { UserMenu } from './UserMenu';
 import type { ReactNode } from 'react';
 
 interface PageHeaderProps {
@@ -18,8 +19,8 @@ export function PageHeader({
   centerContent,
 }: PageHeaderProps) {
   return (
-    <div className="border-b px-6 py-4 bg-card space-y-3 h-19">
-      <div className="flex items-center max-w-6xl mx-auto px-6">
+    <div className="border-b p-4 bg-card space-y-3 h-19">
+      <div className="flex items-center max-w-6xl mx-auto">
         <div className="flex items-center gap-3 flex-1">
           {backLabel && onBack && <Button
             variant="ghost"
@@ -36,6 +37,7 @@ export function PageHeader({
         </div>
         <div className="flex items-center gap-3">
           {rightContent}
+          <UserMenu />
         </div>
       </div>
     </div>

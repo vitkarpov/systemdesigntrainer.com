@@ -228,7 +228,6 @@ export default function Interview() {
                   </Button>
                 )}
                 <Button
-                  variant="destructive"
                   size="sm"
                   onClick={handleEndInterview}
                   disabled={generateFeedbackMutation.isPending}

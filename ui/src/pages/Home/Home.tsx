@@ -93,12 +93,11 @@ export default function Home() {
         rightContent={
           <div className="flex items-center gap-3">
             <InterviewCounter />
-            <UserMenu />
           </div>
         }
       />
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-3.5rem)]">
-        <Card className="w-full max-w-2xl">
+        <Card className="w-full max-w-6xl">
           <CardHeader className="text-center">
             <CardTitle className="text-4xl mb-2">System Design Interview Simulator</CardTitle>
             <CardDescription className="text-lg">
@@ -107,16 +106,50 @@ export default function Home() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
-              {selectedCase && (
-                <div className="bg-muted rounded-lg p-4">
-                  <h3 className="font-semibold mb-2">
-                    Current Case: {selectedCase.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedCase.description}
-                  </p>
-                </div>
-              )}
+              <div>
+                <h3 className="font-semibold mb-3">Select an Interview Case:</h3>
+                {isLoadingCases ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Loading interview cases...
+                  </div>
+                ) : cases.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No interview cases available
+                  </div>
+                ) : (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {cases.map((interviewCase) => (
+                      <button
+                        key={interviewCase.id}
+                        onClick={() => setSelectedCase(interviewCase)}
+                        className={`text-left p-4 rounded-lg border-2 transition-all hover:shadow-md ${
+                          selectedCase?.id === interviewCase.id
+                            ? 'border-primary bg-primary/5'
+                            : 'border-muted bg-muted hover:border-muted-foreground/50'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h4 className="font-semibold">{interviewCase.title}</h4>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap ${
+                              interviewCase.difficulty === 'easy'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : interviewCase.difficulty === 'medium'
+                                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            }`}
+                          >
+                            {interviewCase.difficulty}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {interviewCase.description}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div className="bg-muted rounded-lg p-4">
                 <h3 className="font-semibold mb-2">Interview Format:</h3>

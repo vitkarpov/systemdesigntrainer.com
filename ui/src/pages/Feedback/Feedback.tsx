@@ -60,14 +60,14 @@ export default function Feedback() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 space-y-6">
       <PageHeader
         title="Interview Feedback"
         backLabel="Back to Dashboard"
         onBack={handleBackToHome}
         rightContent={<Button onClick={handleBackToHome}>New Interview</Button>}
       />
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         <OverallScoreCard score={completedFeedback.overallScore} />
 
         <ScoreBreakdownCard
