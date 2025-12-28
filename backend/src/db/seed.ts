@@ -72,7 +72,7 @@ async function seed() {
   const urlShortenerCase = existingCases[0];
   console.log(`✓ Using case: ${urlShortenerCase.title}`);
 
-  // Create an interview session in progress at the last stage
+  // Create an interview session in progress at the high-level phase
   const [session] = await db
     .insert(interviewSessions)
     .values({
@@ -81,7 +81,7 @@ async function seed() {
       status: 'in_progress',
       startedAt: new Date(Date.now() - 30 * 60 * 1000), // Started 30 minutes ago
       completedAt: null,
-      currentPhase: 'deep_dive',
+      currentPhase: 'high_level',
       phaseStartedAt: new Date(Date.now() - 10 * 60 * 1000),
       companyStyle: 'faang',
       level: 'mid',
@@ -90,7 +90,7 @@ async function seed() {
 
   console.log(`Created interview session: ${session.id}`);
 
-  // Create transcript messages (interview conversation)
+  // Create transcript messages (interview conversation up to high_level phase)
   const messages = [
     {
       sessionId: session.id,
@@ -156,38 +156,6 @@ async function seed() {
       phase: 'high_level',
       secondsElapsed: 380,
     },
-    {
-      sessionId: session.id,
-      role: 'interviewer',
-      text: 'Good. How would you generate the short codes?',
-      status: 'completed',
-      phase: 'deep_dive',
-      secondsElapsed: 420,
-    },
-    {
-      sessionId: session.id,
-      role: 'candidate',
-      text: "For short code generation, I'd use base62 encoding (alphanumeric characters). We have a few options here with tradeoffs: Option 1 is using an auto-incrementing ID and encoding it to base62 - this is simple and guarantees uniqueness, but it's predictable. Option 2 is using a hash function like MD5 and taking the first N characters - this is unpredictable but could have collisions. Option 3 is generating random strings and checking for collisions. I'd go with Option 1 (auto-increment + base62) for simplicity and guaranteed uniqueness, which gives us 62^7 = 3.5 trillion possible URLs with a 7-character code.",
-      status: 'completed',
-      phase: 'deep_dive',
-      secondsElapsed: 520,
-    },
-    {
-      sessionId: session.id,
-      role: 'interviewer',
-      text: 'Great analysis of tradeoffs. How would you handle the scale you mentioned earlier?',
-      status: 'completed',
-      phase: 'deep_dive',
-      secondsElapsed: 550,
-    },
-    {
-      sessionId: session.id,
-      role: 'candidate',
-      text: "For scalability: With 100 million URLs per month, that's about 40 shortening requests per second, and with a 100:1 read ratio, we'd have 4000 redirect requests per second. To handle this scale, we'd horizontally scale the API servers behind a load balancer. The database could be scaled with read replicas for the high read load. Redis caching is crucial here - we'd cache the most frequently accessed URLs, which would handle the majority of traffic. For potential bottlenecks, the database write could become a bottleneck, so we might need to implement database sharding based on short_code ranges if we grow significantly larger.",
-      status: 'completed',
-      phase: 'deep_dive',
-      secondsElapsed: 680,
-    },
   ];
 
   const insertedMessages = await Promise.all(
@@ -198,7 +166,7 @@ async function seed() {
 
   console.log(`Created ${insertedMessages.length} transcript messages`);
 
-  // Create interview signals (positive indicators)
+  // Create interview signals (positive indicators for high_level phase)
   const signals = [
     {
       sessionId: session.id,
@@ -223,13 +191,6 @@ async function seed() {
     },
     {
       sessionId: session.id,
-      signalName: 'mentioned_scale',
-      phase: 'deep_dive',
-      secondsElapsed: 680,
-      triggeredByMessageId: insertedMessages[11][0].id,
-    },
-    {
-      sessionId: session.id,
       signalName: 'proposed_api',
       phase: 'high_level',
       secondsElapsed: 300,
@@ -251,20 +212,6 @@ async function seed() {
     },
     {
       sessionId: session.id,
-      signalName: 'addressed_bottlenecks',
-      phase: 'deep_dive',
-      secondsElapsed: 680,
-      triggeredByMessageId: insertedMessages[11][0].id,
-    },
-    {
-      sessionId: session.id,
-      signalName: 'discussed_tradeoffs',
-      phase: 'deep_dive',
-      secondsElapsed: 520,
-      triggeredByMessageId: insertedMessages[9][0].id,
-    },
-    {
-      sessionId: session.id,
       signalName: 'structured_approach',
       phase: 'requirements',
       secondsElapsed: 30,
@@ -282,9 +229,105 @@ async function seed() {
   await db.insert(interviewSignals).values(signals);
   console.log(`✓ Created ${signals.length} interview signals`);
 
+  // Create diagram snapshot and elements for URL shortener
+  const [diagramSnapshot] = await db
+    .insert(diagramSnapshots)
+    .values({
+      sessionId: session.id,
+      phase: 'high_level',
+      secondsElapsed: 300,
+      snapshotAt: new Date(Date.now() - 8 * 60 * 1000), // Created 8 minutes ago
+      createdAt: new Date(Date.now() - 8 * 60 * 1000),
+    })
+    .returning();
+
+  console.log(`✓ Created diagram snapshot: ${diagramSnapshot.id}`);
+
+  // Create diagram data for a high-level URL shortener architecture
+  // The DiagramService stores all nodes and edges as JSON in a single element
+  const nodes = [
+    {
+      id: 'client',
+      type: 'box',
+      position: { x: 100, y: 100 },
+      data: { label: 'Client' },
+      width: 120,
+      height: 60,
+    },
+    {
+      id: 'load-balancer',
+      type: 'box',
+      position: { x: 300, y: 100 },
+      data: { label: 'Load Balancer' },
+      width: 140,
+      height: 60,
+    },
+    {
+      id: 'api-servers',
+      type: 'box',
+      position: { x: 500, y: 100 },
+      data: { label: 'API Servers\nPOST /shorten\nGET /{code}' },
+      width: 150,
+      height: 80,
+    },
+    {
+      id: 'redis',
+      type: 'box',
+      position: { x: 700, y: 50 },
+      data: { label: 'Redis Cache' },
+      width: 130,
+      height: 60,
+    },
+    {
+      id: 'postgres',
+      type: 'box',
+      position: { x: 700, y: 150 },
+      data: { label: 'PostgreSQL\nURLs table' },
+      width: 130,
+      height: 70,
+    },
+  ];
+
+  const edges = [
+    {
+      id: 'edge-1',
+      source: 'client',
+      target: 'load-balancer',
+      label: 'HTTP',
+    },
+    {
+      id: 'edge-2',
+      source: 'load-balancer',
+      target: 'api-servers',
+      label: '',
+    },
+    {
+      id: 'edge-3',
+      source: 'api-servers',
+      target: 'redis',
+      label: 'Check cache',
+    },
+    {
+      id: 'edge-4',
+      source: 'api-servers',
+      target: 'postgres',
+      label: 'Read/Write',
+    },
+  ];
+
+  // Store as a single element with diagram_data type
+  await db.insert(diagramElements).values({
+    snapshotId: diagramSnapshot.id,
+    elementType: 'diagram_data',
+    label: JSON.stringify({ nodes, edges }),
+  });
+
+  console.log(`✓ Created diagram with ${nodes.length} nodes and ${edges.length} edges`);
+
   console.log('\n✅ Development seed completed!');
   console.log(`\nTest User: ${testUser.email}`);
-  console.log(`Interview Session: ${session.id} (in_progress at 'deep_dive' phase)`);
+  console.log(`Interview Session: ${session.id} (in_progress at 'high_level' phase)`);
+  console.log(`Diagram Snapshot: ${diagramSnapshot.id} (with ${nodes.length} nodes and ${edges.length} edges)`);
   console.log(
     `\nYou can now use the app with this test data or continue the interview in the UI.`,
   );
