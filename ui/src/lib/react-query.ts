@@ -21,6 +21,14 @@ export const queryClient = new QueryClient({
   },
   queryCache: new QueryCache({
     onError: (error, query) => {
+      const isAuthError = error instanceof Error &&
+        error.message.includes('Unauthorized');
+
+      if (isAuthError) {
+        console.warn('Unauthorized error:', error.message);
+        return;
+      }
+
       console.error("Query error:", error, "Query key:", query.queryKey);
     },
   }),

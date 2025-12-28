@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const loading = isLoading;
 
   const login = () => {
-    window.location.href = `${API_URL}/api/auth/login`;
+    window.location.href = `${API_URL}/auth/login`;
   };
 
   const logout = async () => {
