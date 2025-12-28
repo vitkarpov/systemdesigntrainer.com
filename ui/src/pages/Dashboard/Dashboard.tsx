@@ -33,7 +33,6 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       <PageHeader
         title="SD Interview Simulator"
-        onBack={() => navigate('/')}
         rightContent={
           <Button onClick={() => navigate('/home')}>
             New Interview

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 interface PageHeaderProps {
   title: string;
-  onBack: () => void;
+  onBack?: () => void;
   backLabel?: string;
   rightContent?: ReactNode;
   centerContent?: ReactNode;
@@ -21,7 +21,7 @@ export function PageHeader({
     <div className="border-b px-6 py-4 bg-card space-y-3 h-19">
       <div className="flex items-center max-w-6xl mx-auto px-6">
         <div className="flex items-center gap-3 flex-1">
-          {backLabel && <Button
+          {backLabel && onBack && <Button
             variant="ghost"
               size="sm"
               onClick={onBack}
