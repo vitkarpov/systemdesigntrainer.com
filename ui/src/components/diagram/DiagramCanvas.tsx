@@ -40,11 +40,13 @@ const EMPTY_EDGES: Edge[] = [];
 interface DiagramCanvasProps {
   sessionId: number;
   isReadOnly?: boolean;
+  sessionStatus?: 'in_progress' | 'completed';
 }
 
 export function DiagramCanvas({
   sessionId,
   isReadOnly = false,
+  sessionStatus = 'in_progress',
 }: DiagramCanvasProps) {
   const nodes = useDiagramStore((state) => state.getDiagram(sessionId)?.nodes ?? EMPTY_NODES);
   const edges = useDiagramStore((state) => state.getDiagram(sessionId)?.edges ?? EMPTY_EDGES);
@@ -160,8 +162,8 @@ export function DiagramCanvas({
           {!isReadOnly && <MiniMap className="bg-card border-border" />}
         </ReactFlow>
 
-        {/* Empty State Overlay - shown when diagram is locked and empty */}
-        {isReadOnly && nodes.length === 0 && (
+        {/* Empty State Overlay - shown when diagram is locked and empty during active session */}
+        {isReadOnly && nodes.length === 0 && sessionStatus === 'in_progress' && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-20 pointer-events-none">
             <div className="text-center space-y-4 max-w-md px-6">
               <div className="flex justify-center">

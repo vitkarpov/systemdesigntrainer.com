@@ -261,6 +261,7 @@ export default function Interview() {
           <DiagramCanvas
             sessionId={sessionIdNum}
             isReadOnly={!isHighLevelPhase}
+            sessionStatus={sessionStatus}
           />
         </div>
 
