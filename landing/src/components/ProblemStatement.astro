@@ -1,0 +1,72 @@
+---
+import { Clock, Shuffle, DollarSign, HelpCircle } from 'lucide-react';
+---
+
+<section class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Heading -->
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 mb-4">
+        Why Do Smart Engineers Fail System Design Interviews?
+      </h2>
+      <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+        It's not about lacking technical knowledge—it's about interview execution
+      </p>
+    </div>
+
+    <!-- Problem Cards -->
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Card 1: Panic Under Pressure -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 hover:border-blue-300 transition-all hover:shadow-xl group">
+        <div class="w-12 h-12 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4 group-hover:bg-blue-600/20 transition-colors">
+          <Clock client:load className="w-6 h-6 text-blue-500" />
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900 mb-2">
+          Panic Under Pressure
+        </h3>
+        <p class="text-sm text-slate-600">
+          You know the concepts but freeze during the 45-minute window
+        </p>
+      </div>
+
+      <!-- Card 2: No Structure -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 hover:border-blue-300 transition-all hover:shadow-xl group">
+        <div class="w-12 h-12 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4 group-hover:bg-blue-600/20 transition-colors">
+          <Shuffle client:load className="w-6 h-6 text-blue-500" />
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900 mb-2">
+          No Structure
+        </h3>
+        <p class="text-sm text-slate-600">
+          Jump straight to code without gathering requirements or discussing trade-offs
+        </p>
+      </div>
+
+      <!-- Card 3: No Real Practice -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 hover:border-blue-300 transition-all hover:shadow-xl group">
+        <div class="w-12 h-12 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4 group-hover:bg-blue-600/20 transition-colors">
+          <DollarSign client:load className="w-6 h-6 text-blue-500" />
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900 mb-2">
+          No Real Practice
+        </h3>
+        <p class="text-sm text-slate-600">
+          $200 mock interviews don't replicate the real pressure and constraints
+        </p>
+      </div>
+
+      <!-- Card 4: Vague Feedback -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 hover:border-blue-300 transition-all hover:shadow-xl group">
+        <div class="w-12 h-12 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4 group-hover:bg-blue-600/20 transition-colors">
+          <HelpCircle client:load className="w-6 h-6 text-blue-500" />
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900 mb-2">
+          Vague Feedback
+        </h3>
+        <p class="text-sm text-slate-600">
+          Generic advice like "think out loud" doesn't help you improve
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

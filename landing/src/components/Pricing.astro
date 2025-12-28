@@ -1,0 +1,163 @@
+---
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
+import { Check } from 'lucide-react';
+---
+
+<section class="py-20 bg-slate-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Heading -->
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 mb-4">
+        Start Free, Upgrade When Ready
+      </h2>
+      <p class="text-lg text-slate-600">
+        Choose the plan that works for you. All credits never expire.
+      </p>
+    </div>
+
+    <!-- Pricing Cards -->
+    <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <!-- Starter Pack -->
+      <Card client:load className="bg-white border-slate-200 flex flex-col">
+        <CardHeader client:load>
+          <CardTitle client:load className="text-2xl">Starter Pack</CardTitle>
+          <CardDescription client:load>Perfect for trying out the platform</CardDescription>
+          <div class="mt-4">
+            <span class="text-4xl font-bold text-slate-900">$39</span>
+            <p class="text-sm text-slate-600 mt-1">$13 per interview</p>
+          </div>
+        </CardHeader>
+        <CardContent client:load className="flex-1">
+          <ul class="space-y-3">
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">3 interview simulations</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">AI-powered interviewer</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">Real-time feedback</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">Detailed performance report</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">Credits never expire</span>
+            </li>
+          </ul>
+        </CardContent>
+        <CardFooter client:load>
+          <Button client:load variant="outline" size="lg" className="w-full" asChild>
+            <a href="https://app.systemdesigntrainer.com/login?tier=starter">
+              Get Started
+            </a>
+          </Button>
+        </CardFooter>
+      </Card>
+
+      <!-- Power Pack (Most Popular) -->
+      <Card client:load className="bg-white border-blue-600 border-2 shadow-xl scale-105 flex flex-col relative">
+        <Badge client:load className="absolute -top-3 left-1/2 -translate-x-1/2">
+          Most Popular
+        </Badge>
+        <CardHeader client:load>
+          <CardTitle client:load className="text-2xl">Power Pack</CardTitle>
+          <CardDescription client:load>Best value for comprehensive prep</CardDescription>
+          <div class="mt-4">
+            <span class="text-4xl font-bold text-slate-900">$59</span>
+            <p class="text-sm text-slate-600 mt-1">$11.80 per interview</p>
+          </div>
+        </CardHeader>
+        <CardContent client:load className="flex-1">
+          <ul class="space-y-3">
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">5 interview simulations</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">AI-powered interviewer</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">Real-time feedback</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">Detailed performance report</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">Credits never expire</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm font-semibold">Best value per interview</span>
+            </li>
+          </ul>
+        </CardContent>
+        <CardFooter client:load>
+          <Button client:load variant="default" size="lg" className="w-full" asChild>
+            <a href="https://app.systemdesigntrainer.com/login?tier=power">
+              Get Started
+            </a>
+          </Button>
+        </CardFooter>
+      </Card>
+
+      <!-- Pro Unlimited -->
+      <Card client:load className="bg-white border-slate-200 flex flex-col">
+        <CardHeader client:load>
+          <CardTitle client:load className="text-2xl">Pro Unlimited</CardTitle>
+          <CardDescription client:load>Unlimited practice for serious prep</CardDescription>
+          <div class="mt-4">
+            <span class="text-4xl font-bold text-slate-900">$149</span>
+            <p class="text-sm text-slate-600 mt-1">/month</p>
+          </div>
+        </CardHeader>
+        <CardContent client:load className="flex-1">
+          <ul class="space-y-3">
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">Unlimited interviews</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">AI-powered interviewer</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">Real-time feedback</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">Detailed performance reports</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm">Cancel anytime</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <Check client:load className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <span class="text-sm font-semibold">Perfect for intensive prep</span>
+            </li>
+          </ul>
+        </CardContent>
+        <CardFooter client:load>
+          <Button client:load variant="outline" size="lg" className="w-full" asChild>
+            <a href="https://app.systemdesigntrainer.com/login?tier=unlimited">
+              Subscribe
+            </a>
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  </div>
+</section>

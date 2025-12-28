@@ -1,0 +1,98 @@
+---
+import { Clock, Activity, MessageSquare, BarChart3, Pencil, TrendingUp } from 'lucide-react';
+---
+
+<section class="py-20 bg-slate-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Heading -->
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 mb-4">
+        Everything You Need to Master System Design
+      </h2>
+      <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+        Built for engineers who want to pass their interviews on the first try
+      </p>
+    </div>
+
+    <!-- Feature Grid -->
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Feature 1: Realistic Pressure -->
+      <div class="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-xl transition-all group">
+        <div class="w-12 h-12 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4 group-hover:bg-blue-600/20 transition-colors">
+          <Clock client:load className="w-6 h-6 text-blue-500" />
+        </div>
+        <h3 class="text-xl font-semibold text-slate-900 mb-3">
+          Realistic Pressure
+        </h3>
+        <p class="text-slate-600 leading-relaxed">
+          45-minute timed sessions with an AI interviewer that interrupts, challenges, and applies real interview pressure.
+        </p>
+      </div>
+
+      <!-- Feature 2: Smart Signal Tracking -->
+      <div class="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-xl transition-all group">
+        <div class="w-12 h-12 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4 group-hover:bg-blue-600/20 transition-colors">
+          <Activity client:load className="w-6 h-6 text-blue-500" />
+        </div>
+        <h3 class="text-xl font-semibold text-slate-900 mb-3">
+          Smart Signal Tracking
+        </h3>
+        <p class="text-slate-600 leading-relaxed">
+          Monitors if you covered requirements, discussed scale, proposed APIs, and identified trade-offs in real-time.
+        </p>
+      </div>
+
+      <!-- Feature 3: Actionable Feedback -->
+      <div class="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-xl transition-all group">
+        <div class="w-12 h-12 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4 group-hover:bg-blue-600/20 transition-colors">
+          <MessageSquare client:load className="w-6 h-6 text-blue-500" />
+        </div>
+        <h3 class="text-xl font-semibold text-slate-900 mb-3">
+          Actionable Feedback
+        </h3>
+        <p class="text-slate-600 leading-relaxed">
+          Detailed performance breakdown across multiple dimensions. Know exactly what you missed and how to improve.
+        </p>
+      </div>
+
+      <!-- Feature 4: Multiple Practice Cases -->
+      <div class="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-xl transition-all group">
+        <div class="w-12 h-12 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4 group-hover:bg-blue-600/20 transition-colors">
+          <BarChart3 client:load className="w-6 h-6 text-blue-500" />
+        </div>
+        <h3 class="text-xl font-semibold text-slate-900 mb-3">
+          Multiple Practice Cases
+        </h3>
+        <p class="text-slate-600 leading-relaxed">
+          Practice with curated cases based on real FAANG interviews. URL shortener, social feeds, streaming, and more.
+        </p>
+      </div>
+
+      <!-- Feature 5: Whiteboard Integration -->
+      <div class="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-xl transition-all group">
+        <div class="w-12 h-12 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4 group-hover:bg-blue-600/20 transition-colors">
+          <Pencil client:load className="w-6 h-6 text-blue-500" />
+        </div>
+        <h3 class="text-xl font-semibold text-slate-900 mb-3">
+          Whiteboard Integration
+        </h3>
+        <p class="text-slate-600 leading-relaxed">
+          Visual diagram editor to draw architecture diagrams during the interview. Export and review them later.
+        </p>
+      </div>
+
+      <!-- Feature 6: Progress Tracking -->
+      <div class="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-xl transition-all group">
+        <div class="w-12 h-12 rounded-lg bg-blue-600/10 flex items-center justify-center mb-4 group-hover:bg-blue-600/20 transition-colors">
+          <TrendingUp client:load className="w-6 h-6 text-blue-500" />
+        </div>
+        <h3 class="text-xl font-semibold text-slate-900 mb-3">
+          Progress Tracking
+        </h3>
+        <p class="text-slate-600 leading-relaxed">
+          Dashboard with all past interviews. See your improvement over time and review transcripts and diagrams.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

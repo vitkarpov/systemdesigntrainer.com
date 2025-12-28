@@ -1,0 +1,31 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Hero from '../components/Hero.astro';
+import ProblemStatement from '../components/ProblemStatement.astro';
+import HowItWorks from '../components/HowItWorks.astro';
+import Features from '../components/Features.astro';
+import Testimonials from '../components/Testimonials.astro';
+import Pricing from '../components/Pricing.astro';
+import FAQ from '../components/FAQ';
+import FinalCTA from '../components/FinalCTA.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout
+  title="Master System Design Interviews"
+  description="AI-powered interview simulations that feel real. Practice under pressure, get actionable feedback, and land your dream engineering role at FAANG and top tech companies."
+>
+  <main>
+    <Hero />
+    <ProblemStatement />
+    <HowItWorks />
+    <Features />
+    <Testimonials />
+    <div id="pricing">
+      <Pricing />
+    </div>
+    <FAQ client:visible />
+    <FinalCTA />
+  </main>
+  <Footer />
+</Layout>

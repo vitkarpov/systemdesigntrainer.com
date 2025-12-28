@@ -1,0 +1,119 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout
+  title="Terms of Service"
+  description="Terms of Service for System Design Interview Simulator"
+>
+  <main class="min-h-screen bg-background">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div class="mb-8">
+        <a href="/" class="text-blue-500 hover:text-blue-400 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Home
+        </a>
+      </div>
+
+      <h1 class="text-4xl font-bold text-foreground mb-4">Terms of Service</h1>
+      <p class="text-muted-foreground mb-8">Last updated: January 2025</p>
+
+      <div class="prose prose-invert max-w-none space-y-6">
+        <section>
+          <h2 class="text-2xl font-semibold text-foreground mb-4">Agreement to Terms</h2>
+          <p class="text-muted-foreground leading-relaxed">
+            By accessing or using System Design Interview Simulator, you agree to be bound by these Terms of Service
+            and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited
+            from using this service.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-semibold text-foreground mb-4">Use License</h2>
+          <p class="text-muted-foreground leading-relaxed mb-4">
+            We grant you a limited, non-exclusive, non-transferable license to:
+          </p>
+          <ul class="list-disc list-inside text-muted-foreground space-y-2">
+            <li>Access and use the platform for personal, non-commercial interview preparation</li>
+            <li>Create and save interview sessions according to your subscription plan</li>
+            <li>Access your feedback reports and session history</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-semibold text-foreground mb-4">Restrictions</h2>
+          <p class="text-muted-foreground leading-relaxed mb-4">
+            You are expressly prohibited from:
+          </p>
+          <ul class="list-disc list-inside text-muted-foreground space-y-2">
+            <li>Sharing your account credentials with others</li>
+            <li>Using the service for any commercial purpose without authorization</li>
+            <li>Attempting to reverse engineer or extract proprietary algorithms</li>
+            <li>Scraping or automated data collection from the platform</li>
+            <li>Using the service in any way that violates applicable laws</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-semibold text-foreground mb-4">Subscription and Payment</h2>
+          <p class="text-muted-foreground leading-relaxed">
+            Payment is processed through Stripe. All purchases are final and non-refundable except as required by law
+            or as explicitly stated in our refund policy. Interview credits purchased do not expire. Subscriptions
+            renew automatically unless cancelled before the renewal date.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-semibold text-foreground mb-4">Refund Policy</h2>
+          <p class="text-muted-foreground leading-relaxed">
+            If you are not satisfied with your first paid interview, you may request a full refund within 7 days of purchase.
+            Contact us at support@systemdesigntrainer.com to request a refund.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-semibold text-foreground mb-4">Disclaimer</h2>
+          <p class="text-muted-foreground leading-relaxed">
+            The platform is provided "as is" without warranties of any kind. We do not guarantee that using our service
+            will result in successful interview outcomes. Interview preparation outcomes depend on many factors beyond our control.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-semibold text-foreground mb-4">Limitation of Liability</h2>
+          <p class="text-muted-foreground leading-relaxed">
+            In no event shall System Design Interview Simulator be liable for any indirect, incidental, special,
+            consequential, or punitive damages arising out of your use of the service.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-semibold text-foreground mb-4">Changes to Terms</h2>
+          <p class="text-muted-foreground leading-relaxed">
+            We reserve the right to modify these terms at any time. We will notify users of any material changes
+            via email or through the platform.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-semibold text-foreground mb-4">Contact Information</h2>
+          <p class="text-muted-foreground leading-relaxed">
+            If you have questions about these Terms, please contact us at:
+            <a href="mailto:support@systemdesigntrainer.com" class="text-blue-500 hover:text-blue-400">
+              support@systemdesigntrainer.com
+            </a>
+          </p>
+        </section>
+
+        <p class="text-sm text-muted-foreground italic">
+          Note: This is a basic terms of service template. Please consult with a legal professional to ensure compliance
+          with applicable laws and regulations.
+        </p>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>
