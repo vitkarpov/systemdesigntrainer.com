@@ -1,4 +1,4 @@
-import './instrument.ts';
+import './instrument';
 import * as dotenv from 'dotenv';
 
 dotenv.config();

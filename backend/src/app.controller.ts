@@ -5,11 +5,6 @@ import { Public } from './auth/decorators/public.decorator';
 export class AppController {
   constructor() {}
 
-  @Get('/debug-sentry')
-  getError() {
-    throw new Error('My first Sentry error!');
-  }
-
   @Public()
   @Get('health')
   health() {
