@@ -265,7 +265,9 @@ async function seed() {
   ];
 
   const insertedMessages = await Promise.all(
-    messages.map((msg) => db.insert(transcriptMessages).values(msg).returning()),
+    messages.map((msg) =>
+      db.insert(transcriptMessages).values(msg).returning(),
+    ),
   );
 
   console.log(`Created ${insertedMessages.length} transcript messages`);
