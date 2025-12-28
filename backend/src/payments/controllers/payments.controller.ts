@@ -24,6 +24,7 @@ import {
 } from '../dto/checkout.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { Public } from '../../auth/decorators/public.decorator';
 import { User } from '../../db/schema';
 
 @ApiTags('Payments')
@@ -62,6 +63,7 @@ export class PaymentsController {
     };
   }
 
+  @Public()
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Handle Stripe webhook events' })

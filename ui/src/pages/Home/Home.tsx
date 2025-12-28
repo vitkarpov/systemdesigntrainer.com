@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/PageHeader';
@@ -16,6 +17,7 @@ import {
 
 export default function Home() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [selectedCase, setSelectedCase] = useState<InterviewCaseDto | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -63,6 +65,10 @@ export default function Home() {
       await startSessionMutation.mutateAsync({
         id: sessionResponse.data.session.id,
       });
+
+      // Invalidate queries so dashboard and counter update
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/sessions/dashboard'] });
 
       navigate(`/interview/${sessionResponse.data.session.id}`);
     } catch (err) {

@@ -1,16 +1,20 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Optional: Confetti or celebration animation here
-    console.log('Payment successful!');
-  }, []);
+    // Invalidate queries to refetch updated interview count
+    queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/sessions/dashboard'] });
+    console.log('Payment successful! Refreshing user data...');
+  }, [queryClient]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

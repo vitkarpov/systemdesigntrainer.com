@@ -85,8 +85,7 @@ export default function Pricing() {
     setLoading(priceId);
 
     try {
-      // Call backend to create Stripe checkout session
-      const response = await fetch('http://localhost:3000/api/payments/checkout', {
+      const response = await fetch('/api/payments/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
