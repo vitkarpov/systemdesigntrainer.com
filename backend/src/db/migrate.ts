@@ -2,6 +2,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 import * as path from 'path';
+import { seedInterviewCasesWithDb } from './seed-interview-cases';
 
 async function runMigrations() {
   const pool = new Pool({
@@ -21,11 +22,16 @@ async function runMigrations() {
     await migrate(db, {
       migrationsFolder: path.join(__dirname, 'migrations'),
     });
-    console.log('Migrations completed successfully');
+    console.log('✅ Migrations completed successfully');
+
+    // Seed interview cases after migrations
+    console.log('\nSeeding interview cases...');
+    await seedInterviewCasesWithDb(db);
+
     await pool.end();
     process.exit(0);
   } catch (error) {
-    console.error('Migration failed:', error);
+    console.error('❌ Migration failed:', error);
     await pool.end();
     process.exit(1);
   }

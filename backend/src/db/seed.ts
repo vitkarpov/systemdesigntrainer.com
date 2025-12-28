@@ -1,9 +1,8 @@
+import { eq } from 'drizzle-orm';
 import { db } from './db';
 import {
   users,
   interviewCases,
-  interviewCaseExpectations,
-  interviewCaseTags,
   interviewSessions,
   transcriptMessages,
   interviewSignals,
@@ -15,7 +14,12 @@ import {
   feedbackNextSteps,
 } from './schema';
 
+/**
+ * Development/Test seed - creates test users and sample sessions
+ * WARNING: This deletes all existing data! Use seed-interview-cases.ts for production
+ */
 async function seed() {
+  console.log('⚠️  WARNING: This will delete all existing data!');
   console.log('Cleaning up database...');
 
   // Delete existing data in correct order (respecting foreign key constraints)
@@ -29,12 +33,9 @@ async function seed() {
   await db.delete(interviewRedFlags);
   await db.delete(transcriptMessages);
   await db.delete(interviewSessions);
-  await db.delete(interviewCaseTags);
-  await db.delete(interviewCaseExpectations);
-  await db.delete(interviewCases);
   await db.delete(users);
 
-  console.log('Database cleaned. Seeding database...');
+  console.log('Database cleaned. Seeding test data...');
 
   // Create test user for development
   const [testUser] = await db
@@ -50,101 +51,26 @@ async function seed() {
     })
     .returning();
 
-  console.log(`Created test user: ${testUser.email}`);
-  // Create URL Shortener interview case
-  const [urlShortenerCase] = await db
-    .insert(interviewCases)
-    .values({
-      title: 'Design a URL Shortener',
-      slug: 'url-shortener',
-      description:
-        'Design a scalable URL shortening service like bit.ly or TinyURL',
-      difficulty: 'medium',
-      problemStatement: '',
-      estimatedDuration: 45,
-      isActive: true,
-    })
-    .returning();
+  console.log(`✓ Created test user: ${testUser.email}`);
 
-  console.log(`Created case: ${urlShortenerCase.title}`);
+  // Find an existing interview case to create a session with
+  // (Assumes you've run seed-interview-cases.ts first)
+  const existingCases = await db
+    .select()
+    .from(interviewCases)
+    .where(eq(interviewCases.slug, 'url-shortener'))
+    .limit(1);
 
-  // Add expectations
-  const expectations = [
-    {
-      caseId: urlShortenerCase.id,
-      expectationType: 'requirements',
-      description:
-        'Clarify functional requirements (URL generation, redirection, analytics)',
-      displayOrder: 1,
-    },
-    {
-      caseId: urlShortenerCase.id,
-      expectationType: 'requirements',
-      description:
-        'Clarify non-functional requirements (latency, scale, availability)',
-      displayOrder: 2,
-    },
-    {
-      caseId: urlShortenerCase.id,
-      expectationType: 'api',
-      description:
-        'Define REST API endpoints (POST /shorten, GET /{shortCode})',
-      displayOrder: 3,
-    },
-    {
-      caseId: urlShortenerCase.id,
-      expectationType: 'data_model',
-      description: 'Design database schema for URL mappings',
-      displayOrder: 4,
-    },
-    {
-      caseId: urlShortenerCase.id,
-      expectationType: 'high_level',
-      description:
-        'Propose component architecture (API servers, database, cache)',
-      displayOrder: 5,
-    },
-    {
-      caseId: urlShortenerCase.id,
-      expectationType: 'deep_dive',
-      description:
-        'Explain short code generation strategy (base62 encoding, hashing)',
-      displayOrder: 6,
-    },
-    {
-      caseId: urlShortenerCase.id,
-      expectationType: 'deep_dive',
-      description: 'Design caching strategy (Redis for hot URLs)',
-      displayOrder: 7,
-    },
-    {
-      caseId: urlShortenerCase.id,
-      expectationType: 'scalability',
-      description: 'Discuss horizontal scaling of API servers',
-      displayOrder: 8,
-    },
-    {
-      caseId: urlShortenerCase.id,
-      expectationType: 'scalability',
-      description: 'Address database partitioning/sharding strategy',
-      displayOrder: 9,
-    },
-  ];
+  if (existingCases.length === 0) {
+    console.log(
+      '\n⚠️  No interview cases found. Please run seed-interview-cases.ts first:',
+    );
+    console.log('   npm run seed:cases\n');
+    process.exit(1);
+  }
 
-  await db.insert(interviewCaseExpectations).values(expectations);
-  console.log(`Added ${expectations.length} expectations`);
-
-  // Add tags
-  const tags = [
-    { caseId: urlShortenerCase.id, tag: 'web-services' },
-    { caseId: urlShortenerCase.id, tag: 'scalability' },
-    { caseId: urlShortenerCase.id, tag: 'caching' },
-    { caseId: urlShortenerCase.id, tag: 'databases' },
-    { caseId: urlShortenerCase.id, tag: 'api-design' },
-  ];
-
-  await db.insert(interviewCaseTags).values(tags);
-  console.log(`Added ${tags.length} tags`);
+  const urlShortenerCase = existingCases[0];
+  console.log(`✓ Using case: ${urlShortenerCase.title}`);
 
   // Create an interview session in progress at the last stage
   const [session] = await db
@@ -354,14 +280,13 @@ async function seed() {
   ];
 
   await db.insert(interviewSignals).values(signals);
-  console.log(`Created ${signals.length} interview signals`);
+  console.log(`✓ Created ${signals.length} interview signals`);
 
-  console.log('\nSeeding completed!');
+  console.log('\n✅ Development seed completed!');
+  console.log(`\nTest User: ${testUser.email}`);
+  console.log(`Interview Session: ${session.id} (in_progress at 'deep_dive' phase)`);
   console.log(
-    `Interview session ${session.id} is ready - currently in 'deep_dive' phase.`,
-  );
-  console.log(
-    `You can continue the interview in the UI and then generate feedback when completed.`,
+    `\nYou can now use the app with this test data or continue the interview in the UI.`,
   );
   process.exit(0);
 }
