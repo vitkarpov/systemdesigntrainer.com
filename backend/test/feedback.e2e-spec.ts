@@ -76,7 +76,7 @@ describe('Feedback Generation (e2e)', () => {
   ): Promise<any> {
     for (let i = 0; i < maxAttempts; i++) {
       const statusResponse = await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/feedback/status`)
+        .get(`/sessions/${sessionId}/feedback/status`)
         .set('Authorization', `Bearer ${authToken}`);
 
       if (statusResponse.body.data.status === 'completed') {
@@ -96,7 +96,7 @@ describe('Feedback Generation (e2e)', () => {
     throw new Error('Feedback generation timed out');
   }
 
-  describe('POST /api/sessions/:id/feedback', () => {
+  describe('POST /sessions/:id/feedback', () => {
     it('should start async feedback generation for completed session', async () => {
       // Add some signals to make feedback more meaningful
       const { db } = getTestDb();
@@ -135,7 +135,7 @@ describe('Feedback Generation (e2e)', () => {
 
       // Start feedback generation (async)
       const response = await request(app.getHttpServer())
-        .post(`/api/sessions/${sessionId}/feedback`)
+        .post(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(202);
 
@@ -240,7 +240,7 @@ describe('Feedback Generation (e2e)', () => {
       ]);
 
       await request(app.getHttpServer())
-        .post(`/api/sessions/${sessionId}/feedback`)
+        .post(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(202);
 
@@ -278,7 +278,7 @@ describe('Feedback Generation (e2e)', () => {
       ]);
 
       await request(app.getHttpServer())
-        .post(`/api/sessions/${sessionId}/feedback`)
+        .post(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(202);
 
@@ -299,7 +299,7 @@ describe('Feedback Generation (e2e)', () => {
       );
 
       const response = await request(app.getHttpServer())
-        .post(`/api/sessions/${inProgressSession.id}/feedback`)
+        .post(`/sessions/${inProgressSession.id}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(202);
 
@@ -345,22 +345,22 @@ describe('Feedback Generation (e2e)', () => {
         .returning();
 
       return request(app.getHttpServer())
-        .post(`/api/sessions/${otherSession.id}/feedback`)
+        .post(`/sessions/${otherSession.id}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(403);
     });
   });
 
-  describe('GET /api/sessions/:id/feedback', () => {
+  describe('GET /sessions/:id/feedback', () => {
     it('should get existing feedback report', async () => {
       // First generate feedback
       await request(app.getHttpServer())
-        .post(`/api/sessions/${sessionId}/feedback`)
+        .post(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`);
 
       // Then retrieve it
       const response = await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/feedback`)
+        .get(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
@@ -382,7 +382,7 @@ describe('Feedback Generation (e2e)', () => {
 
     it('should return 404 when feedback does not exist', () => {
       return request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/feedback`)
+        .get(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
     });
@@ -418,7 +418,7 @@ describe('Feedback Generation (e2e)', () => {
         .returning();
 
       return request(app.getHttpServer())
-        .get(`/api/sessions/${otherSession.id}/feedback`)
+        .get(`/sessions/${otherSession.id}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(403);
     });
@@ -449,7 +449,7 @@ describe('Feedback Generation (e2e)', () => {
 
       // Generate feedback (async)
       await request(app.getHttpServer())
-        .post(`/api/sessions/${sessionId}/feedback`)
+        .post(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(202);
 
@@ -458,7 +458,7 @@ describe('Feedback Generation (e2e)', () => {
 
       // Retrieve feedback
       const response = await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/feedback`)
+        .get(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`);
 
       // Verify feedback has content

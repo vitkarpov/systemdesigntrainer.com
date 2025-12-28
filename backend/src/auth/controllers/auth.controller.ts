@@ -23,7 +23,7 @@ import { User } from '../../db/schema/users.schema';
 import { UserResponseDto } from '../../interview/dto/responses.dto';
 
 @ApiTags('auth')
-@Controller('api/auth')
+@Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,

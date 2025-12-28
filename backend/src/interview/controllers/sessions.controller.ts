@@ -70,7 +70,7 @@ import { User } from '../../db/schema/users.schema';
 
 @ApiTags('sessions')
 @ApiBearerAuth()
-@Controller('api/sessions')
+@Controller('sessions')
 export class SessionsController {
   constructor(
     private sessionService: InterviewSessionService,
@@ -102,7 +102,7 @@ export class SessionsController {
   }
 
   /**
-   * GET /api/sessions/metrics/streaming
+   * GET /sessions/metrics/streaming
    * Get streaming concurrency metrics
    */
   @Get('metrics/streaming')
@@ -120,7 +120,7 @@ export class SessionsController {
   }
 
   /**
-   * GET /api/sessions/dashboard
+   * GET /sessions/dashboard
    * Get all sessions for the current user with feedback scores
    */
   @Get('dashboard')
@@ -163,7 +163,7 @@ export class SessionsController {
   }
 
   /**
-   * POST /api/sessions
+   * POST /sessions
    * Create a new interview session
    */
   @Post()
@@ -199,7 +199,7 @@ export class SessionsController {
   }
 
   /**
-   * GET /api/sessions/:id/transcript
+   * GET /sessions/:id/transcript
    * Get full transcript for a session
    */
   @Get(':id/transcript')
@@ -227,7 +227,7 @@ export class SessionsController {
   }
 
   /**
-   * GET /api/sessions/:id/phases
+   * GET /sessions/:id/phases
    * Get all phases with metadata
    */
   @Get(':id/phases')
@@ -263,7 +263,7 @@ export class SessionsController {
   }
 
   /**
-   * POST /api/sessions/:id/diagram
+   * POST /sessions/:id/diagram
    * Save a diagram snapshot
    */
   @Post(':id/diagram')
@@ -299,7 +299,7 @@ export class SessionsController {
   }
 
   /**
-   * GET /api/sessions/:id/diagram
+   * GET /sessions/:id/diagram
    * Get the latest diagram for a session
    */
   @Get(':id/diagram')
@@ -324,7 +324,7 @@ export class SessionsController {
   }
 
   /**
-   * GET /api/sessions/:id
+   * GET /sessions/:id
    * Get session details
    */
   @Get(':id')
@@ -361,7 +361,7 @@ export class SessionsController {
   }
 
   /**
-   * POST /api/sessions/:id/start
+   * POST /sessions/:id/start
    * Start a session (NOT_STARTED -> IN_PROGRESS)
    */
   @Post(':id/start')
@@ -416,7 +416,7 @@ export class SessionsController {
   }
 
   /**
-   * PATCH /api/sessions/:id/phase
+   * PATCH /sessions/:id/phase
    * Advance to next phase and check for red flags
    */
   @Patch(':id/phase')
@@ -457,7 +457,7 @@ export class SessionsController {
   }
 
   /**
-   * SSE /api/sessions/:id/conversation
+   * SSE /sessions/:id/conversation
    * Handle a conversation turn with the AI interviewer using Server-Sent Events
    *
    * This endpoint implements the SAGA PATTERN for robust error handling:
@@ -690,7 +690,7 @@ export class SessionsController {
   }
 
   /**
-   * POST /api/sessions/:id/conversation/retry
+   * POST /sessions/:id/conversation/retry
    * Retry a failed conversation turn
    *
    * This endpoint allows the UI to retry a conversation turn that failed.
@@ -798,7 +798,7 @@ export class SessionsController {
   }
 
   /**
-   * GET /api/sessions/:id/conversation/failed
+   * GET /sessions/:id/conversation/failed
    * Get all failed conversation turns for retry UI
    */
   @Get(':id/conversation/failed')
@@ -828,7 +828,7 @@ export class SessionsController {
   }
 
   /**
-   * GET /api/sessions/:id/signals
+   * GET /sessions/:id/signals
    * Get all detected signals for a session
    */
   @Get(':id/signals')
@@ -860,7 +860,7 @@ export class SessionsController {
   }
 
   /**
-   * GET /api/sessions/:id/red-flags
+   * GET /sessions/:id/red-flags
    * Get all detected red flags for a session
    */
   @Get(':id/red-flags')
@@ -891,7 +891,7 @@ export class SessionsController {
   }
 
   /**
-   * POST /api/sessions/:id/feedback
+   * POST /sessions/:id/feedback
    * Enqueue feedback generation job for a completed session
    * Returns immediately with job ID for status polling
    *
@@ -975,7 +975,7 @@ export class SessionsController {
   }
 
   /**
-   * GET /api/sessions/:id/feedback/status
+   * GET /sessions/:id/feedback/status
    * Check the status of feedback generation job
    */
   @Get(':id/feedback/status')
@@ -1061,7 +1061,7 @@ export class SessionsController {
   }
 
   /**
-   * GET /api/sessions/:id/feedback
+   * GET /sessions/:id/feedback
    * Get existing feedback report for a session
    * Returns null if feedback doesn't exist yet (still generating)
    */

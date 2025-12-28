@@ -53,10 +53,10 @@ describe('Session Lifecycle (e2e)', () => {
     authToken = generateTestToken(testUserId);
   });
 
-  describe('POST /api/sessions', () => {
+  describe('POST /sessions', () => {
     it('should create a new session', () => {
       return request(app.getHttpServer())
-        .post('/api/sessions')
+        .post('/sessions')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           caseId: testCaseId,
@@ -82,7 +82,7 @@ describe('Session Lifecycle (e2e)', () => {
 
     it('should return 401 without authentication', () => {
       return request(app.getHttpServer())
-        .post('/api/sessions')
+        .post('/sessions')
         .send({
           caseId: testCaseId,
           companyStyle: 'faang',
@@ -93,7 +93,7 @@ describe('Session Lifecycle (e2e)', () => {
 
     it('should return 404 with invalid caseId', () => {
       return request(app.getHttpServer())
-        .post('/api/sessions')
+        .post('/sessions')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           caseId: 99999,
@@ -104,7 +104,7 @@ describe('Session Lifecycle (e2e)', () => {
     });
   });
 
-  describe('POST /api/sessions/:id/start', () => {
+  describe('POST /sessions/:id/start', () => {
     let sessionId: number;
 
     beforeEach(async () => {
@@ -114,7 +114,7 @@ describe('Session Lifecycle (e2e)', () => {
 
     it('should start a session', () => {
       return request(app.getHttpServer())
-        .post(`/api/sessions/${sessionId}/start`)
+        .post(`/sessions/${sessionId}/start`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(201)
         .expect((res) => {
@@ -156,13 +156,13 @@ describe('Session Lifecycle (e2e)', () => {
         .returning();
 
       return request(app.getHttpServer())
-        .post(`/api/sessions/${otherSession.id}/start`)
+        .post(`/sessions/${otherSession.id}/start`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(403);
     });
   });
 
-  describe('GET /api/sessions/:id', () => {
+  describe('GET /sessions/:id', () => {
     let sessionId: number;
 
     beforeEach(async () => {
@@ -175,7 +175,7 @@ describe('Session Lifecycle (e2e)', () => {
     it('should get session details', async () => {
       // Get session
       const sessionResponse = await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}`)
+        .get(`/sessions/${sessionId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
@@ -194,7 +194,7 @@ describe('Session Lifecycle (e2e)', () => {
 
       // Get case details separately
       const caseResponse = await request(app.getHttpServer())
-        .get(`/api/cases/${testCaseId}`)
+        .get(`/cases/${testCaseId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
@@ -233,13 +233,13 @@ describe('Session Lifecycle (e2e)', () => {
         .returning();
 
       return request(app.getHttpServer())
-        .get(`/api/sessions/${otherSession.id}`)
+        .get(`/sessions/${otherSession.id}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(403);
     });
   });
 
-  describe('PATCH /api/sessions/:id/phase', () => {
+  describe('PATCH /sessions/:id/phase', () => {
     let sessionId: number;
 
     beforeEach(async () => {
@@ -268,7 +268,7 @@ describe('Session Lifecycle (e2e)', () => {
 
     it('should advance to next phase', () => {
       return request(app.getHttpServer())
-        .patch(`/api/sessions/${sessionId}/phase`)
+        .patch(`/sessions/${sessionId}/phase`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect((res) => {
           if (res.status !== 200) {
@@ -296,13 +296,13 @@ describe('Session Lifecycle (e2e)', () => {
       );
 
       return request(app.getHttpServer())
-        .patch(`/api/sessions/${notStartedSession.id}/phase`)
+        .patch(`/sessions/${notStartedSession.id}/phase`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(400);
     });
   });
 
-  describe('GET /api/sessions/:id/phases', () => {
+  describe('GET /sessions/:id/phases', () => {
     let sessionId: number;
 
     beforeEach(async () => {
@@ -315,7 +315,7 @@ describe('Session Lifecycle (e2e)', () => {
 
     it('should get all phases with progress', () => {
       return request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/phases`)
+        .get(`/sessions/${sessionId}/phases`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
         .expect((res) => {
@@ -331,7 +331,7 @@ describe('Session Lifecycle (e2e)', () => {
     });
   });
 
-  describe('GET /api/sessions/:id/transcript', () => {
+  describe('GET /sessions/:id/transcript', () => {
     let sessionId: number;
 
     beforeEach(async () => {
@@ -343,7 +343,7 @@ describe('Session Lifecycle (e2e)', () => {
 
     it('should get empty transcript for new session', () => {
       return request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/transcript`)
+        .get(`/sessions/${sessionId}/transcript`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
         .expect((res) => {
@@ -367,7 +367,7 @@ describe('Session Lifecycle (e2e)', () => {
       });
 
       return request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/transcript`)
+        .get(`/sessions/${sessionId}/transcript`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
         .expect((res) => {
@@ -383,7 +383,7 @@ describe('Session Lifecycle (e2e)', () => {
     });
   });
 
-  describe('GET /api/sessions/dashboard', () => {
+  describe('GET /sessions/dashboard', () => {
     it('should get dashboard with user sessions and stats', async () => {
       // Create a few sessions
       await createTestSession(testUserId, testCaseId, {
@@ -394,7 +394,7 @@ describe('Session Lifecycle (e2e)', () => {
       });
 
       return request(app.getHttpServer())
-        .get('/api/sessions/dashboard')
+        .get('/sessions/dashboard')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
         .expect((res) => {
@@ -413,7 +413,7 @@ describe('Session Lifecycle (e2e)', () => {
 
     it('should return empty dashboard for new user', () => {
       return request(app.getHttpServer())
-        .get('/api/sessions/dashboard')
+        .get('/sessions/dashboard')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
         .expect((res) => {

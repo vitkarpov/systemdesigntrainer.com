@@ -67,10 +67,10 @@ describe('Conversation & AI Integration (e2e)', () => {
       .where(require('drizzle-orm').eq(interviewSessions.id, sessionId));
   });
 
-  describe('GET /api/sessions/:id/conversation', () => {
+  describe('GET /sessions/:id/conversation', () => {
     it('should handle conversation and return AI response', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/conversation`)
+        .get(`/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
         .set('Cookie', [`text=What are the key functional requirements?`])
         .set('Accept', 'text/event-stream');
@@ -84,7 +84,7 @@ describe('Conversation & AI Integration (e2e)', () => {
 
     it('should save messages to transcript', async () => {
       await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/conversation`)
+        .get(`/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
         .set('Cookie', [
           `text=I think we need to handle URL shortening and redirection.`,
@@ -93,7 +93,7 @@ describe('Conversation & AI Integration (e2e)', () => {
 
       // Check transcript
       const transcript = await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/transcript`)
+        .get(`/sessions/${sessionId}/transcript`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(transcript.body.data.messages.length).toBeGreaterThan(0);
@@ -113,7 +113,7 @@ describe('Conversation & AI Integration (e2e)', () => {
 
     it('should return 400 without text parameter', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/conversation`)
+        .get(`/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
         .set('Accept', 'text/event-stream');
 
@@ -153,7 +153,7 @@ describe('Conversation & AI Integration (e2e)', () => {
         .returning();
 
       const response = await request(app.getHttpServer())
-        .get(`/api/sessions/${otherSession.id}/conversation`)
+        .get(`/sessions/${otherSession.id}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
         .set('Cookie', [`text=Hello`])
         .set('Accept', 'text/event-stream');
@@ -169,7 +169,7 @@ describe('Conversation & AI Integration (e2e)', () => {
     it('should detect requirement signals', async () => {
       // Send message with requirement keywords
       await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/conversation`)
+        .get(`/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
         .set('Cookie', [
           `text=Let me clarify the functional requirements: we need URL shortening, redirection, and basic analytics. For non-functional requirements, we need to handle scale of 1 million users and ensure high availability.`,
@@ -181,7 +181,7 @@ describe('Conversation & AI Integration (e2e)', () => {
 
       // Check detected signals
       const signals = await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/signals`)
+        .get(`/sessions/${sessionId}/signals`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(signals.body.success).toBe(true);
@@ -196,7 +196,7 @@ describe('Conversation & AI Integration (e2e)', () => {
 
     it('should detect scale and API signals', async () => {
       await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/conversation`)
+        .get(`/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
         .set('Cookie', [
           `text=We should design a REST API with POST /shorten endpoint. The system needs to handle 10,000 requests per second.`,
@@ -206,7 +206,7 @@ describe('Conversation & AI Integration (e2e)', () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       const signals = await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/signals`)
+        .get(`/sessions/${sessionId}/signals`)
         .set('Authorization', `Bearer ${authToken}`);
 
       const signalTypes = signals.body.data.signals.map(
@@ -218,7 +218,7 @@ describe('Conversation & AI Integration (e2e)', () => {
 
     it('should detect tradeoffs discussion', async () => {
       await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/conversation`)
+        .get(`/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
         .set('Cookie', [
           `text=There is a trade-off between consistency and availability. We could use SQL vs NoSQL database.`,
@@ -228,7 +228,7 @@ describe('Conversation & AI Integration (e2e)', () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       const signals = await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/signals`)
+        .get(`/sessions/${sessionId}/signals`)
         .set('Authorization', `Bearer ${authToken}`);
 
       const signalTypes = signals.body.data.signals.map(
@@ -250,7 +250,7 @@ describe('Conversation & AI Integration (e2e)', () => {
 
       // Send message with implementation details
       await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/conversation`)
+        .get(`/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
         .set('Cookie', [
           `text=I would implement this with a class URLShortener that has a function generateShortUrl() using a for loop to iterate through characters.`,
@@ -261,7 +261,7 @@ describe('Conversation & AI Integration (e2e)', () => {
 
       // Check red flags
       const redFlags = await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/red-flags`)
+        .get(`/sessions/${sessionId}/red-flags`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(redFlags.body.success).toBe(true);
@@ -287,7 +287,7 @@ describe('Conversation & AI Integration (e2e)', () => {
 
       // Trigger red flag check by sending a message
       await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/conversation`)
+        .get(`/sessions/${sessionId}/conversation`)
         .set('Authorization', `Bearer ${authToken}`)
         .set('Cookie', [`text=Let me continue thinking about this problem...`])
         .set('Accept', 'text/event-stream');
@@ -295,7 +295,7 @@ describe('Conversation & AI Integration (e2e)', () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       const redFlags = await request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/red-flags`)
+        .get(`/sessions/${sessionId}/red-flags`)
         .set('Authorization', `Bearer ${authToken}`);
 
       const flagTypes = redFlags.body.data.redFlags.map((f: any) => f.flagName);
@@ -303,10 +303,10 @@ describe('Conversation & AI Integration (e2e)', () => {
     });
   });
 
-  describe('GET /api/sessions/:id/signals', () => {
+  describe('GET /sessions/:id/signals', () => {
     it('should return empty signals for new session', () => {
       return request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/signals`)
+        .get(`/sessions/${sessionId}/signals`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
         .expect((res) => {
@@ -317,10 +317,10 @@ describe('Conversation & AI Integration (e2e)', () => {
     });
   });
 
-  describe('GET /api/sessions/:id/red-flags', () => {
+  describe('GET /sessions/:id/red-flags', () => {
     it('should return empty red flags for new session', () => {
       return request(app.getHttpServer())
-        .get(`/api/sessions/${sessionId}/red-flags`)
+        .get(`/sessions/${sessionId}/red-flags`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
         .expect((res) => {

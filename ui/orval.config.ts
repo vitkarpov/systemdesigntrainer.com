@@ -23,6 +23,7 @@ export default defineConfig({
           signal: true,
         },
       },
+      baseUrl: '/api',
     },
   },
 });

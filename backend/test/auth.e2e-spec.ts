@@ -39,10 +39,10 @@ describe('Authentication (e2e)', () => {
     authToken = generateTestToken(testUserId);
   });
 
-  describe('GET /api/auth/status', () => {
+  describe('GET /auth/status', () => {
     it('should return health check status', () => {
       return request(app.getHttpServer())
-        .get('/api/auth/status')
+        .get('/auth/status')
         .expect(200)
         .expect((res) => {
           expect(res.body).toHaveProperty('status', 'ok');
@@ -51,10 +51,10 @@ describe('Authentication (e2e)', () => {
     });
   });
 
-  describe('POST /api/auth/dev/test-token', () => {
+  describe('POST /auth/dev/test-token', () => {
     it('should generate test token in development', () => {
       return request(app.getHttpServer())
-        .post('/api/auth/dev/test-token')
+        .post('/auth/dev/test-token')
         .expect(201)
         .expect((res) => {
           expect(res.body).toHaveProperty('accessToken');
@@ -65,10 +65,10 @@ describe('Authentication (e2e)', () => {
     });
   });
 
-  describe('GET /api/auth/user', () => {
+  describe('GET /auth/user', () => {
     it('should return current user info with valid token', () => {
       return request(app.getHttpServer())
-        .get('/api/auth/user')
+        .get('/auth/user')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
         .expect((res) => {
@@ -82,21 +82,21 @@ describe('Authentication (e2e)', () => {
     });
 
     it('should return 401 without authentication token', () => {
-      return request(app.getHttpServer()).get('/api/auth/user').expect(401);
+      return request(app.getHttpServer()).get('/auth/user').expect(401);
     });
 
     it('should return 401 with invalid token', () => {
       return request(app.getHttpServer())
-        .get('/api/auth/user')
+        .get('/auth/user')
         .set('Authorization', 'Bearer invalid_token')
         .expect(401);
     });
   });
 
-  describe('POST /api/auth/logout', () => {
+  describe('POST /auth/logout', () => {
     it('should logout successfully with valid token', () => {
       return request(app.getHttpServer())
-        .post('/api/auth/logout')
+        .post('/auth/logout')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(201)
         .expect((res) => {
@@ -105,7 +105,7 @@ describe('Authentication (e2e)', () => {
     });
 
     it('should return 401 without authentication token', () => {
-      return request(app.getHttpServer()).post('/api/auth/logout').expect(401);
+      return request(app.getHttpServer()).post('/auth/logout').expect(401);
     });
   });
 });

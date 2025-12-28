@@ -4,7 +4,7 @@ import { InterviewCasesService } from '../services/interview-cases.service';
 import type { InterviewCase } from '../../db/schema/interview-cases.schema';
 
 @ApiTags('cases')
-@Controller('api/cases')
+@Controller('cases')
 export class CasesController {
   constructor(private casesService: InterviewCasesService) {}
 
