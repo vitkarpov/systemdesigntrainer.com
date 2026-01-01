@@ -38,7 +38,7 @@ async function bootstrap() {
   app.enableCors({
     origin:
       process.env.NODE_ENV === 'production'
-        ? ['https://yourdomain.com']
+        ? ['https://app.systemdesigntrainer.com']
         : ['http://localhost:5173'],
     credentials: true,
   });

@@ -1,0 +1,82 @@
+# ==================================
+# Project Configuration
+# ==================================
+
+project_name = "sd-sim"
+environment  = "production"
+domain_name  = "systemdesigntrainer.com"
+aws_region   = "us-east-1"
+
+# ==================================
+# Cost Optimization Settings
+# ==================================
+
+# Use NAT instance instead of NAT Gateway (saves ~$29/month)
+use_nat_instance = true
+
+# Single-AZ RDS (saves ~$13/month vs Multi-AZ)
+enable_multi_az_rds = false
+
+# Minimal ECS task sizing
+ecs_task_cpu        = 256  # 0.25 vCPU
+ecs_task_memory     = 512  # 512MB RAM
+ecs_desired_count   = 1
+ecs_min_count       = 1
+ecs_max_count       = 3
+
+# CloudFront: US/Canada/Europe only (saves ~$5-10/month vs global)
+cloudfront_price_class = "PriceClass_100"
+
+# Short log retention (saves costs)
+log_retention_days = 7
+
+# Disable detailed monitoring initially
+enable_monitoring = false
+
+# ==================================
+# Database Configuration
+# ==================================
+
+rds_instance_class     = "db.t4g.micro"  # Free tier eligible
+rds_allocated_storage  = 20              # Free tier eligible
+rds_database_name      = "sdsim_production"
+rds_username           = "sdsim"
+rds_backup_retention_days = 7
+
+# ==================================
+# Redis Configuration
+# ==================================
+
+redis_node_type               = "cache.t4g.micro"
+redis_num_cache_nodes         = 1
+redis_snapshot_retention_limit = 5
+
+# ==================================
+# Secrets Configuration
+# IMPORTANT: Copy this file to terraform.tfvars and fill in real values
+# DO NOT commit terraform.tfvars to version control!
+# ==================================
+
+# Generate JWT secret with: openssl rand -base64 32
+jwt_secret = "your-jwt-secret-min-32-characters-here"
+
+secrets = {
+  # Anthropic Claude API (required for AI interviewer)
+  # Get from: https://console.anthropic.com/
+  anthropic_api_key = "sk-ant-api03-..."
+
+  # WorkOS (required for authentication)
+  # Get from: https://dashboard.workos.com/
+  workos_client_id = "client_..."
+  workos_api_key   = "sk_live_..."
+
+  # Stripe (required for payments)
+  # Get from: https://dashboard.stripe.com/
+  stripe_secret_key     = "sk_live_..."  # or sk_test_ for testing
+  stripe_webhook_secret = "whsec_..."
+
+  # Stripe Price IDs (create products in Stripe dashboard)
+  stripe_price_3_interviews  = "price_..."
+  stripe_price_5_interviews  = "price_..."
+  stripe_price_unlimited     = "price_..."
+}

@@ -135,3 +135,5 @@ desktop.ini
 
 *.gen.ts
 ui/src/api/openapi.json
+
+terraform/terraform.tfvars
