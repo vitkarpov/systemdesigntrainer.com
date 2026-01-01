@@ -7,6 +7,7 @@ This directory contains Terraform configurations to deploy the System Design Int
 **Cost**: $53-78/month (with RDS free tier: $53-65/month)
 
 The infrastructure deploys:
+- **Landing Page**: Static site on S3 + CloudFront (systemdesigntrainer.com)
 - **Frontend**: React SPA on S3 + CloudFront (app.systemdesigntrainer.com)
 - **Backend**: NestJS API on ECS Fargate behind ALB (api.systemdesigntrainer.com)
 - **Database**: RDS PostgreSQL 16 + ElastiCache Redis 7
@@ -26,7 +27,7 @@ The infrastructure deploys:
 3. AWS CLI configured:
    ```bash
    aws configure
-   # Enter: Access Key ID, Secret Access Key, Region (us-east-1)
+   # Enter: Access Key ID, Secret Access Key, Region (eu-west-1)
    ```
 
 ### Domain
@@ -106,7 +107,19 @@ This:
 - Syncs to S3
 - Invalidates CloudFront
 
-### 8. Configure External Services
+### 8. Deploy Landing Page
+
+```bash
+./scripts/build-landing.sh
+```
+
+This:
+- Syncs landing page files from `../landing` to S3
+- Invalidates CloudFront
+
+**Note**: Create a `landing/` directory at project root with your landing page (index.html, styles, etc.)
+
+### 9. Configure External Services
 
 #### WorkOS
 1. Go to WorkOS dashboard
@@ -143,7 +156,7 @@ This:
      --force-new-deployment
    ```
 
-### 9. Verify Deployment
+### 10. Verify Deployment
 
 ```bash
 # Backend health
@@ -151,6 +164,9 @@ curl https://api.systemdesigntrainer.com/health
 
 # Frontend
 open https://app.systemdesigntrainer.com
+
+# Landing page
+open https://systemdesigntrainer.com
 ```
 
 ## Infrastructure Overview
@@ -162,7 +178,8 @@ open https://app.systemdesigntrainer.com
 - **`storage/`** - RDS PostgreSQL 16, ElastiCache Redis 7
 - **`secrets/`** - AWS Secrets Manager for sensitive env vars
 - **`alb/`** - Application Load Balancer with SSL termination
-- **`frontend/`** - S3 bucket + CloudFront distribution
+- **`frontend/`** - S3 bucket + CloudFront distribution (app.*)
+- **`landing/`** - S3 bucket + CloudFront distribution (root domain)
 - **`container/`** - ECR repository, ECS Fargate cluster & service
 
 ### Architecture Diagram
@@ -439,7 +456,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: eu-west-1
       - name: Build and push
         run: cd terraform && ./scripts/build-and-push.sh
 
@@ -453,7 +470,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: eu-west-1
       - name: Build and deploy
         run: cd terraform && ./scripts/build-frontend.sh
 ```

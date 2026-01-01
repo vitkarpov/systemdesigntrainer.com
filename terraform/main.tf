@@ -9,11 +9,14 @@ module "dns" {
   environment  = var.environment
   domain_name  = var.domain_name
 
-  # These will be set after ALB and CloudFront are created
-  alb_dns_name           = try(module.alb.alb_dns_name, null)
-  alb_zone_id            = try(module.alb.alb_zone_id, null)
-  cloudfront_domain_name = try(module.frontend.cloudfront_domain_name, null)
-  cloudfront_zone_id     = try(module.frontend.cloudfront_zone_id, null)
+  # These values come from ALB and CloudFront modules
+  # Terraform will automatically handle the dependency order
+  alb_dns_name                   = module.alb.alb_dns_name
+  alb_zone_id                    = module.alb.alb_zone_id
+  cloudfront_domain_name         = module.frontend.cloudfront_domain_name
+  cloudfront_zone_id             = module.frontend.cloudfront_zone_id
+  landing_cloudfront_domain_name = module.landing.cloudfront_domain_name
+  landing_cloudfront_zone_id     = module.landing.cloudfront_zone_id
 
   providers = {
     aws           = aws
@@ -101,6 +104,20 @@ module "alb" {
 
 module "frontend" {
   source = "./modules/frontend"
+
+  project_name           = var.project_name
+  environment            = var.environment
+  domain_name            = var.domain_name
+  acm_certificate_arn    = module.dns.acm_certificate_arn_cloudfront
+  cloudfront_price_class = var.cloudfront_price_class
+}
+
+# ==================================
+# Landing Page Module (S3 + CloudFront)
+# ==================================
+
+module "landing" {
+  source = "./modules/landing"
 
   project_name           = var.project_name
   environment            = var.environment

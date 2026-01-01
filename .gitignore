@@ -137,3 +137,6 @@ desktop.ini
 ui/src/api/openapi.json
 
 terraform/terraform.tfvars
+.terraform/
+.terraform.lock.hcl
+*tfstate*

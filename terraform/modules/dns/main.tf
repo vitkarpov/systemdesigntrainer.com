@@ -104,8 +104,6 @@ resource "aws_acm_certificate_validation" "alb" {
 
 # A record for app.systemdesigntrainer.com → CloudFront
 resource "aws_route53_record" "app" {
-  count = var.cloudfront_domain_name != null ? 1 : 0
-
   zone_id = aws_route53_zone.main.zone_id
   name    = "app.${var.domain_name}"
   type    = "A"
@@ -119,8 +117,6 @@ resource "aws_route53_record" "app" {
 
 # A record for api.systemdesigntrainer.com → ALB
 resource "aws_route53_record" "api" {
-  count = var.alb_dns_name != null ? 1 : 0
-
   zone_id = aws_route53_zone.main.zone_id
   name    = "api.${var.domain_name}"
   type    = "A"
@@ -129,5 +125,18 @@ resource "aws_route53_record" "api" {
     name                   = var.alb_dns_name
     zone_id                = var.alb_zone_id
     evaluate_target_health = true
+  }
+}
+
+# A record for systemdesigntrainer.com (root/apex) → CloudFront (landing page)
+resource "aws_route53_record" "root" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = var.domain_name
+  type    = "A"
+
+  alias {
+    name                   = var.landing_cloudfront_domain_name
+    zone_id                = var.landing_cloudfront_zone_id
+    evaluate_target_health = false
   }
 }

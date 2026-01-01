@@ -70,6 +70,25 @@ output "cloudfront_distribution_id" {
 }
 
 # ==================================
+# Landing Page Outputs
+# ==================================
+
+output "landing_url" {
+  description = "Landing page URL (root domain)"
+  value       = module.landing.landing_url
+}
+
+output "landing_s3_bucket_name" {
+  description = "S3 bucket name for landing page assets"
+  value       = module.landing.s3_bucket_name
+}
+
+output "landing_cloudfront_distribution_id" {
+  description = "CloudFront distribution ID for landing page cache invalidations"
+  value       = module.landing.cloudfront_distribution_id
+}
+
+# ==================================
 # Database Outputs
 # ==================================
 
@@ -130,13 +149,19 @@ output "deployment_instructions" {
        aws s3 sync dist/ s3://${module.frontend.s3_bucket_name}/ --delete
        aws cloudfront create-invalidation --distribution-id ${module.frontend.cloudfront_distribution_id} --paths "/*"
 
-    5. CONFIGURE EXTERNAL SERVICES:
+    5. DEPLOY LANDING PAGE:
+       cd landing
+       aws s3 sync ./ s3://${module.landing.s3_bucket_name}/ --delete
+       aws cloudfront create-invalidation --distribution-id ${module.landing.cloudfront_distribution_id} --paths "/*"
+
+    6. CONFIGURE EXTERNAL SERVICES:
        - WorkOS: Add redirect URI: https://${module.dns.api_fqdn}/auth/callback
        - Stripe: Add webhook: https://${module.dns.api_fqdn}/payments/webhook
 
-    6. VERIFY:
+    7. VERIFY:
        - Backend: https://${module.dns.api_fqdn}/health
        - Frontend: https://${module.dns.app_fqdn}
+       - Landing: ${module.landing.landing_url}
 
     📚 Documentation:
        - Deployment scripts: terraform/scripts/

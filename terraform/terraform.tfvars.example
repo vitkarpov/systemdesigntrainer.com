@@ -5,7 +5,7 @@
 project_name = "sd-sim"
 environment  = "production"
 domain_name  = "systemdesigntrainer.com"
-aws_region   = "us-east-1"
+aws_region   = "eu-west-1"
 
 # ==================================
 # Cost Optimization Settings
