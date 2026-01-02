@@ -18,6 +18,11 @@ output "acm_certificate_arn_alb" {
   value       = aws_acm_certificate.alb.arn
 }
 
+output "acm_certificate_validation_cloudfront" {
+  description = "CloudFront certificate validation resource for dependency management"
+  value       = aws_acm_certificate_validation.cloudfront
+}
+
 output "app_fqdn" {
   description = "Fully qualified domain name for frontend app"
   value       = "app.${var.domain_name}"

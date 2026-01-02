@@ -18,6 +18,12 @@ variable "acm_certificate_arn" {
   type        = string
 }
 
+variable "acm_certificate_validation" {
+  description = "ACM certificate validation resource for dependency management"
+  type        = any
+  default     = null
+}
+
 variable "cloudfront_price_class" {
   description = "CloudFront price class"
   type        = string

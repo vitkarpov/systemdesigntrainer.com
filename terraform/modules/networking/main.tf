@@ -83,7 +83,7 @@ data "aws_ami" "nat_instance" {
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-kernel-*-hvm-*-x86_64-gp2"]
+    values = ["amzn2-ami-kernel-*-hvm-*-arm64-gp2"]
   }
 
   filter {

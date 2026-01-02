@@ -50,6 +50,8 @@ locals {
 }
 
 resource "aws_cloudfront_distribution" "landing" {
+  depends_on = [var.acm_certificate_validation]
+
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"

@@ -24,7 +24,7 @@ resource "aws_db_subnet_group" "main" {
 resource "aws_db_instance" "postgresql" {
   identifier     = "${var.project_name}-${var.environment}-postgres"
   engine         = "postgres"
-  engine_version = "16.4"
+  engine_version = "16.3"
 
   # Instance configuration
   instance_class        = var.rds_instance_class
@@ -80,13 +80,15 @@ resource "aws_db_parameter_group" "postgresql" {
 
   # Optimize for small instance
   parameter {
-    name  = "shared_buffers"
-    value = "32768" # 256MB for t4g.micro (1GB RAM)
+    name         = "shared_buffers"
+    value        = "32768" # 256MB for t4g.micro (1GB RAM)
+    apply_method = "pending-reboot"
   }
 
   parameter {
-    name  = "max_connections"
-    value = "100"
+    name         = "max_connections"
+    value        = "100"
+    apply_method = "pending-reboot"
   }
 
   tags = {
@@ -113,16 +115,17 @@ resource "aws_elasticache_parameter_group" "redis" {
   name   = "${var.project_name}-${var.environment}-redis-params"
   family = "redis7"
 
-  # Enable AOF persistence for Bull queue durability
-  parameter {
-    name  = "appendonly"
-    value = "yes"
-  }
-
-  parameter {
-    name  = "appendfsync"
-    value = "everysec"
-  }
+  # Note: appendonly parameter cannot be modified after creation
+  # If you need AOF persistence, you must destroy and recreate this parameter group
+  # parameter {
+  #   name  = "appendonly"
+  #   value = "yes"
+  # }
+  #
+  # parameter {
+  #   name  = "appendfsync"
+  #   value = "everysec"
+  # }
 
   tags = {
     Name = "${var.project_name}-${var.environment}-redis-params"

@@ -105,11 +105,12 @@ module "alb" {
 module "frontend" {
   source = "./modules/frontend"
 
-  project_name           = var.project_name
-  environment            = var.environment
-  domain_name            = var.domain_name
-  acm_certificate_arn    = module.dns.acm_certificate_arn_cloudfront
-  cloudfront_price_class = var.cloudfront_price_class
+  project_name                = var.project_name
+  environment                 = var.environment
+  domain_name                 = var.domain_name
+  acm_certificate_arn         = module.dns.acm_certificate_arn_cloudfront
+  acm_certificate_validation  = module.dns.acm_certificate_validation_cloudfront
+  cloudfront_price_class      = var.cloudfront_price_class
 }
 
 # ==================================
@@ -119,11 +120,12 @@ module "frontend" {
 module "landing" {
   source = "./modules/landing"
 
-  project_name           = var.project_name
-  environment            = var.environment
-  domain_name            = var.domain_name
-  acm_certificate_arn    = module.dns.acm_certificate_arn_cloudfront
-  cloudfront_price_class = var.cloudfront_price_class
+  project_name                = var.project_name
+  environment                 = var.environment
+  domain_name                 = var.domain_name
+  acm_certificate_arn         = module.dns.acm_certificate_arn_cloudfront
+  acm_certificate_validation  = module.dns.acm_certificate_validation_cloudfront
+  cloudfront_price_class      = var.cloudfront_price_class
 }
 
 # ==================================
