@@ -140,3 +140,4 @@ terraform/terraform.tfvars
 .terraform/
 .terraform.lock.hcl
 *tfstate*
+*_accessKeys.csv
