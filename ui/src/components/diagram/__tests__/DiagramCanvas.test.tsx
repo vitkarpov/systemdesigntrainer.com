@@ -51,9 +51,13 @@ vi.mock('@/hooks/useDiagramAutoSave', () => ({
 }))
 
 // Mock API hook
-vi.mock('@/api/hooks.gen', () => ({
-  useSessionsControllerGetDiagram: vi.fn(),
-}))
+vi.mock('@/api/hooks.gen', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/hooks.gen')>();
+  return {
+    ...actual,
+    useSessionsControllerGetDiagram: vi.fn(),
+  };
+})
 
 import { useSessionsControllerGetDiagram } from '@/api/hooks.gen'
 const mockUseSessionsControllerGetDiagram = useSessionsControllerGetDiagram as ReturnType<typeof vi.fn>

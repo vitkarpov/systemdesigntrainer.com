@@ -5,9 +5,13 @@ import { renderWithProviders } from '@/tests/utils'
 import Dashboard from '@/pages/Dashboard/Dashboard'
 
 // Mock API hooks
-vi.mock('@/api/hooks.gen', () => ({
-  useSessionsControllerGetDashboard: vi.fn(),
-}))
+vi.mock('@/api/hooks.gen', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/hooks.gen')>();
+  return {
+    ...actual,
+    useSessionsControllerGetDashboard: vi.fn(),
+  };
+})
 
 // Mock router hooks
 const mockNavigate = vi.fn()

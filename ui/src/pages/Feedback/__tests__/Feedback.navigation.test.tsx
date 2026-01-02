@@ -5,11 +5,15 @@ import { renderWithProviders } from '@/tests/utils'
 import Feedback from '@/pages/Feedback/Feedback'
 
 // Mock API hooks
-vi.mock('@/api/hooks.gen', () => ({
-  useSessionsControllerGetFeedback: vi.fn(),
-  useSessionsControllerGetFeedbackStatus: vi.fn(),
-  useSessionsControllerGenerateFeedback: vi.fn(),
-}))
+vi.mock('@/api/hooks.gen', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/hooks.gen')>();
+  return {
+    ...actual,
+    useSessionsControllerGetFeedback: vi.fn(),
+    useSessionsControllerGetFeedbackStatus: vi.fn(),
+    useSessionsControllerGenerateFeedback: vi.fn(),
+  };
+})
 
 // Mock router hooks
 const mockNavigate = vi.fn()

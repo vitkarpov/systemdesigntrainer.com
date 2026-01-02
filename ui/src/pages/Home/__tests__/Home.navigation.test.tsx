@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { screen } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/tests/utils'
 import Home from '@/pages/Home/Home'
@@ -10,11 +10,26 @@ vi.mock('@/components/UserMenu', () => ({
 }))
 
 // Mock API hooks
-vi.mock('@/api/hooks.gen', () => ({
-  useCasesControllerGetAllCases: vi.fn(),
-  useSessionsControllerCreateSession: vi.fn(),
-  useSessionsControllerStartSession: vi.fn(),
-}))
+vi.mock('@/api/hooks.gen', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/hooks.gen')>();
+  return {
+    ...actual,
+    useCasesControllerGetAllCases: vi.fn(),
+    useSessionsControllerCreateSession: vi.fn(),
+    useSessionsControllerStartSession: vi.fn(),
+    useAuthControllerGetUser: vi.fn(() => ({
+      data: {
+        id: 1,
+        email: 'test@example.com',
+        displayName: 'Test User',
+        subscriptionStatus: 'free',
+        interviewsRemaining: 5,
+      },
+      isLoading: false,
+      error: null,
+    })),
+  };
+})
 
 // Mock router hooks
 const mockNavigate = vi.fn()
@@ -112,8 +127,9 @@ describe('Home - Navigation Consistency', () => {
     it('should show current case information', () => {
       renderWithProviders(<Home />)
 
-      expect(screen.getByText(/Current Case:/i)).toBeInTheDocument()
+      // Case title should be displayed in the case selection area
       expect(screen.getByText(/Design a URL Shortener/i)).toBeInTheDocument()
+      expect(screen.getByText(/Select an Interview Case:/i)).toBeInTheDocument()
     })
 
     it('should provide clear understanding of where they came from via back button', () => {
@@ -152,11 +168,33 @@ describe('Home - Navigation Consistency', () => {
 
       renderWithProviders(<Home />)
 
+      // Wait for cases to load
+      await waitFor(() => {
+        expect(screen.getByText('Design a URL Shortener')).toBeInTheDocument()
+      })
+
+      // User explicitly selects the case
+      const caseButton = screen.getByRole('button', { name: /Design a URL Shortener/i })
+      await user.click(caseButton)
+
+      // Start the interview
       const startButton = screen.getByRole('button', { name: /start interview/i })
       await user.click(startButton)
 
+      // Wait for both mutations to be called
+      await waitFor(() => {
+        expect(mockCreateMutate).toHaveBeenCalledWith({
+          data: {
+            caseId: 1,
+            companyStyle: 'generic',
+            level: 'mid',
+          },
+        })
+        expect(mockStartMutate).toHaveBeenCalledWith({ id: 456 })
+      })
+
       // Should eventually navigate to interview page
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith('/interview/456')
       })
     })

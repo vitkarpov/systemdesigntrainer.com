@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import type { ReactElement, ReactNode } from 'react'
 import { vi } from 'vitest'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 // Create a test query client with no retries
 export function createTestQueryClient() {
@@ -30,9 +31,11 @@ export function ProvidersWrapper({ children, queryClient }: ProvidersWrapperProp
 
   return (
     <QueryClientProvider client={client}>
-      <BrowserRouter>
-        {children}
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          {children}
+        </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }

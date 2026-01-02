@@ -8,17 +8,21 @@ import { toast } from 'sonner'
 import type { UseConversationStreamOptions } from '@/hooks/useConversationStream'
 
 // Mock API hooks
-vi.mock('@/api/hooks.gen', () => ({
-  useSessionsControllerGetSession: vi.fn(),
-  useSessionsControllerGetTranscript: vi.fn(),
-  useSessionsControllerGetFailedMessages: vi.fn(),
-  useSessionsControllerAdvancePhase: vi.fn(),
-  useSessionsControllerGenerateFeedback: vi.fn(),
-  useSessionsControllerRetryConversation: vi.fn(),
-  getSessionsControllerGetSessionQueryKey: vi.fn((id) => ['session', id]),
-  getSessionsControllerGetFailedMessagesQueryKey: vi.fn((id) => ['failedMessages', id]),
-  getSessionsControllerGetTranscriptQueryKey: vi.fn((id) => ['transcript', id]),
-}))
+vi.mock('@/api/hooks.gen', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/hooks.gen')>();
+  return {
+    ...actual,
+    useSessionsControllerGetSession: vi.fn(),
+    useSessionsControllerGetTranscript: vi.fn(),
+    useSessionsControllerGetFailedMessages: vi.fn(),
+    useSessionsControllerAdvancePhase: vi.fn(),
+    useSessionsControllerGenerateFeedback: vi.fn(),
+    useSessionsControllerRetryConversation: vi.fn(),
+    getSessionsControllerGetSessionQueryKey: vi.fn((id) => ['session', id]),
+    getSessionsControllerGetFailedMessagesQueryKey: vi.fn((id) => ['failedMessages', id]),
+    getSessionsControllerGetTranscriptQueryKey: vi.fn((id) => ['transcript', id]),
+  };
+})
 
 // Import the mocked functions after the mock is defined
 import * as apiHooks from '@/api/hooks.gen'
