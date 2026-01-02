@@ -322,12 +322,18 @@ async function seed() {
     label: JSON.stringify({ nodes, edges }),
   });
 
-  console.log(`✓ Created diagram with ${nodes.length} nodes and ${edges.length} edges`);
+  console.log(
+    `✓ Created diagram with ${nodes.length} nodes and ${edges.length} edges`,
+  );
 
   console.log('\n✅ Development seed completed!');
   console.log(`\nTest User: ${testUser.email}`);
-  console.log(`Interview Session: ${session.id} (in_progress at 'high_level' phase)`);
-  console.log(`Diagram Snapshot: ${diagramSnapshot.id} (with ${nodes.length} nodes and ${edges.length} edges)`);
+  console.log(
+    `Interview Session: ${session.id} (in_progress at 'high_level' phase)`,
+  );
+  console.log(
+    `Diagram Snapshot: ${diagramSnapshot.id} (with ${nodes.length} nodes and ${edges.length} edges)`,
+  );
   console.log(
     `\nYou can now use the app with this test data or continue the interview in the UI.`,
   );

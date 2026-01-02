@@ -76,7 +76,13 @@ export async function seedInterviewCasesWithDb(database: NodePgDatabase<any>) {
           displayOrder: 9,
         },
       ],
-      tags: ['web-services', 'scalability', 'caching', 'databases', 'api-design'],
+      tags: [
+        'web-services',
+        'scalability',
+        'caching',
+        'databases',
+        'api-design',
+      ],
     },
     {
       title: 'Design a News Feed System',
@@ -132,7 +138,8 @@ export async function seedInterviewCasesWithDb(database: NodePgDatabase<any>) {
         },
         {
           expectationType: 'scalability',
-          description: 'Handle celebrity/influencer problem (millions of followers)',
+          description:
+            'Handle celebrity/influencer problem (millions of followers)',
           displayOrder: 8,
         },
         {
@@ -142,7 +149,13 @@ export async function seedInterviewCasesWithDb(database: NodePgDatabase<any>) {
           displayOrder: 9,
         },
       ],
-      tags: ['social-media', 'scalability', 'databases', 'caching', 'real-time'],
+      tags: [
+        'social-media',
+        'scalability',
+        'databases',
+        'caching',
+        'real-time',
+      ],
     },
     {
       title: 'Design a Rate Limiter',
@@ -208,8 +221,7 @@ export async function seedInterviewCasesWithDb(database: NodePgDatabase<any>) {
     {
       title: 'Design a Video Streaming Platform',
       slug: 'video-streaming',
-      description:
-        'Design a video streaming service like YouTube or Netflix',
+      description: 'Design a video streaming service like YouTube or Netflix',
       difficulty: 'hard',
       problemStatement: '',
       estimatedDuration: 45,
@@ -337,7 +349,13 @@ export async function seedInterviewCasesWithDb(database: NodePgDatabase<any>) {
           displayOrder: 9,
         },
       ],
-      tags: ['real-time', 'websockets', 'messaging', 'scalability', 'distributed-systems'],
+      tags: [
+        'real-time',
+        'websockets',
+        'messaging',
+        'scalability',
+        'distributed-systems',
+      ],
     },
     {
       title: 'Design a Distributed Cache',
@@ -369,8 +387,7 @@ export async function seedInterviewCasesWithDb(database: NodePgDatabase<any>) {
         },
         {
           expectationType: 'data_model',
-          description:
-            'Design in-memory data structures (hash maps, LRU list)',
+          description: 'Design in-memory data structures (hash maps, LRU list)',
           displayOrder: 4,
         },
         {
@@ -381,8 +398,7 @@ export async function seedInterviewCasesWithDb(database: NodePgDatabase<any>) {
         },
         {
           expectationType: 'deep_dive',
-          description:
-            'Explain eviction policies (LRU, LFU, TTL-based)',
+          description: 'Explain eviction policies (LRU, LFU, TTL-based)',
           displayOrder: 6,
         },
         {
@@ -404,13 +420,17 @@ export async function seedInterviewCasesWithDb(database: NodePgDatabase<any>) {
           displayOrder: 9,
         },
       ],
-      tags: ['caching', 'distributed-systems', 'data-structures', 'scalability'],
+      tags: [
+        'caching',
+        'distributed-systems',
+        'data-structures',
+        'scalability',
+      ],
     },
     {
       title: 'Design a Search Autocomplete System',
       slug: 'search-autocomplete',
-      description:
-        'Design a typeahead/autocomplete system like Google Search',
+      description: 'Design a typeahead/autocomplete system like Google Search',
       difficulty: 'medium',
       problemStatement: '',
       estimatedDuration: 45,
@@ -430,8 +450,7 @@ export async function seedInterviewCasesWithDb(database: NodePgDatabase<any>) {
         },
         {
           expectationType: 'api',
-          description:
-            'Design API endpoints (GET /autocomplete?q={prefix})',
+          description: 'Design API endpoints (GET /autocomplete?q={prefix})',
           displayOrder: 3,
         },
         {
@@ -476,8 +495,7 @@ export async function seedInterviewCasesWithDb(database: NodePgDatabase<any>) {
     {
       title: 'Design a Web Crawler',
       slug: 'web-crawler',
-      description:
-        'Design a distributed web crawler for a search engine',
+      description: 'Design a distributed web crawler for a search engine',
       difficulty: 'medium',
       problemStatement: '',
       estimatedDuration: 45,
@@ -503,8 +521,7 @@ export async function seedInterviewCasesWithDb(database: NodePgDatabase<any>) {
         },
         {
           expectationType: 'data_model',
-          description:
-            'Design data structures for URL queue and visited URLs',
+          description: 'Design data structures for URL queue and visited URLs',
           displayOrder: 4,
         },
         {
@@ -532,7 +549,12 @@ export async function seedInterviewCasesWithDb(database: NodePgDatabase<any>) {
           displayOrder: 8,
         },
       ],
-      tags: ['distributed-systems', 'scalability', 'web-services', 'algorithms'],
+      tags: [
+        'distributed-systems',
+        'scalability',
+        'web-services',
+        'algorithms',
+      ],
     },
   ];
 
