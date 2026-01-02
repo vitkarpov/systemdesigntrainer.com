@@ -25,6 +25,8 @@ ECR_URL=$(terraform output -raw ecr_repository_url 2>/dev/null)
 REGION=$(terraform output -raw aws_region 2>/dev/null)
 CLUSTER=$(terraform output -raw ecs_cluster_name 2>/dev/null)
 SERVICE=$(terraform output -raw ecs_service_name 2>/dev/null)
+PROJECT_NAME=$(terraform output -raw project_name 2>/dev/null || echo 'sd-sim')
+ENVIRONMENT=$(terraform output -raw environment 2>/dev/null || echo 'production')
 
 if [ -z "$ECR_URL" ]; then
   echo -e "${RED}✗ Failed to get ECR URL from Terraform outputs${NC}"
@@ -109,5 +111,5 @@ echo -e "${BLUE}Monitor deployment:${NC}"
 echo -e "  aws ecs describe-services --cluster ${CLUSTER} --services ${SERVICE} --region ${REGION}"
 echo -e ""
 echo -e "${BLUE}View logs:${NC}"
-echo -e "  aws logs tail /ecs/$(terraform output -raw project_name 2>/dev/null || echo 'sd-sim')-$(terraform output -raw environment 2>/dev/null || echo 'production')-backend --follow --region ${REGION}"
+echo -e "  aws logs tail /ecs/${PROJECT_NAME}-${ENVIRONMENT}-backend --follow --region ${REGION}"
 echo -e ""
