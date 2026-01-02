@@ -4,25 +4,40 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../db/db.module';
 import * as schema from '../../db/schema';
+import { ProductTier } from '../dto/checkout.dto';
 
 @Injectable()
 export class StripeService {
   private readonly logger = new Logger(StripeService.name);
   private stripe: Stripe;
 
-  // Price configurations
-  private readonly priceConfigs = {
-    [process.env.STRIPE_PRICE_3_INTERVIEWS]: {
+  // Map product tiers to Stripe price IDs from environment
+  private readonly tierToPriceId: Record<ProductTier, string> = {
+    [ProductTier.THREE_INTERVIEWS]: process.env.STRIPE_PRICE_3_INTERVIEWS,
+    [ProductTier.FIVE_INTERVIEWS]: process.env.STRIPE_PRICE_5_INTERVIEWS,
+    [ProductTier.UNLIMITED]: process.env.STRIPE_PRICE_UNLIMITED,
+  };
+
+  // Product configurations by tier
+  private readonly tierConfigs: Record<
+    ProductTier,
+    {
+      productType: '3_interviews' | '5_interviews' | 'unlimited';
+      interviewsGranted: number;
+      amountPaid: number;
+    }
+  > = {
+    [ProductTier.THREE_INTERVIEWS]: {
       productType: '3_interviews' as const,
       interviewsGranted: 3,
       amountPaid: 3900,
     },
-    [process.env.STRIPE_PRICE_5_INTERVIEWS]: {
+    [ProductTier.FIVE_INTERVIEWS]: {
       productType: '5_interviews' as const,
       interviewsGranted: 5,
       amountPaid: 5900,
     },
-    [process.env.STRIPE_PRICE_UNLIMITED]: {
+    [ProductTier.UNLIMITED]: {
       productType: 'unlimited' as const,
       interviewsGranted: 9999,
       amountPaid: 14900,
@@ -48,27 +63,36 @@ export class StripeService {
   async createCheckoutSession(
     userId: number,
     email: string,
-    priceId: string,
+    productTier: ProductTier,
     successUrl: string,
     cancelUrl: string,
   ): Promise<Stripe.Checkout.Session> {
     this.logger.log(
-      `Creating checkout session for user ${userId}, price ${priceId}`,
+      `Creating checkout session for user ${userId}, tier ${productTier}`,
     );
 
-    const priceConfig = this.priceConfigs[priceId];
-    if (!priceConfig) {
-      throw new Error(`Invalid price ID: ${priceId}`);
+    // Get configuration for this tier
+    const tierConfig = this.tierConfigs[productTier];
+    if (!tierConfig) {
+      throw new Error(`Invalid product tier: ${productTier}`);
+    }
+
+    // Map tier to Stripe price ID
+    const stripePriceId = this.tierToPriceId[productTier];
+    if (!stripePriceId) {
+      throw new Error(
+        `Stripe price ID not configured for tier: ${productTier}`,
+      );
     }
 
     // Determine if this is a subscription or one-time payment
-    const isSubscription = priceConfig.productType === 'unlimited';
+    const isSubscription = tierConfig.productType === 'unlimited';
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: priceId,
+          price: stripePriceId,
           quantity: 1,
         },
       ],
@@ -78,8 +102,8 @@ export class StripeService {
       customer_email: email,
       metadata: {
         userId: userId.toString(),
-        productType: priceConfig.productType,
-        interviewsGranted: priceConfig.interviewsGranted.toString(),
+        productType: tierConfig.productType,
+        interviewsGranted: tierConfig.interviewsGranted.toString(),
       },
     };
 
@@ -87,15 +111,15 @@ export class StripeService {
       sessionParams.subscription_data = {
         metadata: {
           userId: userId.toString(),
-          productType: priceConfig.productType,
+          productType: tierConfig.productType,
         },
       };
     } else {
       sessionParams.payment_intent_data = {
         metadata: {
           userId: userId.toString(),
-          productType: priceConfig.productType,
-          interviewsGranted: priceConfig.interviewsGranted.toString(),
+          productType: tierConfig.productType,
+          interviewsGranted: tierConfig.interviewsGranted.toString(),
         },
       };
     }

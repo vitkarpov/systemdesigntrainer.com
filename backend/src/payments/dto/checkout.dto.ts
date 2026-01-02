@@ -1,20 +1,24 @@
 import { IsString, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export enum PriceOption {
-  THREE_INTERVIEWS = 'price_1SjLXc6w90vVabvpnGzBwrTP',
-  FIVE_INTERVIEWS = 'price_1SjLap6w90vVabvpL9NSujHS',
-  UNLIMITED = 'price_1SjLZu6w90vVabvpHjJjaaRO',
+/**
+ * Product tier enum for pricing options
+ * This abstracts away Stripe price IDs from the frontend
+ */
+export enum ProductTier {
+  THREE_INTERVIEWS = 'THREE_INTERVIEWS',
+  FIVE_INTERVIEWS = 'FIVE_INTERVIEWS',
+  UNLIMITED = 'UNLIMITED',
 }
 
 export class CreateCheckoutSessionDto {
   @ApiProperty({
-    description: 'Stripe Price ID for the product',
-    enum: PriceOption,
-    example: PriceOption.THREE_INTERVIEWS,
+    description: 'Product tier to purchase',
+    enum: ProductTier,
+    example: ProductTier.THREE_INTERVIEWS,
   })
-  @IsEnum(PriceOption)
-  priceId: string;
+  @IsEnum(ProductTier)
+  productTier: ProductTier;
 
   @ApiProperty({
     description: 'URL to redirect to after successful payment',

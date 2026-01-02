@@ -9,17 +9,23 @@ import { useAuthControllerGetUser } from '@/api/hooks.gen';
 import { getApiBaseUrl } from '@/api/client';
 import { toast } from 'sonner';
 
-const PRICE_IDS = {
-  THREE_INTERVIEWS: 'price_1SjLXc6w90vVabvpnGzBwrTP',
-  FIVE_INTERVIEWS: 'price_1SjLap6w90vVabvpL9NSujHS',
-  UNLIMITED: 'price_1SjLZu6w90vVabvpHjJjaaRO',
-};
+/**
+ * Product tier enum matching backend
+ * Frontend uses these tier names instead of knowing actual Stripe price IDs
+ */
+const ProductTier = {
+  THREE_INTERVIEWS: 'THREE_INTERVIEWS',
+  FIVE_INTERVIEWS: 'FIVE_INTERVIEWS',
+  UNLIMITED: 'UNLIMITED',
+} as const;
+
+type ProductTier = typeof ProductTier[keyof typeof ProductTier];
 
 interface PricingTier {
   id: string;
   name: string;
   price: string;
-  priceId: string;
+  productTier: ProductTier;
   description: string;
   features: string[];
   popular?: boolean;
@@ -31,7 +37,7 @@ const tiers: PricingTier[] = [
     id: 'starter',
     name: 'Starter Pack',
     price: '$39',
-    priceId: PRICE_IDS.THREE_INTERVIEWS,
+    productTier: ProductTier.THREE_INTERVIEWS,
     pricePerInterview: '$13 per interview',
     description: 'Perfect for trying out the platform',
     features: [
@@ -46,7 +52,7 @@ const tiers: PricingTier[] = [
     id: 'power',
     name: 'Power Pack',
     price: '$59',
-    priceId: PRICE_IDS.FIVE_INTERVIEWS,
+    productTier: ProductTier.FIVE_INTERVIEWS,
     pricePerInterview: '$11.80 per interview',
     description: 'Best value for comprehensive prep',
     features: [
@@ -63,7 +69,7 @@ const tiers: PricingTier[] = [
     id: 'unlimited',
     name: 'Pro Unlimited',
     price: '$149',
-    priceId: PRICE_IDS.UNLIMITED,
+    productTier: ProductTier.UNLIMITED,
     description: 'Unlimited practice for serious prep',
     features: [
       'Unlimited interviews',
@@ -79,10 +85,10 @@ const tiers: PricingTier[] = [
 export default function Pricing() {
   const navigate = useNavigate();
   const { data: user } = useAuthControllerGetUser();
-  const [loading, setLoading] = useState<string | null>(null);
+  const [loading, setLoading] = useState<ProductTier | null>(null);
 
-  const handlePurchase = async (priceId: string, tierName: string) => {
-    setLoading(priceId);
+  const handlePurchase = async (productTier: ProductTier, tierName: string) => {
+    setLoading(productTier);
 
     try {
       const baseUrl = getApiBaseUrl();
@@ -93,7 +99,7 @@ export default function Pricing() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          priceId,
+          productTier,
           successUrl: `${window.location.origin}/payment/success`,
           cancelUrl: `${window.location.origin}/pricing`,
         }),
@@ -194,10 +200,10 @@ export default function Pricing() {
                   className="w-full"
                   variant={tier.popular ? 'default' : 'outline'}
                   size="lg"
-                  onClick={() => handlePurchase(tier.priceId, tier.name)}
+                  onClick={() => handlePurchase(tier.productTier, tier.name)}
                   disabled={loading !== null || user?.subscriptionStatus === 'unlimited'}
                 >
-                  {loading === tier.priceId ? (
+                  {loading === tier.productTier ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Loading...

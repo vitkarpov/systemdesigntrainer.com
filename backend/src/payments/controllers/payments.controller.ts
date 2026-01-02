@@ -47,12 +47,14 @@ export class PaymentsController {
     @CurrentUser() user: User,
     @Body() dto: CreateCheckoutSessionDto,
   ): Promise<CheckoutSessionResponseDto> {
-    this.logger.log(`Creating checkout for user ${user.id}: ${dto.priceId}`);
+    this.logger.log(
+      `Creating checkout for user ${user.id}: ${dto.productTier}`,
+    );
 
     const session = await this.stripeService.createCheckoutSession(
       user.id,
       user.email,
-      dto.priceId,
+      dto.productTier,
       dto.successUrl,
       dto.cancelUrl,
     );
