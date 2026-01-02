@@ -27,8 +27,16 @@ export function useFeedback(sessionIdNum: number, isValidId: boolean) {
       enabled: isValidId && !feedbackData,
       refetchInterval: (query) => {
         const status = query.state.data?.data?.status;
-        // Poll every second while processing
-        return status === "processing" ? 1000 : false;
+        // Poll every second while processing or when status is unknown
+        // Only stop polling when we get a definitive final state
+        if (
+          status === "completed" ||
+          status === "failed" ||
+          status === "not_started"
+        ) {
+          return false;
+        }
+        return 1000;
       },
     },
   });

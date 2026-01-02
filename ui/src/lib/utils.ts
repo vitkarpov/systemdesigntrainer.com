@@ -21,7 +21,12 @@ export function parseErrorMessage(error: Error, fallback: string): string {
     const parsed = JSON.parse(error.message);
     // If it's an object with a message field, use that
     if (parsed && typeof parsed === "object" && "message" in parsed) {
-      return parsed.message;
+      let errorMessage = parsed.message;
+      // If there's a reason field, append it to the message
+      if ("reason" in parsed && parsed.reason) {
+        errorMessage += `: ${parsed.reason}`;
+      }
+      return errorMessage;
     }
   } catch {
     // If parsing fails, just return the original message
