@@ -1,7 +1,7 @@
 import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { InterviewCasesService } from '../services/interview-cases.service';
-import type { InterviewCase } from '../../db/schema/interview-cases.schema';
+import { InterviewCaseDto } from '../dto/responses.dto';
 
 @ApiTags('cases')
 @Controller('cases')
@@ -16,8 +16,9 @@ export class CasesController {
   @ApiResponse({
     status: 200,
     description: 'List of all active interview cases',
+    type: [InterviewCaseDto],
   })
-  async getAllCases(): Promise<InterviewCase[]> {
+  async getAllCases(): Promise<InterviewCaseDto[]> {
     return this.casesService.getAllCases();
   }
 
@@ -27,10 +28,14 @@ export class CasesController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific interview case by ID' })
   @ApiParam({ name: 'id', description: 'Case ID' })
-  @ApiResponse({ status: 200, description: 'Interview case details' })
+  @ApiResponse({
+    status: 200,
+    description: 'Interview case details',
+    type: InterviewCaseDto,
+  })
   async getCaseById(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<InterviewCase> {
+  ): Promise<InterviewCaseDto> {
     return this.casesService.getCaseById(id);
   }
 }
