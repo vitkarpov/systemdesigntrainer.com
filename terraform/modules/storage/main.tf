@@ -24,7 +24,7 @@ resource "aws_db_subnet_group" "main" {
 resource "aws_db_instance" "postgresql" {
   identifier     = "${var.project_name}-${var.environment}-postgres"
   engine         = "postgres"
-  engine_version = "16.3"
+  engine_version = "17.6"
 
   # Instance configuration
   instance_class        = var.rds_instance_class
@@ -76,7 +76,7 @@ resource "aws_db_instance" "postgresql" {
 # RDS parameter group
 resource "aws_db_parameter_group" "postgresql" {
   name   = "${var.project_name}-${var.environment}-postgres-params"
-  family = "postgres16"
+  family = "postgres17"
 
   # Optimize for small instance
   parameter {
