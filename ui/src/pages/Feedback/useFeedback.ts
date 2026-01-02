@@ -6,16 +6,14 @@ import {
 
 export function useFeedback(sessionIdNum: number, isValidId: boolean) {
   // Try to get existing feedback first
-  const {
-    data: feedbackData,
-    isLoading: isFeedbackLoading,
-    error: feedbackError,
-  } = useSessionsControllerGetFeedback(sessionIdNum, {
-    query: {
-      enabled: isValidId,
-      retry: false,
-    },
-  });
+  const { data: feedbackData, isLoading: isFeedbackLoading } =
+    useSessionsControllerGetFeedback(sessionIdNum, {
+      query: {
+        enabled: isValidId,
+        retry: false,
+        throwOnError: true,
+      },
+    });
 
   // Get feedback status (for polling)
   const {
@@ -25,6 +23,7 @@ export function useFeedback(sessionIdNum: number, isValidId: boolean) {
   } = useSessionsControllerGetFeedbackStatus(sessionIdNum, {
     query: {
       enabled: isValidId && !feedbackData,
+      throwOnError: true,
       refetchInterval: (query) => {
         const status = query.state.data?.data?.status;
         // Poll every second while processing or when status is unknown
@@ -56,7 +55,6 @@ export function useFeedback(sessionIdNum: number, isValidId: boolean) {
     statusInfo,
     isFeedbackLoading,
     isStatusLoading,
-    feedbackError,
     generateMutation,
     handleRetry,
     refetchStatus,

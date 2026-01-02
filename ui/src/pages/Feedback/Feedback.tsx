@@ -1,17 +1,19 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
 import { useFeedback } from './useFeedback';
 import { LoadingState } from './states/LoadingState';
 import { ProcessingState } from './states/ProcessingState';
 import { ErrorState } from './states/ErrorState';
-import { NotFoundState } from './states/NotFoundState';
+import { NotFoundState } from '@/pages/shared/NotFoundState';
 import { OverallScoreCard } from './components/OverallScoreCard';
 import { ScoreBreakdownCard } from './components/ScoreBreakdownCard';
 import { FeedbackItemsCard } from './components/FeedbackItemsCard';
 import { NextStepsCard } from './components/NextStepsCard';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-export default function Feedback() {
+function FeedbackPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
 
@@ -23,7 +25,6 @@ export default function Feedback() {
     statusInfo,
     isFeedbackLoading,
     isStatusLoading,
-    feedbackError,
     generateMutation,
     handleRetry,
   } = useFeedback(sessionIdNum, isValidId);
@@ -44,8 +45,8 @@ export default function Feedback() {
   // Show feedback from status if completed
   const completedFeedback = statusInfo?.status === 'completed' ? statusInfo.feedback : feedback;
 
-  // Show error state
-  if (statusInfo?.status === 'failed' || (!completedFeedback && feedbackError)) {
+  // Show error state for failed feedback generation
+  if (statusInfo?.status === 'failed') {
     return (
       <ErrorState
         error={statusInfo?.error}
@@ -55,8 +56,15 @@ export default function Feedback() {
     );
   }
 
+  // Show not found if no feedback exists
   if (!completedFeedback) {
-    return <NotFoundState onBackToHome={handleBackToHome} />;
+    return (
+      <NotFoundState
+        onBackToHome={handleBackToHome}
+        title="Feedback Not Found"
+        message="The feedback you're looking for doesn't exist or hasn't been generated yet."
+      />
+    );
   }
 
   return (
@@ -89,5 +97,20 @@ export default function Feedback() {
         <NextStepsCard steps={completedFeedback.nextSteps || []} />
       </div>
     </div>
+  );
+}
+
+export default function Feedback() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  return (
+    <ErrorBoundary
+      context="feedback"
+      onBackToHome={() => navigate('/')}
+      onReset={() => queryClient.invalidateQueries()}
+    >
+      <FeedbackPage />
+    </ErrorBoundary>
   );
 }

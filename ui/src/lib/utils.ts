@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { ApiError } from "@/api/client";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -33,4 +34,12 @@ export function parseErrorMessage(error: Error, fallback: string): string {
   }
 
   return error.message;
+}
+
+export function isApiError(error: unknown): error is ApiError {
+  return error instanceof ApiError;
+}
+
+export function isForbiddenError(error: unknown): boolean {
+  return isApiError(error) && error.status === 403;
 }

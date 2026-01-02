@@ -1,6 +1,19 @@
 // Get API base URL from environment variable
 // In production: should be set to https://api.systemdesigntrainer.com
 // In development: defaults to '/api' to use Vite proxy
+// Custom error class that includes HTTP status information
+export class ApiError extends Error {
+  status: number;
+  statusText: string;
+
+  constructor(message: string, status: number, statusText: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.statusText = statusText;
+  }
+}
+
 export const getApiBaseUrl = () => {
   return import.meta.env.VITE_API_URL ?? "/api";
 };
@@ -50,7 +63,11 @@ export const customInstance = async <T>(config: {
   // Handle errors
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(errorText || `HTTP error! status: ${response.status}`);
+    throw new ApiError(
+      errorText || `HTTP error! status: ${response.status}`,
+      response.status,
+      response.statusText,
+    );
   }
 
   // Parse and return JSON response

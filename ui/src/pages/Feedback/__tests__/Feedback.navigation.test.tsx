@@ -178,7 +178,7 @@ describe('Feedback - Navigation Consistency', () => {
   })
 
   describe('Not Found State Navigation', () => {
-    it('should show "Back to Home" button in not found state', () => {
+    it('should show "Back to Dashboard" button in not found state', () => {
       mockUseFeedback.mockReturnValue({
         feedback: null,
         statusInfo: null,
@@ -191,7 +191,7 @@ describe('Feedback - Navigation Consistency', () => {
 
       renderWithProviders(<Feedback />)
 
-      expect(screen.getByRole('button', { name: /back to home/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument()
     })
   })
 

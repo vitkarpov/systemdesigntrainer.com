@@ -19,8 +19,9 @@ import {
   getSessionsControllerGetFailedMessagesQueryKey,
 } from '@/api/hooks.gen';
 import { useConversationStream } from '@/hooks/useConversationStream';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-export default function Interview() {
+function InterviewPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -61,12 +62,14 @@ export default function Interview() {
       refetchInterval: (query) => {
         return query.state.data?.data?.session?.status === 'in_progress' ? 1000 : false;
       },
+      throwOnError: true,
     },
   });
 
   const { data: transcriptData, isLoading: isLoadingMessages } = useSessionsControllerGetTranscript(sessionIdNum, {
     query: {
       enabled: !!sessionId && !isNaN(sessionIdNum),
+      throwOnError: true,
     },
   });
 
@@ -297,5 +300,20 @@ export default function Interview() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Interview() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  return (
+    <ErrorBoundary
+      context="interview"
+      onBackToHome={() => navigate('/')}
+      onReset={() => queryClient.invalidateQueries()}
+    >
+      <InterviewPage />
+    </ErrorBoundary>
   );
 }
