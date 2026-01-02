@@ -60,6 +60,10 @@ export class AuthController {
         sameSite: 'lax', // CSRF protection
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: '/',
+        // Set domain for cross-subdomain access (api. and app.)
+        domain: process.env.NODE_ENV === 'production'
+          ? '.systemdesigntrainer.com'
+          : undefined,
       });
 
       // Redirect without token in URL
@@ -105,6 +109,10 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
+      // Must match domain from cookie creation
+      domain: process.env.NODE_ENV === 'production'
+        ? '.systemdesigntrainer.com'
+        : undefined,
     });
 
     return res.json({

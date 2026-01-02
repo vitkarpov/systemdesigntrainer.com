@@ -1,3 +1,10 @@
+// Get API base URL from environment variable
+// In production: should be set to https://api.systemdesigntrainer.com
+// In development: defaults to '/api' to use Vite proxy
+const getApiBaseUrl = () => {
+  return import.meta.env.VITE_API_URL ?? "/api";
+};
+
 export const customInstance = async <T>(config: {
   url: string;
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -13,6 +20,10 @@ export const customInstance = async <T>(config: {
       url = url.replace(`{${key}}`, String(config.params[key]));
     });
   }
+
+  const baseUrl = getApiBaseUrl();
+  const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+  url = `${baseUrl}/${cleanUrl}`;
 
   // Build headers
   const headers: Record<string, string> = {
