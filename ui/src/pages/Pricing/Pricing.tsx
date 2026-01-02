@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
-import { UserMenu } from '@/components/UserMenu';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

@@ -4,7 +4,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/PageHeader';
-import { UserMenu } from '@/components/UserMenu';
 import { InterviewCounter } from '@/components/InterviewCounter';
 import { PaywallModal } from '@/components/PaywallModal';
 import {
