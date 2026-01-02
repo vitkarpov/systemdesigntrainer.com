@@ -148,6 +148,8 @@ docker rmi sd-sim-backend
 
 ## Database
 
+### Local Development
+
 ```bash
 # Generate migrations
 $ npm run db:generate
@@ -161,6 +163,146 @@ $ npm run db:seed
 # Open Drizzle Studio
 $ npm run db:studio
 ```
+
+### Connecting to Production Database
+
+To connect to the production RDS database using Drizzle Studio, you need to establish a tunnel through the VPC since the database is in a private subnet.
+
+#### Prerequisites
+
+1. AWS CLI installed and configured with appropriate credentials
+2. AWS Systems Manager Session Manager plugin installed:
+   ```bash
+   # macOS
+   brew install --cask session-manager-plugin
+
+   # Linux/Windows - follow AWS documentation:
+   # https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
+   ```
+
+3. An EC2 instance in the VPC with:
+   - SSM Agent installed (Amazon Linux 2/2023 AMIs have this by default)
+   - IAM role with `AmazonSSMManagedInstanceCore` policy
+   - Network access to RDS (must be in same VPC or have security group access)
+
+#### Steps to Connect
+
+1. Get database connection details:
+   ```bash
+   # Get RDS endpoint
+   RDS_ENDPOINT=$(aws rds describe-db-instances \
+     --db-instance-identifier sd-sim-production-postgres \
+     --query 'DBInstances[0].Endpoint.Address' \
+     --output text)
+
+   # Get database name
+   DB_NAME=$(aws rds describe-db-instances \
+     --db-instance-identifier sd-sim-production-postgres \
+     --query 'DBInstances[0].DBName' \
+     --output text)
+
+   # Get database username
+   DB_USER=$(aws rds describe-db-instances \
+     --db-instance-identifier sd-sim-production-postgres \
+     --query 'DBInstances[0].MasterUsername' \
+     --output text)
+
+   echo "RDS Endpoint: $RDS_ENDPOINT"
+   echo "Database Name: $DB_NAME"
+   echo "Username: $DB_USER"
+   ```
+
+2. Get database password from AWS Secrets Manager:
+   ```bash
+   DB_PASSWORD=$(aws secretsmanager get-secret-value \
+     --secret-id sd-sim-production-backend-secrets \
+     --query 'SecretString' \
+     --output text | jq -r '.DB_PASSWORD')
+
+   echo "Password retrieved (length: ${#DB_PASSWORD})"
+   ```
+
+3. Find an EC2 instance to use as tunnel host:
+   ```bash
+   # List available EC2 instances in the VPC
+   aws ec2 describe-instances \
+     --filters "Name=tag:Name,Values=sd-sim-production-*" \
+              "Name=instance-state-name,Values=running" \
+     --query 'Reservations[*].Instances[*].[InstanceId,Tags[?Key==`Name`].Value|[0]]' \
+     --output table
+
+   # Set the instance ID for the tunnel (use NAT instance or any other instance from above)
+   INSTANCE_ID="<instance-id-from-above>"
+   ```
+
+   Note: You can use any EC2 instance in the VPC that has:
+   - SSM Agent installed and running
+   - IAM role with `AmazonSSMManagedInstanceCore` policy
+   - Network access to the RDS instance
+
+   The NAT instance (if used) is a good choice as it's always running and has access to the private subnets where RDS resides.
+
+4. Start an SSM port forwarding session:
+   ```bash
+   aws ssm start-session \
+     --target $INSTANCE_ID \
+     --document-name AWS-StartPortForwardingSessionToRemoteHost \
+     --parameters host="$RDS_ENDPOINT",portNumber="5432",localPortNumber="5433"
+   ```
+
+   Keep this terminal window open - the tunnel will remain active while this session runs.
+
+5. In a new terminal, set environment variables and run Drizzle Studio:
+   ```bash
+   export DB_HOST=localhost
+   export DB_PORT=5433
+   export DB_USER="<username-from-step-1>"
+   export DB_PASSWORD="<password-from-step-2>"
+   export DB_NAME="<database-name-from-step-1>"
+
+   # Navigate to backend directory
+   cd backend
+
+   # Run Drizzle Studio
+   npm run db:studio
+   ```
+
+6. Access Drizzle Studio at `https://local.drizzle.studio` in your browser
+
+7. When finished, terminate the SSM session (Ctrl+C in the first terminal)
+
+#### Alternative: SSH Bastion Host
+
+If you prefer using an SSH bastion host:
+
+```bash
+# Port forward through bastion to RDS
+ssh -i ~/.ssh/your-key.pem \
+  -L 5433:<RDS_ENDPOINT>:5432 \
+  ec2-user@<BASTION_PUBLIC_IP> \
+  -N
+
+# Then connect with the same environment variables as above
+```
+
+#### Security Notes
+
+- Never commit production credentials to version control
+- Use IAM database authentication when possible
+- Rotate credentials regularly
+- Ensure your local machine's IP is authorized if using bastion host with security groups
+- SSM Session Manager is preferred as it doesn't require opening SSH ports or managing keys
+- If using the NAT instance for tunneling, you may need to temporarily add an ingress rule to the RDS security group allowing connections from the NAT instance's security group
+
+#### Troubleshooting
+
+If you encounter connection issues:
+
+1. Verify the EC2 instance has SSM Agent installed and an IAM role with `AmazonSSMManagedInstanceCore` policy
+2. Check that the RDS security group allows connections from your tunnel host
+3. Ensure the tunnel host is in the same VPC as the RDS instance
+4. Verify the RDS endpoint and credentials are correct
+5. Check CloudWatch Logs for SSM session logs if the tunnel fails to establish
 
 ## Test
 
