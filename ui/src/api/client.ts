@@ -22,7 +22,7 @@ export const customInstance = async <T>(config: {
   }
 
   const baseUrl = getApiBaseUrl();
-  const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+  const cleanUrl = url.startsWith("/") ? url.slice(1) : url;
   url = `${baseUrl}/${cleanUrl}`;
 
   // Build headers

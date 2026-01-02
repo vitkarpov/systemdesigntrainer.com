@@ -192,7 +192,7 @@ describe("client", () => {
         expect.any(String),
         expect.objectContaining({
           credentials: "include",
-        })
+        }),
       );
     });
 
@@ -213,7 +213,7 @@ describe("client", () => {
           headers: expect.objectContaining({
             "Content-Type": "application/json",
           }),
-        })
+        }),
       );
     });
 
@@ -238,7 +238,7 @@ describe("client", () => {
             "Content-Type": "application/json",
             "X-Custom-Header": "custom-value",
           }),
-        })
+        }),
       );
     });
 
@@ -261,7 +261,7 @@ describe("client", () => {
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify(data),
-        })
+        }),
       );
     });
 
@@ -284,7 +284,7 @@ describe("client", () => {
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify(data),
-        })
+        }),
       );
     });
 
@@ -314,7 +314,7 @@ describe("client", () => {
         customInstance({
           url: "/users/999",
           method: "GET",
-        })
+        }),
       ).rejects.toThrow("Not found");
     });
 
@@ -329,7 +329,7 @@ describe("client", () => {
         customInstance({
           url: "/users",
           method: "GET",
-        })
+        }),
       ).rejects.toThrow("HTTP error! status: 500");
     });
 
@@ -367,7 +367,7 @@ describe("client", () => {
         expect.any(String),
         expect.objectContaining({
           signal: controller.signal,
-        })
+        }),
       );
     });
   });

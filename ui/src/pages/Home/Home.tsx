@@ -121,12 +121,27 @@ export default function Home() {
                       <button
                         key={interviewCase.id}
                         onClick={() => setSelectedCase(interviewCase)}
-                        className={`text-left p-4 rounded-lg border-2 transition-all hover:shadow-md ${
+                        className={`relative text-left p-4 rounded-lg border-2 transition-all hover:shadow-md ${
                           selectedCase?.id === interviewCase.id
-                            ? 'border-primary bg-primary/5'
+                            ? 'border-primary bg-primary/10 shadow-sm ring-2 ring-primary/20'
                             : 'border-muted bg-muted hover:border-muted-foreground/50'
                         }`}
                       >
+                        {selectedCase?.id === interviewCase.id && (
+                          <div className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                            <svg
+                              className="w-4 h-4 text-primary-foreground"
+                              fill="none"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path d="M5 13l4 4L19 7"></path>
+                            </svg>
+                          </div>
+                        )}
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <h4 className="font-semibold">{interviewCase.title}</h4>
                           <span
