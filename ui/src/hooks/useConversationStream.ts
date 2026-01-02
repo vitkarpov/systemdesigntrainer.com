@@ -46,18 +46,24 @@ export function useConversationStream({
       const abortController = new AbortController();
       useStreamingStore.getState().startStreaming(sessionId, abortController);
 
+      // Determine cookie domain for production
+      const baseUrl = getApiBaseUrl();
+      const isProduction = baseUrl.includes("systemdesigntrainer.com");
+      const domainAttr = isProduction
+        ? "; domain=.systemdesigntrainer.com"
+        : "";
+
       try {
         // Set parameters as cookies to avoid URL length limitations
-        document.cookie = `text=${encodeURIComponent(text)}; path=/; SameSite=Lax`;
+        document.cookie = `text=${encodeURIComponent(text)}; path=/; SameSite=Lax${domainAttr}`;
 
         // Add diagram data if provided
         if (diagram && diagram.nodes && diagram.nodes.length > 0) {
           const diagramJson = JSON.stringify(diagram);
-          document.cookie = `diagramData=${encodeURIComponent(diagramJson)}; path=/; SameSite=Lax`;
+          document.cookie = `diagramData=${encodeURIComponent(diagramJson)}; path=/; SameSite=Lax${domainAttr}`;
         } else {
           // Clear diagram cookie if no diagram provided
-          document.cookie =
-            "diagramData=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          document.cookie = `diagramData=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainAttr}`;
         }
 
         const baseUrl = getApiBaseUrl();
@@ -166,10 +172,8 @@ export function useConversationStream({
         }
       } finally {
         // Clean up cookies after request completes
-        document.cookie =
-          "text=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-        document.cookie =
-          "diagramData=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = `text=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainAttr}`;
+        document.cookie = `diagramData=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainAttr}`;
       }
     },
     [sessionId, queryClient, onStart, onComplete, onError],
