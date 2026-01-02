@@ -24,6 +24,7 @@ echo -e "${BLUE}[1/5] Getting Terraform outputs...${NC}"
 S3_BUCKET=$(terraform output -raw s3_bucket_name 2>/dev/null)
 CF_DIST_ID=$(terraform output -raw cloudfront_distribution_id 2>/dev/null)
 API_URL=$(terraform output -raw api_url 2>/dev/null)
+FRONTEND_URL=$(terraform output -raw frontend_url 2>/dev/null || echo 'https://app.systemdesigntrainer.com')
 
 if [ -z "$S3_BUCKET" ] || [ -z "$CF_DIST_ID" ]; then
   echo -e "${RED}✗ Failed to get S3 bucket or CloudFront distribution from Terraform outputs${NC}"
@@ -34,6 +35,7 @@ fi
 echo -e "${GREEN}✓ S3 Bucket: ${S3_BUCKET}${NC}"
 echo -e "${GREEN}✓ CloudFront Distribution: ${CF_DIST_ID}${NC}"
 echo -e "${GREEN}✓ API URL: ${API_URL}${NC}"
+echo -e "${GREEN}✓ Frontend URL: ${FRONTEND_URL}${NC}"
 
 # Build frontend
 echo -e "${BLUE}[2/5] Building frontend...${NC}"
@@ -115,7 +117,7 @@ echo -e "${GREEN}═════════════════════
 echo -e "${GREEN}   Frontend deployment complete!${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════════════${NC}"
 echo -e ""
-echo -e "${BLUE}Frontend URL:${NC} $(terraform output -raw frontend_url 2>/dev/null || echo 'https://app.systemdesigntrainer.com')"
+echo -e "${BLUE}Frontend URL:${NC} ${FRONTEND_URL}"
 echo -e ""
 if [ "$INVALIDATION_ID" != "N/A" ]; then
   echo -e "${BLUE}Monitor invalidation:${NC}"
