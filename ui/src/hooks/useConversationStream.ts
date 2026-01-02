@@ -5,6 +5,7 @@ import {
   getSessionsControllerGetSessionQueryKey,
   getSessionsControllerGetTranscriptQueryKey,
 } from "@/api/hooks.gen";
+import { getApiBaseUrl } from "@/api/client";
 
 export interface UseConversationStreamOptions {
   sessionId: number;
@@ -59,7 +60,8 @@ export function useConversationStream({
             "diagramData=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         }
 
-        const url = `/api/sessions/${sessionId}/conversation`;
+        const baseUrl = getApiBaseUrl();
+        const url = `${baseUrl}/sessions/${sessionId}/conversation`;
 
         const response = await fetch(url, {
           method: "GET",

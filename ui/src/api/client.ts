@@ -1,7 +1,7 @@
 // Get API base URL from environment variable
 // In production: should be set to https://api.systemdesigntrainer.com
 // In development: defaults to '/api' to use Vite proxy
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = () => {
   return import.meta.env.VITE_API_URL ?? "/api";
 };
 

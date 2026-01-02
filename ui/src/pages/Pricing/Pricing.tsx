@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuthControllerGetUser } from '@/api/hooks.gen';
+import { getApiBaseUrl } from '@/api/client';
 import { toast } from 'sonner';
 
 const PRICE_IDS = {
@@ -84,7 +85,8 @@ export default function Pricing() {
     setLoading(priceId);
 
     try {
-      const response = await fetch('/api/payments/checkout', {
+      const baseUrl = getApiBaseUrl();
+      const response = await fetch(`${baseUrl}/payments/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
