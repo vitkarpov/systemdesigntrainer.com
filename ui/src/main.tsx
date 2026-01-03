@@ -10,7 +10,7 @@ if (import.meta.env.MODE === 'production') {
         blockAllMedia: false,
       }),
     ],
-    replaysSessionSampleRate: 0.1,
+    replaysSessionSampleRate: 1.0,
     replaysOnErrorSampleRate: 1.0,
   });
 }
