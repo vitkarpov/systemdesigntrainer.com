@@ -289,8 +289,9 @@ export class InterviewSessionService {
    * Get time spent in current phase (seconds)
    */
   getPhaseElapsedSeconds(session: SessionState): number {
-    const now = new Date();
-    const elapsed = now.getTime() - session.phaseStartedAt.getTime();
+    // If session is completed, use completedAt instead of current time
+    const endTime = session.completedAt || new Date();
+    const elapsed = endTime.getTime() - session.phaseStartedAt.getTime();
     return Math.floor(elapsed / 1000);
   }
 
