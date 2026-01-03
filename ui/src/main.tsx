@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/react";
 
-if (import.meta.env.PROD) {
+if (import.meta.env.MODE === 'production') {
   Sentry.init({
     dsn: "https://7ab342feb99b15de49cec223fe44b584@o4510612969881600.ingest.de.sentry.io/4510613028339792",
     sendDefaultPii: true,
