@@ -3,7 +3,15 @@ import * as Sentry from "@sentry/react";
 if (import.meta.env.PROD) {
   Sentry.init({
     dsn: "https://7ab342feb99b15de49cec223fe44b584@o4510612969881600.ingest.de.sentry.io/4510613028339792",
-    sendDefaultPii: true
+    sendDefaultPii: true,
+    integrations: [
+      Sentry.replayIntegration({
+        maskAllText: false,
+        blockAllMedia: false,
+      }),
+    ],
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
   });
 }
 
