@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
   const { login, isAuthenticated } = useAuth();
@@ -21,14 +21,14 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900">
-            System Design Interview Simulator
+            Welcome back
           </h2>
           <p className="mt-2 text-gray-600">
-            Practice real system design interviews under pressure
+            Sign in to continue your practice
           </p>
         </div>
 
-        <div className="mt-8 space-y-4">
+        <div className="mt-8">
           <button
             onClick={handleLogin}
             className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
@@ -47,65 +47,18 @@ const Login = () => {
             Sign in with GitHub
           </button>
 
-          <p className="text-xs text-center text-gray-500">
+          <p className="text-xs text-center text-gray-500 mt-4">
             By signing in, you agree to our Terms of Service and Privacy Policy
           </p>
         </div>
 
-        <div className="mt-6 border-t border-gray-200 pt-6">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">
-            What you'll get:
-          </h3>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li className="flex items-start">
-              <svg
-                className="h-5 w-5 text-green-500 mr-2 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              1 free practice interview
-            </li>
-            <li className="flex items-start">
-              <svg
-                className="h-5 w-5 text-green-500 mr-2 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              Real-time AI interviewer
-            </li>
-            <li className="flex items-start">
-              <svg
-                className="h-5 w-5 text-green-500 mr-2 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              Detailed feedback report
-            </li>
-          </ul>
+        <div className="text-center pt-4 border-t border-gray-200">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500">
+              Sign up to see what you'll get
+            </Link>
+          </p>
         </div>
       </div>
     </div>

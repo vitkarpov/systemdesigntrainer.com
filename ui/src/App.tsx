@@ -6,6 +6,7 @@ import Feedback from './pages/Feedback/Feedback';
 import Pricing from './pages/Pricing/Pricing';
 import PaymentSuccess from './pages/Payment/Success';
 import Login from './pages/Auth/Login';
+import Signup from './pages/Auth/Signup';
 import Callback from './pages/Auth/Callback';
 import AuthError from './pages/Auth/Error';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -16,6 +17,7 @@ function App() {
     <>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/auth/callback" element={<Callback />} />
         <Route path="/auth/error" element={<AuthError />} />
         <Route
