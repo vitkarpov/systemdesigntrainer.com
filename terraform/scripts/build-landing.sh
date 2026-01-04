@@ -28,10 +28,19 @@ if [ ! -d "$LANDING_DIR" ]; then
   exit 1
 fi
 
+# Build the landing page
+echo "🔨 Building landing page..."
+cd "$LANDING_DIR"
+npm run build
+echo "✅ Build complete"
+echo ""
+
+cd "$SCRIPT_DIR"
+
 # Check if dist directory exists
 if [ ! -d "$LANDING_DIR/dist" ]; then
   echo "❌ Error: dist directory not found at $LANDING_DIR/dist"
-  echo "Please build the landing page first (e.g., npm run build)"
+  echo "Build may have failed - please check the build output above"
   exit 1
 fi
 
