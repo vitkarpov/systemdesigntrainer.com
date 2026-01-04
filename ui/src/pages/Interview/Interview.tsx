@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { DiagramCanvas } from '@/components/diagram/DiagramCanvas';
 import { PageHeader } from '@/components/PageHeader';
 import { PhaseDisplay } from '@/components/PhaseDisplay';
-import { MessageList, InterviewInput } from './components';
+import { MessageList, InterviewInput, TimeoutWarningBanner } from './components';
 import { Button } from '@/components/ui/button';
 import { formatElapsedTime, parseErrorMessage } from '@/lib/utils';
 import { useInterviewStore, useDiagramStore, useStreamingStore } from '@/stores';
@@ -19,6 +19,7 @@ import {
   getSessionsControllerGetFailedMessagesQueryKey,
 } from '@/api/hooks.gen';
 import { useConversationStream } from '@/hooks/useConversationStream';
+import { useTimeoutStatus } from '@/hooks/useTimeoutStatus';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 function InterviewPage() {
@@ -86,6 +87,12 @@ function InterviewPage() {
 
   const advancePhaseMutation = useSessionsControllerAdvancePhase();
   const generateFeedbackMutation = useSessionsControllerGenerateFeedback();
+
+  // Timeout status polling (only for in-progress sessions)
+  const timeoutStatus = useTimeoutStatus(
+    sessionIdNum,
+    session?.data.session.status === 'in_progress'
+  );
 
   useEffect(() => {
     if (session) {
@@ -255,6 +262,14 @@ function InterviewPage() {
           ) : null
         }
       />
+
+      {/* Timeout Warning Banner */}
+      {timeoutStatus.shouldShowWarning && (
+        <TimeoutWarningBanner
+          inactiveSeconds={timeoutStatus.inactiveSeconds}
+          onDismiss={timeoutStatus.dismissWarning}
+        />
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
