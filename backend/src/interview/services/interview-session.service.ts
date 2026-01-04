@@ -163,6 +163,7 @@ export class InterviewSessionService {
       .set({
         status: SessionStatus.IN_PROGRESS,
         startedAt: sql`NOW()`,
+        lastUserMessageAt: sql`NOW()`,
         updatedAt: sql`NOW()`,
       })
       .where(eq(interviewSessions.id, sessionId))
@@ -272,6 +273,100 @@ export class InterviewSessionService {
   }
 
   /**
+   * Update lastUserMessageAt timestamp
+   */
+  async updateLastUserMessageAt(sessionId: number): Promise<void> {
+    await this.db
+      .update(interviewSessions)
+      .set({
+        lastUserMessageAt: sql`NOW()`,
+        updatedAt: sql`NOW()`,
+      })
+      .where(eq(interviewSessions.id, sessionId));
+  }
+
+  /**
+   * Check session timeout status
+   * Returns an object with timeout information
+   */
+  getTimeoutStatus(session: SessionState): {
+    shouldShowWarning: boolean;
+    shouldAutoEnd: boolean;
+    inactiveSeconds: number;
+    totalElapsedSeconds: number;
+    reason?: 'inactive' | 'hard_cap';
+  } {
+    const totalElapsedSeconds = this.getElapsedSeconds(session);
+
+    // Hard cap: 60 minutes (3600 seconds)
+    if (totalElapsedSeconds >= 3600) {
+      return {
+        shouldShowWarning: false,
+        shouldAutoEnd: true,
+        inactiveSeconds: 0,
+        totalElapsedSeconds,
+        reason: 'hard_cap',
+      };
+    }
+
+    // Inactivity check
+    if (!session.lastUserMessageAt || !session.startedAt) {
+      return {
+        shouldShowWarning: false,
+        shouldAutoEnd: false,
+        inactiveSeconds: 0,
+        totalElapsedSeconds,
+      };
+    }
+
+    const now = new Date();
+    const inactiveMs = now.getTime() - session.lastUserMessageAt.getTime();
+    const inactiveSeconds = Math.floor(inactiveMs / 1000);
+
+    // Warning at 10 minutes (600 seconds) of inactivity
+    const shouldShowWarning = inactiveSeconds >= 600 && inactiveSeconds < 780;
+
+    // Auto-end at 13 minutes (780 seconds) of inactivity
+    const shouldAutoEnd = inactiveSeconds >= 780;
+
+    return {
+      shouldShowWarning,
+      shouldAutoEnd,
+      inactiveSeconds,
+      totalElapsedSeconds,
+      reason: shouldAutoEnd ? 'inactive' : undefined,
+    };
+  }
+
+  /**
+   * End session due to timeout
+   */
+  async endSessionDueToTimeout(sessionId: number): Promise<SessionState> {
+    const session = await this.getSession(sessionId);
+
+    if (session.status !== SessionStatus.IN_PROGRESS) {
+      throw new InvalidSessionStateException(
+        sessionId,
+        session.status,
+        'end due to timeout',
+        [SessionStatus.IN_PROGRESS],
+      );
+    }
+
+    const [updated] = await this.db
+      .update(interviewSessions)
+      .set({
+        status: SessionStatus.ABANDONED_TIMEOUT,
+        completedAt: sql`NOW()`,
+        updatedAt: sql`NOW()`,
+      })
+      .where(eq(interviewSessions.id, sessionId))
+      .returning();
+
+    return this.mapToSessionState(updated);
+  }
+
+  /**
    * Get session elapsed time in seconds
    */
   getElapsedSeconds(session: SessionState): number {
@@ -307,6 +402,7 @@ export class InterviewSessionService {
       currentPhase: session.currentPhase as InterviewPhase,
       startedAt: session.startedAt,
       completedAt: session.completedAt,
+      lastUserMessageAt: session.lastUserMessageAt,
       phaseStartedAt: session.phaseStartedAt,
       companyStyle: session.companyStyle,
       level: session.level,

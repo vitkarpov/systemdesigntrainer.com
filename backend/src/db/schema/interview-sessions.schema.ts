@@ -25,6 +25,7 @@ export const interviewSessions = pgTable('interview_sessions', {
   status: varchar('status', { length: 20 }).notNull().default('not_started'),
   startedAt: timestamp('started_at'),
   completedAt: timestamp('completed_at'),
+  lastUserMessageAt: timestamp('last_user_message_at'),
 
   // Current state
   currentPhase: varchar('current_phase', { length: 20 })

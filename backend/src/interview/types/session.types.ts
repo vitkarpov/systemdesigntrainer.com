@@ -3,6 +3,7 @@ export enum SessionStatus {
   NOT_STARTED = 'not_started',
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
+  ABANDONED_TIMEOUT = 'abandoned_timeout',
 }
 
 // Interview phase enum
@@ -39,6 +40,7 @@ export interface SessionState {
   currentPhase: InterviewPhase;
   startedAt: Date | null;
   completedAt: Date | null;
+  lastUserMessageAt: Date | null;
   phaseStartedAt: Date;
   companyStyle: string;
   level: string;

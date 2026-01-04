@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import * as schema from '../../db/schema';
 import { DATABASE_CONNECTION } from '../../db/db.module';
 import { TranscriptService } from './transcript.service';
@@ -65,6 +65,15 @@ export class ConversationSagaService {
       secondsElapsed: elapsedSeconds,
       status: 'pending', // Mark as pending until AI responds
     });
+
+    // Step 2: Update lastUserMessageAt timestamp for timeout tracking
+    await this.db
+      .update(schema.interviewSessions)
+      .set({
+        lastUserMessageAt: sql`NOW()`,
+        updatedAt: sql`NOW()`,
+      })
+      .where(eq(schema.interviewSessions.id, session.id));
 
     this.logger.log(
       `Conversation turn started for session ${session.id}, candidate message ${candidateMessage.id}`,
