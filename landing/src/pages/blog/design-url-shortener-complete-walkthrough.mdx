@@ -1,0 +1,539 @@
+---
+layout: ../../layouts/BlogLayout.astro
+title: "Design a URL Shortener: Complete Walkthrough"
+description: "Step-by-step guide to solving one of the most popular system design interview questions."
+publishDate: "2026-01-04"
+readTime: "18 min read"
+---
+
+"Design a URL shortener like bit.ly" is one of the most common system design interview questions. It appears at Google, Meta, Amazon, and almost every tech company.
+
+Why? Because it's the perfect interview question:
+- Simple enough to explain in 30 seconds
+- Complex enough to test your understanding of distributed systems
+- Touches on multiple important concepts (hashing, databases, caching, scale)
+
+This walkthrough shows you **exactly how to approach this problem** in a 45-minute interview, following the framework that gets you hired.
+
+## Phase 1: Clarify Requirements (5 minutes)
+
+Never start designing immediately. Always ask questions.
+
+### Functional Requirements
+
+**You:** "Before I start, let me clarify what we're building. For functional requirements:
+
+1. The core feature is converting a long URL into a short URL, correct?
+2. When users visit the short URL, they should be redirected to the original long URL?
+3. Do we need custom short URLs? Like `bit.ly/my-custom-link`?
+4. Do we need analytics? (click tracking, geographic data, etc.)
+5. Should short URLs expire after some time, or last forever?
+6. Do we need a UI, or just API endpoints?"
+
+**Interviewer:** "Let's keep it simple. Core shortening and redirection. Custom URLs would be nice to have. No analytics. URLs never expire. Just focus on the API."
+
+**You:** "Got it. So MVP is:
+- Create short URL from long URL
+- Redirect short URL to long URL
+- Support custom short URLs (nice to have)
+
+I'll focus on these."
+
+### Non-Functional Requirements
+
+**You:** "Now for scale and performance:
+
+1. How many URLs are we shortening per day?
+2. What's the ratio of shortening to redirection? (writes vs reads)
+3. What's our latency requirement for redirects?
+4. Do we need high availability? What's acceptable downtime?
+5. How long do we need to store URLs? Forever?"
+
+**Interviewer:** "Let's say 100 million new URLs per day. Redirects will be 100:1 compared to shortening - very read-heavy. Redirects should be under 100ms. High availability is important - this is user-facing. URLs should be stored indefinitely."
+
+**You:** "Perfect. Let me write this down."
+
+```
+Functional Requirements:
+✅ Create short URL from long URL
+✅ Redirect short URL → original URL
+✅ Custom short URLs (nice to have)
+❌ No analytics
+❌ No expiration
+
+Non-Functional Requirements:
+- 100M new URLs/day
+- 100:1 read/write ratio → very read-heavy
+- <100ms latency for redirects
+- High availability
+- Indefinite storage
+```
+
+## Phase 2: Capacity Estimation (5 minutes)
+
+**You:** "Let me do some back-of-envelope math to understand the scale."
+
+### Traffic Estimates
+
+```
+Write requests (URL shortening):
+100M URLs/day ÷ 86,400 seconds = ~1,200 writes/second
+Peak traffic (3x average) = ~3,600 writes/second
+
+Read requests (redirects):
+100M writes × 100 read/write ratio = 10B redirects/day
+10B redirects/day ÷ 86,400 seconds = ~115,000 reads/second
+Peak traffic = ~350,000 reads/second
+
+This is a highly read-heavy system.
+```
+
+### Storage Estimates
+
+```
+Assumptions:
+- Each URL record: 500 bytes average
+  (short_url: 7 chars, long_url: 200 chars, metadata)
+- 100M new URLs/day
+- Keep URLs forever
+
+Storage per day:
+100M URLs × 500 bytes = 50 GB/day
+
+Storage for 10 years:
+50 GB × 365 days × 10 years = ~180 TB
+
+This is manageable for modern databases.
+```
+
+### Bandwidth Estimates
+
+```
+Write bandwidth:
+1,200 writes/sec × 500 bytes = 0.6 MB/second
+
+Read bandwidth (just redirects, not full page load):
+115K reads/sec × 500 bytes = 57 MB/second
+
+Total: ~60 MB/second bandwidth
+```
+
+**You:** "Based on these numbers, we're clearly read-heavy, which means caching will be critical. Storage is reasonable for a single database, but we'll need to plan for horizontal scaling eventually."
+
+## Phase 3: High-Level Design (10 minutes)
+
+**You:** "Let me start with the simplest design and iterate."
+
+### Version 1: Basic Architecture
+
+```
+[Client] → [Load Balancer] → [Application Servers] → [Database]
+```
+
+**You:** "At minimum, we need:
+- Load balancer to distribute traffic
+- Application servers to handle business logic
+- Database to store URL mappings"
+
+### API Design
+
+**You:** "Let me define the core APIs:"
+
+```
+POST /api/shorten
+Request:
+{
+  "long_url": "https://example.com/very/long/url",
+  "custom_alias": "my-link" (optional)
+}
+
+Response:
+{
+  "short_url": "https://short.ly/abc123",
+  "long_url": "https://example.com/very/long/url"
+}
+
+GET /{short_code}
+Redirects to original URL with 301 redirect
+```
+
+### Database Schema
+
+**You:** "For the database, we need a simple schema:"
+
+```sql
+CREATE TABLE urls (
+  id BIGSERIAL PRIMARY KEY,
+  short_code VARCHAR(7) UNIQUE NOT NULL,
+  long_url TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  INDEX(short_code)
+);
+```
+
+**You:** "The short_code is the key. It's what appears in our shortened URL: `short.ly/abc123` where `abc123` is the short_code."
+
+### The Critical Decision: How to Generate Short Codes?
+
+**You:** "Now for the most important question: How do we generate unique short codes?"
+
+**You:** "Let me think through options:
+
+**Option 1: Random Generation**
+- Generate random 6-7 character string
+- Check if it exists in database
+- If collision, retry
+- ✅ Pros: Simple, no coordination needed
+- ❌ Cons: Collision probability increases as DB grows
+
+**Option 2: Hash-Based (MD5/SHA256)**
+- Hash the long URL
+- Take first 7 characters of hash
+- ✅ Pros: Same URL always gets same short code
+- ❌ Cons: Hash collisions, not truly unique
+
+**Option 3: Counter-Based (Base62 Encoding)**
+- Use auto-incrementing ID from database
+- Encode ID in base62 (a-z, A-Z, 0-9)
+- ✅ Pros: Guaranteed unique, no collisions
+- ❌ Cons: Predictable, reveals usage volume
+
+I'd recommend **Base62 encoding** for the MVP because:
+- Guaranteed uniqueness
+- No collision handling
+- Deterministic length
+
+We can add randomness later if predictability is a concern."
+
+### Base62 Encoding Explained
+
+**You:** "Here's how base62 works:"
+
+```
+Database ID: 12345
+Base62 alphabet: a-zA-Z0-9 (62 characters)
+
+12345 in base62 = "dnh"
+
+So URL becomes: short.ly/dnh
+```
+
+**You:** "With 7 characters of base62, we can support:
+- 62^7 = 3.5 trillion unique URLs
+- Far more than we need for 100M/day"
+
+## Phase 4: Deep Dive (15 minutes)
+
+**Interviewer:** "Your design looks good. Let's discuss how you'd handle 350,000 reads/second."
+
+### Adding Cache Layer
+
+**You:** "With 350K reads/second, the database will be overwhelmed. We need caching."
+
+```
+[Client] → [Load Balancer] → [App Servers] → [Redis Cache]
+                                          ↓
+                                      [Database]
+```
+
+**You:** "Here's the flow:
+
+**For URL Creation (Write Path):**
+1. Generate base62 short code from DB sequence
+2. Store mapping in database
+3. Store in Redis cache (write-through)
+4. Return short URL to user
+
+**For URL Redirect (Read Path):**
+1. Check Redis cache for short_code
+2. If cache hit → return long URL (fast!)
+3. If cache miss → query database → store in cache → return
+4. Redirect user to long URL"
+
+**Interviewer:** "What's your caching strategy? Cache everything?"
+
+**You:** "Good question. Let's think about this:
+
+We have 100M new URLs/day, but read distribution will follow a power law - 20% of URLs will get 80% of traffic.
+
+**Caching Strategy:**
+- Use LRU (Least Recently Used) eviction policy
+- Cache hot URLs automatically based on access patterns
+- Set cache size to hold ~20% of URLs (manageable)
+- TTL: No expiration (or very long, like 30 days)
+
+This way we cache the hot URLs naturally without needing to cache everything."
+
+### Database Scaling
+
+**Interviewer:** "What if 180TB in 10 years becomes a problem? How would you scale the database?"
+
+**You:** "Great question. We have a few options:
+
+**Option 1: Vertical Scaling**
+- Upgrade to bigger database servers
+- ✅ Pros: Simple, no code changes
+- ❌ Cons: Limited ceiling, expensive
+
+**Option 2: Read Replicas**
+- Master handles writes, replicas handle reads
+- ✅ Pros: Scales read traffic easily
+- ❌ Cons: Doesn't solve storage problem
+
+**Option 3: Database Sharding**
+- Partition data across multiple databases
+- Shard by short_code range or hash
+
+Example sharding:
+```
+Shard 1: short_codes starting with 0-9 → DB1
+Shard 2: short_codes starting with a-m → DB2
+Shard 3: short_codes starting with n-z → DB3
+```
+
+✅ Pros: Distributes both reads and storage
+❌ Cons: More complex, need routing logic
+
+For 180TB over 10 years, I'd start with read replicas and shard later if needed."
+
+### Handling High Availability
+
+**Interviewer:** "What if the database goes down?"
+
+**You:** "We need redundancy at every layer:"
+
+```
+Architecture with HA:
+
+[Clients]
+    ↓
+[CDN] (for static assets)
+    ↓
+[Load Balancer 1] ↔ [Load Balancer 2] (failover)
+    ↓
+[App Server 1] [App Server 2] [App Server N] (auto-scaling)
+    ↓
+[Redis Cluster] (master-replica, automatic failover)
+    ↓
+[DB Master] ↔ [DB Standby] (replication)
+    ↓
+[DB Replicas] (read scaling)
+```
+
+**Single Points of Failure Eliminated:**
+- Load balancer: Active-passive pair with health checks
+- App servers: Horizontal scaling, kill one and traffic routes around
+- Redis: Cluster mode with replication
+- Database: Master-standby replication with automatic failover
+
+**Target: 99.99% uptime** (less than 1 hour downtime/year)"
+
+### Supporting Custom Short URLs
+
+**Interviewer:** "How would you add support for custom short URLs like `bit.ly/my-brand`?"
+
+**You:** "We need to modify our approach slightly:
+
+**Database Schema Update:**
+```sql
+ALTER TABLE urls ADD COLUMN is_custom BOOLEAN DEFAULT FALSE;
+ADD CONSTRAINT unique_custom_code CHECK (is_custom = TRUE);
+```
+
+**Logic:**
+1. When user requests custom alias, check if it's available
+2. If available, store with `is_custom = TRUE`
+3. If not available, return error (can't auto-generate custom URLs)
+4. For regular shortening, continue using base62 encoding
+
+**Challenges:**
+- Namespace collision: custom `abc` vs generated `abc`
+- Solution: Reserve a namespace for custom URLs (e.g., custom URLs require 5+ chars)
+
+**Example:**
+- Generated: `bit.ly/a2X` (short, auto)
+- Custom: `bit.ly/my-brand` (longer, user-chosen)"
+
+## Phase 5: Bottlenecks & Trade-offs (5 minutes)
+
+**You:** "Let me identify potential bottlenecks and trade-offs in this design:"
+
+### Bottleneck 1: Database Write Contention
+
+**Problem:** Auto-incrementing ID requires coordination
+
+**Solutions:**
+- Use UUID instead of sequential IDs (no coordination)
+- Use distributed ID generator like Twitter Snowflake
+- Pre-allocate ID ranges to each app server
+
+**Trade-off:** UUIDs are longer than sequential IDs
+
+### Bottleneck 2: Cache Stampede
+
+**Problem:** If a popular URL expires from cache, many requests hit DB simultaneously
+
+**Solution:**
+- Use "cache stampede protection" (lock-based or probabilistic early expiration)
+- For URL shortener, this is less critical since we don't expire cache entries
+
+### Bottleneck 3: Geographic Latency
+
+**Problem:** Single region deployment = high latency for international users
+
+**Solution:**
+- Multi-region deployment
+- Geo-DNS routing to nearest region
+- Replicate databases across regions
+- Eventual consistency is acceptable (it's okay if new URL takes 1-2 seconds to propagate)
+
+### Trade-off Analysis: SQL vs NoSQL
+
+**You:** "I chose PostgreSQL, but let me explain the trade-off:
+
+**PostgreSQL:**
+✅ ACID guarantees
+✅ Good for writes with auto-increment
+✅ Simple queries (get by short_code)
+❌ Harder to scale horizontally
+
+**Cassandra/DynamoDB:**
+✅ Easy horizontal scaling
+✅ High write throughput
+❌ Eventual consistency
+❌ More complex for our simple use case
+
+**Decision:** PostgreSQL for MVP, because our write volume (1.2K/sec) is manageable and we want strong consistency. We can shard later if needed."
+
+### Security Considerations
+
+**You:** "A few security concerns I'd address:
+
+1. **Rate Limiting**
+   - Prevent abuse/spam URL creation
+   - Use token bucket: 10 URLs/minute per IP
+
+2. **Malicious URLs**
+   - Scan URLs for malware/phishing before shortening
+   - Integrate with Google Safe Browsing API
+
+3. **Collision Attacks**
+   - With base62 encoding, codes are predictable
+   - Consider adding random salt or using UUIDs if security-critical"
+
+## The Complete Solution
+
+**Final Architecture:**
+
+```
+                    [Clients]
+                       ↓
+                     [CDN]
+                       ↓
+              [Load Balancer (HA)]
+                       ↓
+    ┌──────────────────┼──────────────────┐
+    ↓                  ↓                  ↓
+[App Server 1]   [App Server 2]   [App Server N]
+    └──────────────────┼──────────────────┘
+                       ↓
+              [Redis Cache Cluster]
+                       ↓
+         [PostgreSQL Master-Standby]
+                       ↓
+           [PostgreSQL Read Replicas]
+```
+
+**Request Flows:**
+
+**Shorten URL (Write):**
+1. Client sends long URL
+2. App server generates base62 short code from DB sequence
+3. Store in PostgreSQL
+4. Store in Redis cache
+5. Return short URL
+
+**Redirect (Read):**
+1. Client requests short URL
+2. Check Redis cache
+3. If hit: return long URL
+4. If miss: query PostgreSQL → cache result → return
+5. HTTP 301 redirect to long URL
+
+**Scale Estimates:**
+- Handles 350K reads/sec via Redis caching
+- Handles 3.6K writes/sec via PostgreSQL
+- Stores 180TB over 10 years
+- 99.99% uptime via redundancy
+
+## Common Follow-up Questions
+
+### Q: "Why 301 redirect instead of 302?"
+
+**You:** "Good question.
+
+- **301** (Permanent Redirect): Browser caches the redirect, future requests don't hit our server
+- **302** (Temporary Redirect): Browser doesn't cache, every request hits our server
+
+**Trade-off:**
+- 301 reduces server load (good)
+- 301 makes analytics harder - we don't see repeat visits (bad)
+
+For a URL shortener without analytics, I'd use **301**. If we add analytics later, we'd use **302** to track every click."
+
+### Q: "What if someone generates millions of URLs?"
+
+**You:** "We need rate limiting:
+
+1. **Per IP address:** 100 URLs/hour
+2. **Per API key:** 10,000 URLs/day (for paid users)
+3. **Global rate limit:** Cap total writes at safe threshold
+
+Implementation: Use Redis with sliding window:
+```
+Key: rate_limit:{ip}:{hour}
+Increment on each request
+Expire after 1 hour
+```
+
+If abuse continues, we can require authentication or CAPTCHA."
+
+### Q: "How would you add analytics?"
+
+**You:** "We'd need to track clicks without slowing down redirects:
+
+**Approach:**
+1. On redirect request, immediately return 302 redirect (don't block user)
+2. Asynchronously write click event to message queue (Kafka)
+3. Background workers consume events and write to analytics DB
+4. Use a time-series database (InfluxDB) for click data
+
+This way, redirects stay fast (less than 100ms) and analytics are eventually consistent."
+
+## What Makes This Answer Strong
+
+This walkthrough demonstrates:
+
+1. **Structured thinking** - followed the 5-phase framework
+2. **Asked clarifying questions** - didn't assume requirements
+3. **Did capacity estimation** - showed you understand scale
+4. **Started simple, then iterated** - didn't overengineer
+5. **Discussed trade-offs** - SQL vs NoSQL, 301 vs 302, caching strategies
+6. **Identified bottlenecks** - proactively mentioned limitations
+7. **Covered non-functional requirements** - availability, latency, security
+
+## Practice This Problem
+
+Now it's your turn. Set a timer for 45 minutes and practice this problem:
+
+1. Write down requirements
+2. Do capacity math
+3. Draw the architecture
+4. Explain the data flow
+5. Discuss trade-offs
+
+**Talk out loud** while you do it. System design interviews are conversations, not silent coding sessions.
+
+The more you practice, the more natural this structure becomes. Soon, you'll apply this framework to any system design question.
+
+Now go build that URL shortener.

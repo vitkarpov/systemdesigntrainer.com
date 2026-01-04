@@ -1,0 +1,181 @@
+---
+import Layout from './Layout.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  publishDate: string;
+  author?: string;
+  readTime?: string;
+}
+
+// Get props from either Astro.props directly or from frontmatter (for MDX)
+const frontmatter = Astro.props.frontmatter || Astro.props;
+const { title, description, publishDate, author = 'System Design Trainer', readTime = '10 min read' } = frontmatter;
+
+// Format the date properly
+const formattedDate = publishDate ? new Date(publishDate + 'T00:00:00').toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+}) : '';
+---
+
+<style>
+  .blog-content :global(h2) {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: white;
+    margin: 2rem 0;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+  }
+
+  .blog-content :global(h3) {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin: 1.5rem 0;
+    line-height: 1.3;
+  }
+
+  .blog-content :global(h4) {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: rgb(226, 232, 240);
+    margin: 1rem 0;
+  }
+
+  .blog-content :global(p) {
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    color: rgb(226, 232, 240);
+    margin-top: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .blog-content :global(ul),
+  .blog-content :global(ol) {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .blog-content :global(li) {
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    color: rgb(226, 232, 240);
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .blog-content :global(strong) {
+    font-weight: 600;
+    color: white;
+  }
+
+  .blog-content :global(a) {
+    color: rgb(96, 165, 250);
+    text-decoration: none;
+  }
+
+  .blog-content :global(a:hover) {
+    color: rgb(147, 197, 253);
+    text-decoration: underline;
+  }
+
+  .blog-content :global(code) {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    color: rgb(147, 197, 253);
+    background-color: rgba(30, 41, 59, 0.7);
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  .blog-content :global(pre) {
+    background-color: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgb(51, 65, 85);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    line-height: 1.75;
+  }
+
+  .blog-content :global(pre code) {
+    background-color: transparent;
+    padding: 0;
+    font-size: 0.875rem;
+    color: rgb(226, 232, 240);
+  }
+
+  .blog-content :global(blockquote) {
+    border-left: 4px solid rgb(59, 130, 246);
+    padding-left: 1.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    font-style: italic;
+    color: rgb(226, 232, 240);
+  }
+</style>
+
+<Layout title={title} description={description}>
+  <main class="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
+    <!-- Navigation -->
+    <nav class="border-b border-slate-700">
+      <div class="max-w-6xl mx-auto px-4 py-4">
+        <a href="/blog" class="text-blue-400 hover:text-blue-300 transition-colors">
+          ← Back to Blog
+        </a>
+      </div>
+    </nav>
+
+    <!-- Article Header -->
+    <header class="max-w-6xl mx-auto px-4 py-12">
+      <div class="space-y-4">
+        <h1 class="text-4xl md:text-5xl font-bold text-white leading-tight">
+          {title}
+        </h1>
+        <p class="text-xl text-slate-300">
+          {description}
+        </p>
+        <div class="flex items-center gap-4 text-sm text-slate-400">
+          <span>{author}</span>
+          <span>•</span>
+          <time datetime={publishDate}>{formattedDate}</time>
+          <span>•</span>
+          <span>{readTime}</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Article Content -->
+    <article class="max-w-6xl mx-auto px-4 pb-16">
+      <div class="blog-content">
+        <slot />
+      </div>
+
+      <!-- CTA Box -->
+      <div class="mt-16 p-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg">
+        <h3 class="text-2xl font-bold text-white mb-4">
+          Ready to practice under real interview pressure?
+        </h3>
+        <p class="text-blue-100 mb-6">
+          Stop just reading about system design. Start practicing with AI-powered mock interviews that feel real.
+        </p>
+        <a
+          href="https://app.systemdesigntrainer.com/signup?utm_source=landing&utm_medium=blog&utm_campaign=signup"
+          class="inline-block px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors"
+        >
+          Start Your Free Interview
+        </a>
+      </div>
+    </article>
+  </main>
+  <Footer />
+</Layout>

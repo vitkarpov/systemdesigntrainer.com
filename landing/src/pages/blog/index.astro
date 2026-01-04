@@ -1,0 +1,88 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Footer from '../../components/Footer.astro';
+
+const articles = [
+  {
+    title: 'Complete System Design Interview Preparation Guide 2026',
+    description: 'Everything you need to know to prepare for and ace your system design interview at FAANG and top tech companies.',
+    slug: 'complete-system-design-interview-prep-guide-2026',
+    publishDate: '2026-01-04',
+    readTime: '25 min read',
+    category: 'Preparation'
+  },
+  {
+    title: '10 Most Common System Design Interview Mistakes',
+    description: 'Learn the critical mistakes that cost engineers their dream offers - and how to avoid them.',
+    slug: 'common-system-design-interview-mistakes',
+    publishDate: '2026-01-04',
+    readTime: '12 min read',
+    category: 'Interview Tips'
+  },
+  {
+    title: 'Design a URL Shortener: Complete Walkthrough',
+    description: 'Step-by-step guide to solving one of the most popular system design interview questions.',
+    slug: 'design-url-shortener-complete-walkthrough',
+    publishDate: '2026-01-04',
+    readTime: '18 min read',
+    category: 'Case Study'
+  }
+];
+---
+
+<Layout
+  title="System Design Interview Blog"
+  description="Expert guides, tips, and walkthroughs to help you master system design interviews at FAANG and top tech companies."
+>
+  <main class="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
+    <!-- Navigation -->
+    <nav class="border-b border-slate-700">
+      <div class="max-w-6xl mx-auto px-4 py-4">
+        <a href="/" class="text-blue-400 hover:text-blue-300 transition-colors">
+          ← Back to Home
+        </a>
+      </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto px-4 py-16">
+      <h1 class="text-5xl md:text-6xl font-bold text-white mb-6">
+        System Design Interview Blog
+      </h1>
+      <p class="text-xl text-slate-300 max-w-3xl">
+        Expert guides, interview tips, and problem walkthroughs to help you master system design interviews.
+      </p>
+    </header>
+
+    <!-- Articles Grid -->
+    <section class="max-w-6xl mx-auto px-4 pb-16">
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {articles.map((article) => (
+          <article class="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden hover:border-blue-500 transition-colors group">
+            <a href={`/blog/${article.slug}`} class="block p-6">
+              <div class="mb-4">
+                <span class="inline-block px-3 py-1 text-xs font-semibold text-blue-400 bg-blue-400/10 rounded-full">
+                  {article.category}
+                </span>
+              </div>
+              <h2 class="text-2xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors">
+                {article.title}
+              </h2>
+              <p class="text-slate-400 mb-4 line-clamp-3">
+                {article.description}
+              </p>
+              <div class="flex items-center gap-3 text-sm text-slate-500">
+                <time datetime={article.publishDate}>
+                  {new Date(article.publishDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </time>
+                <span>•</span>
+                <span>{article.readTime}</span>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

@@ -1,0 +1,401 @@
+---
+layout: ../../layouts/BlogLayout.astro
+title: "10 Most Common System Design Interview Mistakes"
+description: "Learn the critical mistakes that cost engineers their dream offers - and how to avoid them."
+publishDate: "2026-01-04"
+readTime: "12 min read"
+---
+
+I've reviewed hundreds of system design interview recordings, and I keep seeing the same mistakes over and over. These aren't obscure edge cases - they're fundamental errors that immediately signal to interviewers: "This candidate isn't ready."
+
+The frustrating part? **Most of these mistakes have nothing to do with technical knowledge.** You can know every database pattern, caching strategy, and load balancing algorithm and still fail if you make these errors.
+
+Let's fix that.
+
+## Mistake #1: Jumping to Solutions Too Fast
+
+**What it looks like:**
+
+> Interviewer: "Design Instagram"
+>
+> Candidate: "Okay so we'll use PostgreSQL for the posts, Redis for caching, S3 for images, and we'll need Kafka for the feed generation..."
+
+**Why it's fatal:**
+
+You haven't asked a single question. You don't know:
+- How many users?
+- What features to prioritize?
+- What are the scale requirements?
+- What are we optimizing for?
+
+Interviewers are testing if you can **handle ambiguity**. Jumping to solutions screams: "I don't know how to gather requirements in a real engineering role."
+
+**How to fix it:**
+
+Spend the first 5-7 minutes asking clarifying questions:
+
+```
+"Before I start designing, let me clarify the requirements:
+
+Functional requirements:
+- Do we need to support photo uploads, stories, and reels?
+  Or just the core feed?
+- Are we building web, mobile, or just the backend?
+- Do we need direct messages?
+
+Non-functional requirements:
+- How many daily active users are we targeting?
+- What's our latency requirement for the feed?
+- Do we need to support global users or specific regions?
+- Should this be eventually consistent or strongly consistent?
+```
+
+**Pro tip:** Write down the requirements on the whiteboard. This shows you're organized and gives you an anchor to refer back to.
+
+## Mistake #2: Ignoring Scale (or Overengineering It)
+
+**Two opposite mistakes with the same root cause:**
+
+### The Underestimator
+
+Designs a system for 1,000 users when the problem needs 100 million.
+
+> "We can just use a single MySQL database and scale vertically if we need to."
+
+**Why it fails:** At scale, a single database becomes a bottleneck. No discussion of sharding, replication, or caching = instant rejection.
+
+### The Overengineer
+
+Designs for Google-scale when the problem is a startup MVP.
+
+> "We'll deploy across 15 AWS regions with multi-master replication, Kubernetes for orchestration, service mesh for traffic management..."
+
+**Why it fails:** You're solving problems that don't exist yet. Shows you can't prioritize or think about costs.
+
+**How to fix it:**
+
+Do back-of-envelope math early:
+
+```
+"Let me estimate the scale:
+- 100M daily active users
+- Each user uploads 5 photos/day
+- That's 500M writes/day = ~6K writes/second
+- Read-to-write ratio is probably 100:1
+- So ~600K reads/second
+
+This is clearly read-heavy and requires distributed systems.
+We can't use a single database."
+```
+
+Then design for that specific scale - not more, not less.
+
+## Mistake #3: Not Discussing Trade-offs
+
+**What it looks like:**
+
+> "We'll use MongoDB because it's good for this use case."
+
+**Why it fails:**
+
+You made a decision without explaining your reasoning. Interviewers want to see you understand **there's no perfect solution** - only trade-offs.
+
+**How to fix it:**
+
+Explicitly discuss alternatives:
+
+```
+"For the database, I'm considering two options:
+
+Option 1: PostgreSQL
+✅ Pros: ACID guarantees, complex queries, mature ecosystem
+❌ Cons: Harder to scale horizontally, schema migrations are painful
+
+Option 2: Cassandra
+✅ Pros: Excellent write performance, easy horizontal scaling
+❌ Cons: Eventual consistency, limited query flexibility
+
+Given we're building a write-heavy system with millions of users,
+I'd lean toward Cassandra. We can handle eventual consistency
+for social feeds - it's okay if a like takes 100ms to appear.
+
+Does that reasoning make sense to you?"
+```
+
+**Key phrase:** "Does that reasoning make sense to you?"
+
+This invites the interviewer to correct you if you're on the wrong track. It's collaborative, not defensive.
+
+## Mistake #4: Terrible Time Management
+
+**The most common pattern:**
+
+- 0-15 min: Gathering requirements (good!)
+- 15-30 min: Still gathering requirements (uh oh...)
+- 30-40 min: Finally starting to draw the architecture (panic mode)
+- 40-45 min: "Sorry, I'm running out of time..."
+- Result: Never got to discuss trade-offs, bottlenecks, or deep dives
+
+**How to fix it:**
+
+Internalize the 5-phase structure:
+
+1. **Requirements** (5-7 min)
+2. **Capacity estimation** (3-5 min)
+3. **High-level design** (10-12 min)
+4. **Deep dive** (15-18 min)
+5. **Trade-offs & bottlenecks** (5-7 min)
+
+Set mental checkpoints:
+- Minute 10: Should be sketching architecture
+- Minute 20: Should be deep-diving into components
+- Minute 40: Should be discussing bottlenecks
+
+**Pro tip:** Ask the interviewer if they want you to move on:
+
+> "I've covered the high-level architecture. Should I deep dive into the database design, or would you like me to discuss caching first?"
+
+## Mistake #5: Drawing an Incomprehensible Diagram
+
+**What bad diagrams look like:**
+
+- Arrows going in random directions
+- No labels on components
+- Spaghetti of connections everywhere
+- Can't explain the data flow
+
+**Why it fails:**
+
+If **you** can't explain your own diagram, how will you explain complex systems to your team?
+
+**How to fix it:**
+
+Follow a clear structure:
+
+```
+[Top of whiteboard]
+Client Layer: Web, Mobile, iOS
+
+[Middle]
+Load Balancer → App Servers → Cache → Database
+
+[Bottom]
+External Services: S3, CDN, Message Queue
+```
+
+**Rules for good diagrams:**
+- Draw left-to-right or top-to-bottom (consistent flow)
+- Label every box clearly ("Application Servers", not "Servers")
+- Use arrows to show data flow (request/response)
+- Keep it clean - erase and redraw if needed
+- Walk through a request: "User clicks tweet → hits load balancer → ..."
+
+## Mistake #6: Getting Lost in Low-Level Details
+
+**What it looks like:**
+
+> "So in the database schema, we'll have a users table with an auto-incrementing ID, and we should index on email, and the timestamp should be stored as Unix epoch in milliseconds, and we'll need a foreign key constraint..."
+
+**Why it fails:**
+
+You're solving problems that don't exist yet. System design is about **architecture**, not implementation details.
+
+Interviewers care about:
+- Do we need a SQL or NoSQL database?
+- How do we shard it?
+- What's the replication strategy?
+
+They don't care about:
+- Exact column names
+- Index types (B-tree vs hash)
+- Whether timestamps are Unix epoch or ISO 8601
+
+**How to fix it:**
+
+Stay at the right level of abstraction. When tempted to go deep, ask:
+
+> "Should I dive deeper into the schema, or should we discuss how we'll handle database scaling?"
+
+Usually, the interviewer will steer you back to high-level concerns.
+
+## Mistake #7: Silent Thinking
+
+**What it looks like:**
+
+[30 seconds of silence while candidate stares at whiteboard]
+
+**Why it fails:**
+
+Interviewers can't read your mind. They don't know if you're:
+- Thinking deeply about a problem
+- Completely lost
+- Having a mental breakdown
+
+Silence = red flag.
+
+**How to fix it:**
+
+**Think out loud.** Narrate your thought process:
+
+```
+"Hmm, I'm thinking about how to handle cache invalidation here.
+We could use a write-through cache, but that adds latency to writes.
+Or we could do cache-aside with TTL, which is faster for writes
+but might serve stale data. Given this is a social feed where
+eventual consistency is okay, I'm leaning toward cache-aside
+with a 60-second TTL. Does that sound reasonable?"
+```
+
+This accomplishes three things:
+1. Shows your problem-solving process
+2. Keeps the interviewer engaged
+3. Gives them a chance to correct you if you're wrong
+
+## Mistake #8: Not Asking for Feedback
+
+**What it looks like:**
+
+You finish your design and wait for the interviewer to speak.
+
+**Why it's a missed opportunity:**
+
+Interviews are **collaborative**. If you're going down the wrong path, wouldn't you want to know early?
+
+**How to fix it:**
+
+Periodically check in with the interviewer:
+
+- "Does this approach make sense so far?"
+- "Am I focusing on the right things, or should I pivot?"
+- "I've designed the high-level architecture - any concerns before I deep dive?"
+- "Am I on the right track here?"
+
+This shows:
+- You're coachable
+- You value feedback
+- You collaborate well
+
+**Bonus:** If you're going off-track, the interviewer will course-correct you. This is way better than spending 20 minutes on the wrong approach.
+
+## Mistake #9: Claiming Your Design Is Perfect
+
+**What it looks like:**
+
+> Interviewer: "What are some weaknesses in your design?"
+>
+> Candidate: "I don't think there are any major weaknesses. This should handle all the requirements."
+
+**Why it fails:**
+
+Every system has trade-offs. Claiming perfection shows:
+- Overconfidence
+- Lack of experience with real systems
+- Poor judgment
+
+**How to fix it:**
+
+Proactively identify bottlenecks and weaknesses:
+
+```
+"Here are some potential issues with this design:
+
+1. The database could become a bottleneck at peak hours.
+   We'd need to implement read replicas or sharding.
+
+2. If a celebrity user posts, the fan-out write could overwhelm
+   our system. We'd need a hybrid push/pull model for hot users.
+
+3. We're using eventual consistency for the cache, so users
+   might see stale data for ~60 seconds. If that's unacceptable,
+   we'd need to implement cache invalidation on writes.
+
+4. Our single region deployment means high latency for
+   international users. We'd need multi-region deployment
+   with geo-routing for a global rollout."
+```
+
+**This is what senior engineers do** - they think about what will break and plan accordingly.
+
+## Mistake #10: Not Practicing Under Real Conditions
+
+**The biggest mistake of all:**
+
+Reading about system design ≠ Being good at system design interviews
+
+You can:
+- Read all the books ✅
+- Watch all the videos ✅
+- Understand all the concepts ✅
+
+And still fail if you've never:
+- Practiced talking through a design out loud ❌
+- Worked under 45-minute time pressure ❌
+- Drew architecture diagrams on a whiteboard ❌
+- Received feedback on your communication style ❌
+
+**Why this is fatal:**
+
+System design interviews are **performance skills**, like public speaking or playing an instrument. You can't learn them from books alone.
+
+**How to fix it:**
+
+Do full mock interviews:
+
+1. **Find a practice partner** (peer, mentor, or platform)
+2. **Set a timer for 45 minutes** (no pausing)
+3. **Use a whiteboard or draw on paper** (not a laptop)
+4. **Practice talking out loud** the entire time
+5. **Get feedback** on what you missed
+
+**Minimum recommended:** 5-10 full practice interviews before your real one.
+
+If you don't have a practice partner, use:
+- Pramp (free peer practice)
+- Interviewing.io (professional mock interviews)
+- SystemDesignTrainer.com (AI-powered simulations)
+
+## The Pattern Behind All These Mistakes
+
+Notice anything?
+
+**9 out of 10 mistakes aren't about technical knowledge.** They're about:
+- Communication
+- Structure
+- Time management
+- Asking questions
+- Explaining trade-offs
+
+You can be the best engineer in the room and still fail if you can't communicate your thinking clearly.
+
+## Your Action Plan
+
+Here's what to do this week:
+
+1. **Record yourself** doing a system design problem out loud (even if it's just you and your phone)
+2. Watch it back and notice:
+   - How much silence?
+   - Did you ask clarifying questions?
+   - Did you explain trade-offs?
+   - Was your diagram clear?
+
+3. **Do one full mock interview** (45 minutes, timed, with feedback)
+
+4. **Create a checklist** and practice until it's automatic:
+   - ✅ Ask clarifying questions
+   - ✅ Do capacity estimation
+   - ✅ Start simple, then iterate
+   - ✅ Discuss trade-offs
+   - ✅ Identify bottlenecks
+   - ✅ Think out loud
+
+## Final Thought
+
+The engineers who pass system design interviews aren't necessarily smarter or more experienced.
+
+**They're just better prepared.**
+
+They've practiced the structure. They've made these mistakes in mock interviews instead of real ones. They know how to communicate their thinking clearly.
+
+You can be one of them.
+
+Now go practice.

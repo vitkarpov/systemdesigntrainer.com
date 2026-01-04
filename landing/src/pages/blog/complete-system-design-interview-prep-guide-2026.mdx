@@ -1,0 +1,386 @@
+---
+layout: ../../layouts/BlogLayout.astro
+title: "Complete System Design Interview Preparation Guide 2026"
+description: "Everything you need to know to prepare for and ace your system design interview at FAANG and top tech companies."
+publishDate: "2026-01-04"
+readTime: "25 min read"
+---
+
+## What Is a System Design Interview?
+
+A system design interview is a 45-60 minute conversation where you design a large-scale distributed system from scratch. Unlike coding interviews that test algorithms, system design interviews evaluate your ability to:
+
+- **Think at scale**: Design systems that handle millions of users
+- **Make trade-offs**: Choose the right tool for the job and justify your decisions
+- **Communicate clearly**: Explain complex technical concepts to interviewers
+- **Handle ambiguity**: Ask the right questions to clarify requirements
+
+These interviews are typically given to mid-to-senior engineers (5+ years experience) and are **the primary gatekeeper** for senior roles at companies like Meta, Google, Amazon, Netflix, and Uber.
+
+## Why Most Engineers Fail
+
+Here's the uncomfortable truth: **most engineers fail system design interviews not because they lack technical knowledge, but because they don't know how to structure their answer.**
+
+Common failure patterns:
+- Jumping straight to implementation without gathering requirements
+- Designing for 100 users when the problem requires 100 million
+- Not discussing trade-offs between different approaches
+- Running out of time without covering key aspects
+- Getting lost in low-level details too early
+
+The good news? System design interviews are **highly coachable** once you understand the structure.
+
+## The 5-Phase Interview Framework
+
+Every system design interview follows a predictable structure. Master these phases and you'll never feel lost again:
+
+### Phase 1: Requirements Gathering (5-10 minutes)
+
+**Goal**: Define what you're building and set constraints
+
+This is the most underrated phase. Interviewers want to see you ask clarifying questions before writing a single line of architecture.
+
+**Functional Requirements** (What should the system do?)
+- What are the core features we need to support?
+- What are the edge cases we should handle?
+- What can we explicitly NOT support in this design?
+
+Example for "Design Twitter":
+- Do we need to support tweets, retweets, and likes?
+- Do we need a timeline feed? What about direct messages?
+- Are we building the web app, mobile app, or just the backend?
+
+**Non-Functional Requirements** (How should it perform?)
+- How many users? (1K, 1M, 100M, 1B?)
+- What's the expected read/write ratio?
+- What's our latency requirement? (Real-time vs eventual consistency)
+- Do we need to support international users?
+
+**Signals interviewers look for:**
+- You ask before assuming
+- You prioritize features (MVP vs nice-to-have)
+- You think about scale from the start
+
+### Phase 2: Capacity Estimation (5 minutes)
+
+**Goal**: Do back-of-envelope calculations to understand scale
+
+This shows you can think quantitatively about systems. You don't need to be exact - being within 10x is fine.
+
+**Key metrics to calculate:**
+- Queries per second (QPS)
+- Storage requirements
+- Bandwidth needs
+- Cache sizing
+
+**Example for Twitter:**
+
+```
+Assumptions:
+- 300M daily active users (DAU)
+- Each user views 100 tweets/day
+- Each user posts 2 tweets/day
+
+Calculations:
+Read QPS: (300M users × 100 reads) / 86400 seconds = ~350K QPS
+Write QPS: (300M users × 2 writes) / 86400 seconds = ~7K QPS
+Read-heavy system: 50:1 read/write ratio
+
+Storage per day:
+- 600M tweets/day × 280 characters × 2 bytes = ~336 GB/day
+- Plus metadata, images, videos = ~1 TB/day
+- 5 years = ~1.8 PB
+```
+
+Don't spend more than 5 minutes here. The interviewer wants to see you can do rough math, not perfect calculations.
+
+### Phase 3: High-Level Design (10-15 minutes)
+
+**Goal**: Draw the major components and data flow
+
+This is where you sketch the architecture on the whiteboard. Start simple, then add complexity.
+
+**Basic components to include:**
+- Client (web/mobile)
+- Load balancer
+- Application servers
+- Databases
+- Caches
+- Message queues
+- External services
+
+**Start with the simplest design that could work**, then iterate:
+
+1. **Version 1**: Client → Server → Database
+2. **Version 2**: Add load balancer and multiple servers
+3. **Version 3**: Add cache layer (Redis)
+4. **Version 4**: Add database read replicas
+5. **Version 5**: Add CDN for static assets
+
+Walk through a typical request flow:
+1. User opens app
+2. Request hits load balancer
+3. App server checks cache
+4. If cache miss, query database
+5. Return data to user
+
+**Signals interviewers look for:**
+- You start simple and iterate
+- You can explain why each component exists
+- Your arrows show correct data flow
+
+### Phase 4: Deep Dive (15-20 minutes)
+
+**Goal**: Zoom into critical components and solve bottlenecks
+
+The interviewer will steer you toward specific areas. Common deep dives:
+
+**Database Schema Design**
+- What tables do you need?
+- What are the relationships?
+- What indexes do you need?
+- SQL vs NoSQL choice and why?
+
+**API Design**
+```
+POST /api/tweets
+GET /api/timeline/:userId
+POST /api/tweets/:tweetId/like
+GET /api/search?q=query
+```
+
+**Scaling Strategies**
+- Vertical vs horizontal scaling
+- Database sharding (by user ID, by geography)
+- Consistent hashing for cache distribution
+- Read replicas and master-slave replication
+
+**Caching Strategy**
+- What to cache? (hot tweets, user profiles, timelines)
+- Cache invalidation strategy
+- CDN for images/videos
+- Cache aside vs write-through patterns
+
+**Reliability & Availability**
+- How to handle server failures?
+- Database replication for high availability
+- Message queues for async processing
+- Rate limiting to prevent abuse
+
+### Phase 5: Bottlenecks & Trade-offs (5-10 minutes)
+
+**Goal**: Show you understand no solution is perfect
+
+Discuss weaknesses in your design and how to address them:
+
+**Potential bottlenecks:**
+- Database becomes a single point of failure → Add replication
+- Too many writes overwhelm database → Add write buffer (Kafka)
+- Hot users (celebrities) break fan-out model → Hybrid push/pull
+- Global latency issues → Multi-region deployment with geo-routing
+
+**Trade-offs you made:**
+- SQL vs NoSQL: Chose X because...
+- Consistency vs availability: Chose X because...
+- Normalized vs denormalized: Chose X because...
+
+**Signals interviewers look for:**
+- You proactively identify weaknesses
+- You understand CAP theorem implications
+- You can articulate why you chose approach A over B
+
+## Essential Concepts to Study
+
+### 1. Load Balancing
+- Layer 4 vs Layer 7 load balancers
+- Round-robin, least connections, consistent hashing
+- Health checks and failover
+
+### 2. Caching
+- Cache-aside (lazy loading)
+- Write-through
+- Write-back
+- Cache eviction policies (LRU, LFU, FIFO)
+- Redis vs Memcached
+
+### 3. Database Scaling
+- Vertical vs horizontal scaling
+- Replication (master-slave, master-master)
+- Sharding strategies (range, hash, geography)
+- SQL vs NoSQL decision framework
+
+### 4. CAP Theorem
+- Consistency, Availability, Partition Tolerance
+- You can only guarantee 2 of 3
+- CP systems: HBase, MongoDB
+- AP systems: Cassandra, DynamoDB
+
+### 5. Message Queues
+- Kafka, RabbitMQ, SQS
+- Pub/sub patterns
+- Async processing
+- Event-driven architecture
+
+### 6. CDN & Static Content
+- Edge locations and geo-distribution
+- Cache headers and invalidation
+- When to use CDN vs origin servers
+
+### 7. Rate Limiting & Security
+- Token bucket algorithm
+- Leaky bucket algorithm
+- DDoS protection
+- API authentication (OAuth, JWT)
+
+## Common System Design Questions
+
+Practice these problems - they appear in 80% of interviews:
+
+**Social Media Systems**
+- Design Twitter
+- Design Instagram
+- Design Facebook News Feed
+- Design TikTok
+
+**Content Delivery**
+- Design YouTube
+- Design Netflix
+- Design a CDN
+
+**Communication Systems**
+- Design WhatsApp
+- Design Slack
+- Design Zoom
+
+**Search & Discovery**
+- Design Google Search
+- Design Autocomplete/Typeahead
+- Design an E-commerce recommendation system
+
+**Infrastructure**
+- Design a URL Shortener (bit.ly)
+- Design a Rate Limiter
+- Design a Distributed Cache
+- Design a Key-Value Store
+
+**Ride-Sharing & Location**
+- Design Uber
+- Design Google Maps
+
+## 8-Week Preparation Timeline
+
+### Weeks 1-2: Build Foundation
+- Study core concepts (caching, load balancing, databases)
+- Read "Designing Data-Intensive Applications" by Martin Kleppmann
+- Watch YouTube videos on system design basics
+
+### Weeks 3-4: Learn Patterns
+- Study 5-10 common system design questions
+- Understand the patterns (read-heavy vs write-heavy, etc)
+- Practice drawing diagrams
+
+### Weeks 5-6: Practice Under Pressure
+- Do timed mock interviews (45 minutes)
+- Practice talking through your designs out loud
+- Get feedback from peers or mentors
+
+### Weeks 7-8: Polish & Review
+- Review weak areas
+- Practice explaining trade-offs clearly
+- Do final mock interviews
+
+## Resources Worth Your Time
+
+**Books:**
+- "Designing Data-Intensive Applications" by Martin Kleppmann (THE book)
+- "System Design Interview" by Alex Xu (quick visual guides)
+
+**Courses:**
+- Grokking the System Design Interview (Educative)
+- System Design Primer (GitHub - free)
+
+**YouTube Channels:**
+- Gaurav Sen (best free resource)
+- Tech Dummies Narendra L
+- Success in Tech
+
+**Practice Platforms:**
+- SystemDesignTrainer.com (shameless plug - realistic timed simulations)
+- Pramp (peer practice)
+- Interviewing.io (professional mock interviews)
+
+## The Most Important Advice
+
+**Practice out loud.** System design interviews are not coding - they're conversations. You need to practice talking through your designs, not just thinking about them.
+
+Most engineers prepare by:
+1. Reading about system design ✅
+2. Watching videos ✅
+3. Thinking through problems ✅
+
+But they skip:
+
+4. Actually practicing under time pressure ❌
+5. Speaking their design out loud ❌
+6. Getting feedback on their communication ❌
+
+**You cannot think your way to success in system design interviews. You must practice.**
+
+Do at least 5-10 full mock interviews before your real one. Not quick 15-minute walkthroughs - full 45-minute simulated interviews with pressure and feedback.
+
+## Red Flags That Cost You the Job
+
+**Time management failures:**
+- Spending 25 minutes on requirements
+- Not starting the diagram until minute 20
+- Rushing through trade-offs in the last 2 minutes
+
+**Communication issues:**
+- Long silences while thinking
+- Not explaining your reasoning
+- Speaking too quietly or too quickly
+
+**Technical mistakes:**
+- Not asking about scale
+- Overengineering a simple problem
+- Underengineering a complex problem
+- Not discussing availability/reliability
+
+**Attitude problems:**
+- Defensive when questioned
+- Not taking feedback from interviewer
+- Claiming your design is perfect
+
+## What Happens After You Pass
+
+System design interviews are usually just one part of the process:
+
+**Typical FAANG loop:**
+1. Phone screen (1 coding round)
+2. Onsite (4-5 rounds):
+   - 2 coding rounds
+   - 1 system design round
+   - 1 behavioral round
+   - 1 architecture/design round (for senior roles)
+
+You need to pass most rounds to get an offer. A strong system design performance can compensate for a weaker coding round, but not vice versa for senior roles.
+
+**Evaluation criteria:**
+- Technical competence (do you know the concepts?)
+- Communication (can you explain clearly?)
+- Problem-solving (can you handle unknowns?)
+- Trade-off thinking (do you understand limitations?)
+
+## Final Thoughts
+
+System design interviews feel overwhelming because they're open-ended. There's no "correct answer" - just better and worse approaches.
+
+But here's the secret: **interviewers aren't looking for perfection.** They're looking for:
+- Structured thinking
+- Asking good questions
+- Making reasonable trade-offs
+- Communicating clearly
+
+Master the 5-phase framework. Practice under pressure. Talk through your designs out loud.
+
+You've got this.
