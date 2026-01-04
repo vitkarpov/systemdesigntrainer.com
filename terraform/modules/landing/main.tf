@@ -19,26 +19,28 @@ resource "aws_s3_bucket_versioning" "landing" {
   }
 }
 
-# Block all public access
+# Configure public access block for static website hosting
+# Block individual ACLs but allow bucket policies for public access
 resource "aws_s3_bucket_public_access_block" "landing" {
   bucket = aws_s3_bucket.landing.id
 
   block_public_acls       = true
-  block_public_policy     = true
+  block_public_policy     = false  # Must be false to allow public bucket policy
   ignore_public_acls      = true
-  restrict_public_buckets = true
+  restrict_public_buckets = false  # Must be false to allow public bucket policy
 }
 
-# ==================================
-# CloudFront Origin Access Control
-# ==================================
+# Configure bucket for static website hosting
+resource "aws_s3_bucket_website_configuration" "landing" {
+  bucket = aws_s3_bucket.landing.id
 
-resource "aws_cloudfront_origin_access_control" "landing" {
-  name                              = "${var.project_name}-${var.environment}-landing-oac"
-  description                       = "OAC for ${var.project_name} landing page S3 bucket"
-  origin_access_control_origin_type = "s3"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "404.html"
+  }
 }
 
 # ==================================
@@ -47,6 +49,8 @@ resource "aws_cloudfront_origin_access_control" "landing" {
 
 locals {
   s3_origin_id = "S3-${aws_s3_bucket.landing.id}"
+  # S3 website endpoint (not REST API endpoint) to enable index.html auto-serving
+  s3_website_endpoint = aws_s3_bucket_website_configuration.landing.website_endpoint
 }
 
 resource "aws_cloudfront_distribution" "landing" {
@@ -59,9 +63,16 @@ resource "aws_cloudfront_distribution" "landing" {
   aliases             = [var.domain_name]
 
   origin {
-    domain_name              = aws_s3_bucket.landing.bucket_regional_domain_name
-    origin_id                = local.s3_origin_id
-    origin_access_control_id = aws_cloudfront_origin_access_control.landing.id
+    # Use S3 website endpoint for automatic index.html serving
+    domain_name = local.s3_website_endpoint
+    origin_id   = local.s3_origin_id
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only" # S3 website endpoints only support HTTP
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
   }
 
   # Default cache behavior
@@ -91,19 +102,6 @@ resource "aws_cloudfront_distribution" "landing" {
     minimum_protocol_version = "TLSv1.2_2021"
   }
 
-  # Custom error responses
-  custom_error_response {
-    error_code         = 403
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
-  custom_error_response {
-    error_code         = 404
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
   restrictions {
     geo_restriction {
       restriction_type = "none"
@@ -116,17 +114,17 @@ resource "aws_cloudfront_distribution" "landing" {
 }
 
 # ==================================
-# S3 Bucket Policy for CloudFront
+# S3 Bucket Policy for Static Website
 # ==================================
 
-data "aws_iam_policy_document" "cloudfront_oac" {
+data "aws_iam_policy_document" "landing_public_read" {
   statement {
-    sid    = "AllowCloudFrontServicePrincipal"
+    sid    = "PublicReadGetObject"
     effect = "Allow"
 
     principals {
-      type        = "Service"
-      identifiers = ["cloudfront.amazonaws.com"]
+      type        = "*"
+      identifiers = ["*"]
     }
 
     actions = [
@@ -136,16 +134,12 @@ data "aws_iam_policy_document" "cloudfront_oac" {
     resources = [
       "${aws_s3_bucket.landing.arn}/*"
     ]
-
-    condition {
-      test     = "StringEquals"
-      variable = "AWS:SourceArn"
-      values   = [aws_cloudfront_distribution.landing.arn]
-    }
   }
 }
 
-resource "aws_s3_bucket_policy" "cloudfront_oac" {
+resource "aws_s3_bucket_policy" "landing_public_read" {
+  depends_on = [aws_s3_bucket_public_access_block.landing]
+
   bucket = aws_s3_bucket.landing.id
-  policy = data.aws_iam_policy_document.cloudfront_oac.json
+  policy = data.aws_iam_policy_document.landing_public_read.json
 }
