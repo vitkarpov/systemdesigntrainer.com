@@ -9,6 +9,8 @@ import Login from './pages/Auth/Login';
 import Signup from './pages/Auth/Signup';
 import Callback from './pages/Auth/Callback';
 import AuthError from './pages/Auth/Error';
+import TermsOfService from './pages/Legal/TermsOfService';
+import PrivacyPolicy from './pages/Legal/PrivacyPolicy';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -20,6 +22,8 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/auth/callback" element={<Callback />} />
         <Route path="/auth/error" element={<AuthError />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route
           path="/"
           element={

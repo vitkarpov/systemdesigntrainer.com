@@ -48,7 +48,14 @@ const Login = () => {
           </button>
 
           <p className="text-xs text-center text-gray-500 mt-4">
-            By signing in, you agree to our Terms of Service and Privacy Policy
+            By signing in, you agree to our{' '}
+            <Link to="/terms" className="text-blue-600 hover:text-blue-500 hover:underline">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy" className="text-blue-600 hover:text-blue-500 hover:underline">
+              Privacy Policy
+            </Link>
           </p>
         </div>
 
