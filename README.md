@@ -13,6 +13,8 @@ Most engineers fail system design interviews not because they lack technical kno
 - Can't structure their answers effectively
 - Get no actionable feedback from mock interviews
 
+**Built for engineers who know the concepts but need to master the interview format.**
+
 ## 💡 The Solution
 
 A realistic interview simulator that:
@@ -109,32 +111,14 @@ InterviewSession {
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- npm, yarn, or pnpm
-
-### Installation
-
-```bash
-# Install dependencies for all packages
-npm install
-cd api && npm install
-cd ../app && npm install
-```
+- Node.js (v20.18.0)
+- npm
 
 ### Development
 
-**Run both servers:**
 ```bash
-npm run dev
-```
-
-**Or run individually:**
-```bash
-# Terminal 1 - Backend (http://localhost:3000)
-cd api && npm run start:dev
-
-# Terminal 2 - Frontend (http://localhost:5173)
-cd app && npm run dev
+$ cd api && docker-compose up -d
+$ cd ../app && npm install && npm run dev
 ```
 
 ### Project Structure
@@ -143,7 +127,7 @@ cd app && npm run dev
 sd-sim-2/
 ├── api/                 # NestJS API server
 │   ├── src/
-│   │   ├── interview/    # Interview orchestrator
+│   │   ├── interview/   # Interview orchestrator
 │   │   ├── ai/          # LLM integration
 │   │   └── feedback/    # Feedback generation
 ├── app/                 # React + Vite frontend
@@ -151,65 +135,7 @@ sd-sim-2/
 │   │   ├── components/  # UI components
 │   │   ├── pages/       # Interview, feedback pages
 │   │   └── hooks/       # Custom hooks
-├── shared/              # Shared TypeScript types
-│   └── types/
+├── website/             # Astro website (landing + SEO pages)
+│   └── src/
 └── README.md
 ```
-
-## 🛠️ Development Progress
-
-**Current Status:** Week 1 Complete ✅ → Week 2 Starting 🔄
-
-- **Week 1:** Foundation & Core Flow (REST API, State Machine, Database) - ✅ COMPLETE
-- **Week 2:** AI Interviewer & Signal Tracking - 🔄 NEXT
-- **Week 3:** Feedback Generation
-- **Week 4-6:** Auth, Payments, Polish
-
-**See [TASKS.md](TASKS.md) for detailed progress tracking and next steps.**
-
-**Test the API:** Run `./api/test-api.sh` to see the working endpoints.
-
-### Code Quality
-
-```bash
-# Type checking
-npm run type-check
-
-# Linting
-npm run lint
-
-# Testing
-npm run test
-```
-
-## 📊 Success Metrics (MVP)
-
-- ≥30% of users complete 2+ interviews
-- ≥10% convert to paid
-- Users report: "This felt real"
-
-## 💰 Business Model
-
-- **Free**: 1 interview
-- **Pro**: $39-59/month (unlimited interviews)
-- **Pay-per-interview**: $15/interview
-
-Target: 100-300 signups, 10-30 paying users in first 30 days
-
-## 🤝 Contributing
-
-This is an early-stage project. For now, development is focused on reaching MVP.
-
-### Development Guidelines
-- **Type Safety**: Always use TypeScript
-- **Flow First**: Prioritize rigid interview flow over AI intelligence
-- **Simple Heuristics**: Use keyword matching and timing rules, not AI interpretation
-- **One Thing Well**: Focus on one interview case, one flow, one ICP
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-**Built for engineers who know the concepts but need to master the interview format.**
