@@ -46,3 +46,8 @@ logs
 tmp
 temp
 *.tmp
+
+# Lambda (separate deployment)
+lambda
+Dockerfile.lambda
+build-lambda.sh
