@@ -108,19 +108,6 @@ InterviewSession {
 
 **Key Principle**: Signals are tracked by heuristics (keyword matching, timing rules), not AI interpretation. This makes the system predictable and debuggable.
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js (v20.18.0)
-- npm
-
-### Development
-
-```bash
-$ cd api && docker-compose up -d
-$ cd ../app && npm install && npm run dev
-```
-
 ### Project Structure
 
 ```
