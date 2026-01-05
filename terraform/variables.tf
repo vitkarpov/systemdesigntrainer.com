@@ -209,3 +209,13 @@ variable "enable_monitoring" {
   type        = bool
   default     = false
 }
+
+# ==================================
+# Lambda Configuration
+# ==================================
+
+variable "lambda_image_uri" {
+  description = "URI of the Lambda container image in ECR (format: <account_id>.dkr.ecr.<region>.amazonaws.com/<repo>:<tag>)"
+  type        = string
+  default     = ""
+}

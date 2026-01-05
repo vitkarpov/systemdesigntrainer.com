@@ -83,6 +83,36 @@ module "secrets" {
 }
 
 # ==================================
+# Lambda Admin Module
+# ==================================
+
+module "lambda_admin" {
+  source = "./modules/lambda-admin"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+
+  # Networking
+  vpc_id                = module.networking.vpc_id
+  private_subnet_ids    = module.networking.private_subnet_ids
+  rds_security_group_id = module.networking.rds_security_group_id
+
+  # Database
+  rds_endpoint      = module.storage.rds_address
+  rds_port          = module.storage.rds_port
+  rds_username      = module.storage.rds_username
+  rds_database_name = module.storage.rds_database_name
+  secrets_arn       = module.secrets.secret_arn
+
+  # Lambda image (use placeholder for initial deployment, then update with actual image)
+  # After initial terraform apply, build and push the image, then update this
+  lambda_image_uri = var.lambda_image_uri
+
+  log_retention_days = var.log_retention_days
+}
+
+# ==================================
 # ALB Module
 # ==================================
 
