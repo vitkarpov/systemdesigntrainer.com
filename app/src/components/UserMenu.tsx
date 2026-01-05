@@ -12,7 +12,7 @@ export function UserMenu() {
   };
 
   const getUserInitials = () => {
-    if (!user) return 'U';
+    if (!user || !user.name) return 'U';
     const names = user.name.split(' ');
     if (names.length >= 2) {
       return `${names[0][0]}${names[1][0]}`.toUpperCase();
