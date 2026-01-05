@@ -28,7 +28,7 @@ output "cloudfront_zone_id" {
   value       = aws_cloudfront_distribution.landing.hosted_zone_id
 }
 
-output "landing_url" {
-  description = "Full URL of the landing page"
+output "website_url" {
+  description = "Full URL of the website"
   value       = "https://${var.domain_name}"
 }

@@ -1,6 +1,6 @@
-# Landing Page Module
+# Website Module
 
-This module creates the infrastructure for hosting a static landing page on the root domain (systemdesigntrainer.com) using S3 and CloudFront.
+This module creates the infrastructure for hosting a static website on the root domain (systemdesigntrainer.com) using S3 and CloudFront.
 
 ## Features
 
@@ -21,7 +21,7 @@ CloudFront Distribution
     ↓
 S3 Bucket (Private)
     ↓
-Landing Page Assets (index.html, CSS, JS, images)
+Website Assets (index.html, CSS, JS, images)
 ```
 
 ## Requirements
@@ -32,8 +32,8 @@ Landing Page Assets (index.html, CSS, JS, images)
 ## Usage
 
 ```hcl
-module "landing" {
-  source = "./modules/landing"
+module "website" {
+  source = "./modules/website"
 
   project_name           = "sd-sim"
   environment            = "production"
@@ -63,16 +63,16 @@ module "landing" {
 | cloudfront_distribution_arn | CloudFront distribution ARN |
 | cloudfront_domain_name | CloudFront domain name (for Route53 alias) |
 | cloudfront_zone_id | CloudFront hosted zone ID (for Route53 alias) |
-| landing_url | Full URL of the landing page |
+| website_url | Full URL of the website |
 
 ## Deployment
 
-### 1. Build Your Landing Page
+### 1. Build Your Website
 
-Create your static landing page in a `landing/` directory at the project root:
+Create your static website in a `website/` directory at the project root:
 
 ```bash
-landing/
+website/
 ├── index.html
 ├── styles.css
 ├── script.js
@@ -84,19 +84,19 @@ landing/
 
 ```bash
 # Sync files to S3
-aws s3 sync landing/ s3://$(terraform output -raw landing_s3_bucket_name)/ --delete
+aws s3 sync website/ s3://$(terraform output -raw website_s3_bucket_name)/ --delete
 
 # Invalidate CloudFront cache
 aws cloudfront create-invalidation \
-  --distribution-id $(terraform output -raw landing_cloudfront_distribution_id) \
+  --distribution-id $(terraform output -raw website_cloudfront_distribution_id) \
   --paths "/*"
 ```
 
 ### 3. Verify
 
-Visit your landing page:
+Visit your website:
 ```bash
-open $(terraform output -raw landing_url)
+open $(terraform output -raw website_url)
 ```
 
 ## Cache Configuration
@@ -108,7 +108,7 @@ open $(terraform output -raw landing_url)
 
 ## Cost Estimate
 
-- **S3 Storage**: $0.023/GB/month (~$0.10/month for 4GB landing page)
+- **S3 Storage**: $0.023/GB/month (~$0.10/month for 4GB website)
 - **CloudFront**: ~$0.50-2/month (depends on traffic)
 - **Total**: ~$0.60-2.10/month
 
@@ -121,7 +121,7 @@ open $(terraform output -raw landing_url)
 
 ## Notes
 
-- The landing page is separate from the main app (app.systemdesigntrainer.com)
-- This module only creates infrastructure, not the landing page content
+- The website is separate from the main app (app.systemdesigntrainer.com)
+- This module only creates infrastructure, not the website content
 - You need to create and deploy your own HTML/CSS/JS files
 - For SPA routing, 403/404 errors redirect to index.html

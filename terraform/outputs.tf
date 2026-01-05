@@ -70,21 +70,21 @@ output "cloudfront_distribution_id" {
 }
 
 # ==================================
-# Landing Page Outputs
+# Website Outputs
 # ==================================
 
-output "landing_url" {
-  description = "Landing page URL (root domain)"
-  value       = module.landing.landing_url
+output "website_url" {
+  description = "Website URL (root domain)"
+  value       = module.landing.website_url
 }
 
-output "landing_s3_bucket_name" {
-  description = "S3 bucket name for landing page assets"
+output "website_s3_bucket_name" {
+  description = "S3 bucket name for website assets"
   value       = module.landing.s3_bucket_name
 }
 
-output "landing_cloudfront_distribution_id" {
-  description = "CloudFront distribution ID for landing page cache invalidations"
+output "website_cloudfront_distribution_id" {
+  description = "CloudFront distribution ID for website cache invalidations"
   value       = module.landing.cloudfront_distribution_id
 }
 
@@ -132,7 +132,7 @@ output "deployment_instructions" {
        Wait 5-60 minutes for DNS propagation.
 
     2. BUILD & PUSH BACKEND:
-       cd backend
+       cd api
        docker build -t sd-sim-backend .
        aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${module.container.ecr_repository_url}
        docker tag sd-sim-backend:latest ${module.container.ecr_repository_url}:latest
@@ -144,13 +144,13 @@ output "deployment_instructions" {
        Monitor: aws logs tail /ecs/${var.project_name}-${var.environment}-backend --follow --region ${var.aws_region}
 
     4. BUILD & DEPLOY FRONTEND:
-       cd ui
+       cd app
        VITE_API_URL=${module.dns.api_fqdn} npm run build
        aws s3 sync dist/ s3://${module.frontend.s3_bucket_name}/ --delete
        aws cloudfront create-invalidation --distribution-id ${module.frontend.cloudfront_distribution_id} --paths "/*"
 
-    5. DEPLOY LANDING PAGE:
-       cd landing
+    5. DEPLOY WEBSITE:
+       cd website
        aws s3 sync ./ s3://${module.landing.s3_bucket_name}/ --delete
        aws cloudfront create-invalidation --distribution-id ${module.landing.cloudfront_distribution_id} --paths "/*"
 
@@ -161,7 +161,7 @@ output "deployment_instructions" {
     7. VERIFY:
        - Backend: https://${module.dns.api_fqdn}/health
        - Frontend: https://${module.dns.app_fqdn}
-       - Landing: ${module.landing.landing_url}
+       - Website: ${module.landing.website_url}
 
     📚 Documentation:
        - Deployment scripts: terraform/scripts/

@@ -15,8 +15,8 @@ module "dns" {
   alb_zone_id                    = module.alb.alb_zone_id
   cloudfront_domain_name         = module.frontend.cloudfront_domain_name
   cloudfront_zone_id             = module.frontend.cloudfront_zone_id
-  landing_cloudfront_domain_name = module.landing.cloudfront_domain_name
-  landing_cloudfront_zone_id     = module.landing.cloudfront_zone_id
+  website_cloudfront_domain_name = module.landing.cloudfront_domain_name
+  website_cloudfront_zone_id     = module.landing.cloudfront_zone_id
 
   providers = {
     aws           = aws
@@ -114,11 +114,11 @@ module "frontend" {
 }
 
 # ==================================
-# Landing Page Module (S3 + CloudFront)
+# Website Module (S3 + CloudFront)
 # ==================================
 
 module "landing" {
-  source = "./modules/landing"
+  source = "./modules/website"
 
   project_name                = var.project_name
   environment                 = var.environment

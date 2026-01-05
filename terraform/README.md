@@ -7,7 +7,7 @@ This directory contains Terraform configurations to deploy the System Design Int
 **Cost**: $53-78/month (with RDS free tier: $53-65/month)
 
 The infrastructure deploys:
-- **Landing Page**: Static site on S3 + CloudFront (systemdesigntrainer.com)
+- **Website**: Static site on S3 + CloudFront (systemdesigntrainer.com)
 - **Frontend**: React SPA on S3 + CloudFront (app.systemdesigntrainer.com)
 - **Backend**: NestJS API on ECS Fargate behind ALB (api.systemdesigntrainer.com)
 - **Database**: RDS PostgreSQL 16 + ElastiCache Redis 7
@@ -107,17 +107,17 @@ This:
 - Syncs to S3
 - Invalidates CloudFront
 
-### 8. Deploy Landing Page
+### 8. Deploy Website
 
 ```bash
-./scripts/build-landing.sh
+./scripts/build-website.sh
 ```
 
 This:
-- Syncs landing page files from `../landing` to S3
+- Syncs website files from `../website` to S3
 - Invalidates CloudFront
 
-**Note**: Create a `landing/` directory at project root with your landing page (index.html, styles, etc.)
+**Note**: Create a `website/` directory at project root with your website (index.html, styles, etc.)
 
 ### 9. Configure External Services
 
@@ -165,7 +165,7 @@ curl https://api.systemdesigntrainer.com/health
 # Frontend
 open https://app.systemdesigntrainer.com
 
-# Landing page
+# Website
 open https://systemdesigntrainer.com
 ```
 
@@ -179,7 +179,7 @@ open https://systemdesigntrainer.com
 - **`secrets/`** - AWS Secrets Manager for sensitive env vars
 - **`alb/`** - Application Load Balancer with SSL termination
 - **`frontend/`** - S3 bucket + CloudFront distribution (app.*)
-- **`landing/`** - S3 bucket + CloudFront distribution (root domain)
+- **`website/`** - S3 bucket + CloudFront distribution (root domain)
 - **`container/`** - ECR repository, ECS Fargate cluster & service
 
 ### Architecture Diagram

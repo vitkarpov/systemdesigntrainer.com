@@ -15,7 +15,7 @@ This module manages Route53 hosted zone and ACM SSL/TLS certificates for the Sys
 ### Subdomain Setup
 - **app.systemdesigntrainer.com** → CloudFront distribution (frontend)
 - **api.systemdesigntrainer.com** → Application Load Balancer (backend)
-- **systemdesigntrainer.com** (root) → Not managed by this module (for landing page)
+- **systemdesigntrainer.com** (root) → Not managed by this module (for website)
 
 ### Certificate Strategy
 - **Wildcard certificates** (*.systemdesigntrainer.com) cover both app and api subdomains

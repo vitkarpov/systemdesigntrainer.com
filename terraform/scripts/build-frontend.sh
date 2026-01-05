@@ -39,10 +39,10 @@ echo -e "${GREEN}✓ Frontend URL: ${FRONTEND_URL}${NC}"
 
 # Build frontend
 echo -e "${BLUE}[2/5] Building frontend...${NC}"
-cd "$PROJECT_ROOT/ui"
+cd "$PROJECT_ROOT/app"
 
 if [ ! -f "package.json" ]; then
-  echo -e "${RED}✗ package.json not found in ui directory${NC}"
+  echo -e "${RED}✗ package.json not found in app directory${NC}"
   exit 1
 fi
 

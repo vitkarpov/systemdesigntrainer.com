@@ -39,10 +39,10 @@ echo -e "${GREEN}✓ Region: ${REGION}${NC}"
 
 # Build Docker image
 echo -e "${BLUE}[2/6] Building Docker image...${NC}"
-cd "$PROJECT_ROOT/backend"
+cd "$PROJECT_ROOT/api"
 
 if [ ! -f "Dockerfile" ]; then
-  echo -e "${RED}✗ Dockerfile not found in backend directory${NC}"
+  echo -e "${RED}✗ Dockerfile not found in api directory${NC}"
   exit 1
 fi
 

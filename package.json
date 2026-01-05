@@ -1,12 +1,12 @@
 {
   "scripts": {
-    "dev": "npx concurrently \"cd backend && npm run start:dev\" \"cd ui && npm run dev\"",
-    "build": "cd ui && npm run build && mkdir -p ../backend/public && cp -r dist/* ../backend/public/ && cd ../backend && npm run build",
-    "test": "concurrently \"cd backend && npm test\" \"cd ui && npm run test\"",
-    "lint": "concurrently \"cd backend && npm run lint\" \"cd ui && npm run lint\"",
-    "format": "concurrently \"cd backend && npm run format\" \"cd ui && npm run format\"",
-    "clean": "rimraf backend/dist ui/dist backend/public",
-    "codegen": "cd backend && npm run openapi:generate && cd ../ui && npm run codegen"
+    "dev": "npx concurrently \"cd api && npm run start:dev\" \"cd app && npm run dev\"",
+    "build": "cd app && npm run build && mkdir -p ../api/public && cp -r dist/* ../api/public/ && cd ../api && npm run build",
+    "test": "concurrently \"cd api && npm test\" \"cd app && npm run test\"",
+    "lint": "concurrently \"cd api && npm run lint\" \"cd app && npm run lint\"",
+    "format": "concurrently \"cd api && npm run format\" \"cd app && npm run format\"",
+    "clean": "rimraf api/dist app/dist api/public",
+    "codegen": "cd api && npm run openapi:generate && cd ../app && npm run codegen"
   },
   "devDependencies": {
     "concurrently": "^8.0.0",

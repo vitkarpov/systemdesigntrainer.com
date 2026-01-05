@@ -1,5 +1,5 @@
 # ==================================
-# S3 Bucket for Landing Page
+# S3 Bucket for Website
 # ==================================
 
 resource "aws_s3_bucket" "landing" {

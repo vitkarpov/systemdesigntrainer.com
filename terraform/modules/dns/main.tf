@@ -128,15 +128,15 @@ resource "aws_route53_record" "api" {
   }
 }
 
-# A record for systemdesigntrainer.com (root/apex) → CloudFront (landing page)
+# A record for systemdesigntrainer.com (root/apex) → CloudFront (website)
 resource "aws_route53_record" "root" {
   zone_id = aws_route53_zone.main.zone_id
   name    = var.domain_name
   type    = "A"
 
   alias {
-    name                   = var.landing_cloudfront_domain_name
-    zone_id                = var.landing_cloudfront_zone_id
+    name                   = var.website_cloudfront_domain_name
+    zone_id                = var.website_cloudfront_zone_id
     evaluate_target_health = false
   }
 }

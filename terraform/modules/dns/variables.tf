@@ -33,12 +33,12 @@ variable "alb_zone_id" {
   type        = string
 }
 
-variable "landing_cloudfront_domain_name" {
-  description = "CloudFront distribution domain name for root domain landing page (optional - can be same as app)"
+variable "website_cloudfront_domain_name" {
+  description = "CloudFront distribution domain name for root domain website (optional - can be same as app)"
   type        = string
 }
 
-variable "landing_cloudfront_zone_id" {
-  description = "CloudFront distribution hosted zone ID for landing page (optional - can be same as app)"
+variable "website_cloudfront_zone_id" {
+  description = "CloudFront distribution hosted zone ID for website (optional - can be same as app)"
   type        = string
 }

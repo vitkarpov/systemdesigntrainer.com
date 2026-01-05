@@ -260,8 +260,8 @@ To connect to the production RDS database using Drizzle Studio, you need to esta
    export DB_PASSWORD="<password-from-step-2>"
    export DB_NAME="<database-name-from-step-1>"
 
-   # Navigate to backend directory
-   cd backend
+   # Navigate to api directory
+   cd api
 
    # Run Drizzle Studio
    npm run db:studio

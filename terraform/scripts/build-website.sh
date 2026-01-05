@@ -2,25 +2,25 @@
 set -e
 
 # ==================================
-# Deploy Landing Page to S3 + CloudFront
+# Deploy Website to S3 + CloudFront
 # ==================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TERRAFORM_DIR="$PROJECT_ROOT/terraform"
-LANDING_DIR="$PROJECT_ROOT/landing"
+WEBSITE_DIR="$PROJECT_ROOT/website"
 
 echo "╔════════════════════════════════════════════════════════════════════╗"
-echo "║  Landing Page Deployment                                          ║"
+echo "║  Website Deployment                                                ║"
 echo "╚════════════════════════════════════════════════════════════════════╝"
 echo ""
 
-# Check if landing directory exists
-if [ ! -d "$LANDING_DIR" ]; then
-  echo "❌ Error: Landing directory not found at $LANDING_DIR"
+# Check if website directory exists
+if [ ! -d "$WEBSITE_DIR" ]; then
+  echo "❌ Error: Website directory not found at $WEBSITE_DIR"
   echo ""
-  echo "Please create a landing/ directory with your landing page files:"
-  echo "  landing/"
+  echo "Please create a website/ directory with your website files:"
+  echo "  website/"
   echo "  ├── index.html"
   echo "  ├── styles.css"
   echo "  ├── script.js"
@@ -28,9 +28,9 @@ if [ ! -d "$LANDING_DIR" ]; then
   exit 1
 fi
 
-# Build the landing page
-echo "🔨 Building landing page..."
-cd "$LANDING_DIR"
+# Build the website
+echo "🔨 Building website..."
+cd "$WEBSITE_DIR"
 npm run build
 echo "✅ Build complete"
 echo ""
@@ -38,15 +38,15 @@ echo ""
 cd "$SCRIPT_DIR"
 
 # Check if dist directory exists
-if [ ! -d "$LANDING_DIR/dist" ]; then
-  echo "❌ Error: dist directory not found at $LANDING_DIR/dist"
+if [ ! -d "$WEBSITE_DIR/dist" ]; then
+  echo "❌ Error: dist directory not found at $WEBSITE_DIR/dist"
   echo "Build may have failed - please check the build output above"
   exit 1
 fi
 
 # Check if index.html exists in dist
-if [ ! -f "$LANDING_DIR/dist/index.html" ]; then
-  echo "❌ Error: index.html not found in $LANDING_DIR/dist"
+if [ ! -f "$WEBSITE_DIR/dist/index.html" ]; then
+  echo "❌ Error: index.html not found in $WEBSITE_DIR/dist"
   exit 1
 fi
 
@@ -65,9 +65,9 @@ if echo "$OUTPUT_CHECK" | grep -q "No outputs found"; then
 fi
 
 echo "📦 Getting S3 bucket name..."
-BUCKET_NAME=$(terraform output -raw landing_s3_bucket_name 2>&1 | grep -v "^╷\|^│\|^╵")
+BUCKET_NAME=$(terraform output -raw website_s3_bucket_name 2>&1 | grep -v "^╷\|^│\|^╵")
 if [ -z "$BUCKET_NAME" ] || echo "$BUCKET_NAME" | grep -q "Warning:"; then
-  echo "❌ Error: Could not get landing_s3_bucket_name from Terraform outputs"
+  echo "❌ Error: Could not get website_s3_bucket_name from Terraform outputs"
   echo "Make sure you have run 'terraform apply' first"
   exit 1
 fi
@@ -77,9 +77,9 @@ echo ""
 
 # Get CloudFront distribution ID
 echo "🌐 Getting CloudFront distribution ID..."
-DISTRIBUTION_ID=$(terraform output -raw landing_cloudfront_distribution_id 2>&1 | grep -v "^╷\|^│\|^╵")
+DISTRIBUTION_ID=$(terraform output -raw website_cloudfront_distribution_id 2>&1 | grep -v "^╷\|^│\|^╵")
 if [ -z "$DISTRIBUTION_ID" ] || echo "$DISTRIBUTION_ID" | grep -q "Warning:"; then
-  echo "❌ Error: Could not get landing_cloudfront_distribution_id from Terraform outputs"
+  echo "❌ Error: Could not get website_cloudfront_distribution_id from Terraform outputs"
   exit 1
 fi
 
@@ -94,8 +94,8 @@ if [ -z "$AWS_REGION" ] || echo "$AWS_REGION" | grep -q "Warning:"; then
 fi
 
 # Sync to S3 with appropriate cache control headers
-echo "☁️  Uploading landing page to S3..."
-cd "$LANDING_DIR/dist"
+echo "☁️  Uploading website to S3..."
+cd "$WEBSITE_DIR/dist"
 
 # Upload HTML files with no-cache
 aws s3 sync . s3://"$BUCKET_NAME"/ \
@@ -141,7 +141,7 @@ aws s3 sync . s3://"$BUCKET_NAME"/ \
   --delete \
   --region "$AWS_REGION"
 
-echo "✅ Landing page uploaded successfully"
+echo "✅ Website uploaded successfully"
 echo ""
 
 # Invalidate CloudFront cache
@@ -155,18 +155,18 @@ INVALIDATION_ID=$(aws cloudfront create-invalidation \
 echo "   Invalidation ID: $INVALIDATION_ID"
 echo ""
 
-# Get landing URL
+# Get website URL
 cd "$TERRAFORM_DIR"
-LANDING_URL=$(terraform output -raw landing_url 2>&1 | grep -v "^╷\|^│\|^╵")
-if [ -z "$LANDING_URL" ] || echo "$LANDING_URL" | grep -q "Warning:"; then
-  LANDING_URL="https://systemdesigntrainer.com"
+WEBSITE_URL=$(terraform output -raw website_url 2>&1 | grep -v "^╷\|^│\|^╵")
+if [ -z "$WEBSITE_URL" ] || echo "$WEBSITE_URL" | grep -q "Warning:"; then
+  WEBSITE_URL="https://systemdesigntrainer.com"
 fi
 
 echo "╔════════════════════════════════════════════════════════════════════╗"
-echo "║  Landing Page Deployment Complete!                                ║"
+echo "║  Website Deployment Complete!                                      ║"
 echo "╚════════════════════════════════════════════════════════════════════╝"
 echo ""
-echo "🎯 Landing Page URL: $LANDING_URL"
+echo "🎯 Website URL: $WEBSITE_URL"
 echo ""
 echo "⏳ Note: CloudFront invalidation may take 1-5 minutes to complete."
 echo "   You can check status with:"

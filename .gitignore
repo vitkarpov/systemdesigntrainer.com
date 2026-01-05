@@ -27,19 +27,19 @@ build/
 .next/
 .nuxt/
 .vuepress/dist/
-backend/public
+api/public
 
 # Backend specific (NestJS)
 # =========================
-backend/dist/
-backend/coverage/
-backend/.nyc_output/
+api/dist/
+api/coverage/
+api/.nyc_output/
 
 # Frontend specific (React/Vite)
 # ==============================
-ui/dist/
-ui/dist-ssr/
-ui/coverage/
+app/dist/
+app/dist-ssr/
+app/coverage/
 *.local
 
 # Logs
@@ -134,7 +134,7 @@ desktop.ini
 .firebase/
 
 *.gen.ts
-ui/src/api/openapi.json
+app/src/api/openapi.json
 
 terraform/terraform.tfvars
 .terraform/

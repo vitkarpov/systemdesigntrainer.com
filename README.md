@@ -117,8 +117,8 @@ InterviewSession {
 ```bash
 # Install dependencies for all packages
 npm install
-cd backend && npm install
-cd ../ui && npm install
+cd api && npm install
+cd ../app && npm install
 ```
 
 ### Development
@@ -131,22 +131,22 @@ npm run dev
 **Or run individually:**
 ```bash
 # Terminal 1 - Backend (http://localhost:3000)
-cd backend && npm run start:dev
+cd api && npm run start:dev
 
 # Terminal 2 - Frontend (http://localhost:5173)
-cd ui && npm run dev
+cd app && npm run dev
 ```
 
 ### Project Structure
 
 ```
 sd-sim-2/
-├── backend/              # NestJS API server
+├── api/                 # NestJS API server
 │   ├── src/
 │   │   ├── interview/    # Interview orchestrator
 │   │   ├── ai/          # LLM integration
 │   │   └── feedback/    # Feedback generation
-├── ui/                  # React + Vite frontend
+├── app/                 # React + Vite frontend
 │   ├── src/
 │   │   ├── components/  # UI components
 │   │   ├── pages/       # Interview, feedback pages
@@ -167,7 +167,7 @@ sd-sim-2/
 
 **See [TASKS.md](TASKS.md) for detailed progress tracking and next steps.**
 
-**Test the API:** Run `./backend/test-api.sh` to see the working endpoints.
+**Test the API:** Run `./api/test-api.sh` to see the working endpoints.
 
 ### Code Quality
 
