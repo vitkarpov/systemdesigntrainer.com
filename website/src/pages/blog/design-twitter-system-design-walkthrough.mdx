@@ -1,0 +1,834 @@
+---
+layout: ../../layouts/BlogLayout.astro
+title: "Design Twitter: Complete System Design Interview Walkthrough"
+description: "Step-by-step guide to solving the Twitter system design interview question - covering timeline generation, fan-out strategies, and scaling to millions of users."
+publishDate: "2026-01-06"
+readTime: "22 min read"
+---
+
+"Design Twitter" is the most frequently asked system design interview question at FAANG companies. It appears at Meta, Google, Amazon, Netflix, and nearly every major tech company.
+
+Why is it so popular with interviewers?
+
+- **Perfect complexity level**: Simple enough to explain in 30 seconds, complex enough to reveal your true skill level
+- **Tests multiple concepts**: Caching, databases, message queues, fan-out strategies, consistency models
+- **Real-world constraints**: Celebrity users, global scale, real-time requirements
+- **Open-ended**: Can be solved many different ways, showing how you think through trade-offs
+
+This walkthrough shows you exactly how to ace this question in a 45-minute interview, using the framework that gets you hired at top companies.
+
+## Phase 1: Clarify Requirements (5-7 minutes)
+
+Never start designing immediately. The interviewer is testing if you can handle ambiguity and gather requirements like you would in a real engineering role.
+
+### Functional Requirements
+
+**You:** "Let me start by clarifying the functional requirements. For Twitter, I want to make sure I understand the scope:
+
+1. **Core features**: Users can post tweets (280 characters), correct?
+2. **Timeline**: Users should see a feed of tweets from people they follow?
+3. **Follow system**: Users can follow/unfollow other users?
+4. **Interactions**: Do we need likes, retweets, and replies?
+5. **Search**: Should we support searching tweets or just show timelines?
+6. **Notifications**: Real-time notifications for mentions/likes?
+7. **Media**: Support images and videos in tweets?
+8. **Direct messages**: Are DMs in scope?
+
+Which features should I prioritize?"
+
+**Interviewer:** "Good questions. Focus on the core: posting tweets, following users, and generating the home timeline. We need likes and retweets. Skip search, notifications, and DMs for now. You can assume text-only tweets first, then we'll discuss media later."
+
+**You:** "Perfect. So my MVP features are:
+- Post a tweet (280 characters)
+- Follow/unfollow users
+- Home timeline (feed of tweets from followed users)
+- Like and retweet functionality
+
+Got it. Let me write this down."
+
+### Non-Functional Requirements
+
+**You:** "Now for scale and performance requirements:
+
+1. **Users**: How many daily active users (DAU) are we targeting?
+2. **Read vs Write**: What's the ratio of timeline views to tweet posts?
+3. **Latency**: What's acceptable latency for timeline generation?
+4. **Consistency**: If someone posts a tweet, how quickly should followers see it? Real-time or eventual consistency?
+5. **Availability**: How critical is uptime? Can we have brief outages?
+6. **Scale challenges**: Do we need to handle celebrity users with millions of followers?"
+
+**Interviewer:** "Great questions. Let's say:
+- 200 million DAU
+- Read-heavy: 100:1 read-to-write ratio (people consume way more than they post)
+- Timeline should load in under 1 second
+- Eventual consistency is fine - if a tweet takes 2-3 seconds to appear in followers' feeds, that's acceptable
+- High availability is critical (99.9% uptime minimum)
+- Yes, definitely handle celebrity users - think millions of followers"
+
+**You:** "Excellent. Let me summarize what we're building:"
+
+```
+Functional Requirements:
+✅ Post tweet (280 chars, text only for MVP)
+✅ Follow/unfollow users
+✅ Home timeline (tweets from followed users)
+✅ Like tweets
+✅ Retweet functionality
+❌ Search (out of scope)
+❌ Notifications (out of scope)
+❌ DMs (out of scope)
+
+Non-Functional Requirements:
+- 200M daily active users
+- 100:1 read/write ratio (read-heavy)
+- Timeline load: less than 1 second
+- Eventual consistency (2-3 sec delay acceptable)
+- 99.9%+ availability
+- Support celebrity users (millions of followers)
+```
+
+## Phase 2: Capacity Estimation (5 minutes)
+
+**You:** "Let me do back-of-envelope calculations to understand the scale we're dealing with."
+
+### Traffic Estimates
+
+```
+Assumptions:
+- 200M daily active users (DAU)
+- Each user posts 2 tweets/day on average
+- Each user views their timeline 10 times/day
+- Each timeline view loads 20 tweets
+
+Write traffic (tweet posts):
+200M users × 2 tweets/day = 400M tweets/day
+400M tweets/day ÷ 86,400 seconds = ~4,600 tweets/second
+Peak traffic (3x average) = ~14,000 tweets/second
+
+Read traffic (timeline views):
+200M users × 10 timeline views/day = 2B timeline views/day
+2B views/day ÷ 86,400 seconds = ~23,000 timeline requests/second
+Peak traffic = ~70,000 timeline requests/second
+
+This confirms we're read-heavy (100:1 ratio)
+```
+
+### Storage Estimates
+
+```
+Per tweet storage:
+- Tweet text: 280 chars × 2 bytes (UTF-8) = 560 bytes
+- Metadata (user_id, timestamp, tweet_id, etc): 200 bytes
+- Total per tweet: ~1 KB
+
+Daily storage:
+400M tweets/day × 1 KB = 400 GB/day
+
+Storage for 5 years:
+400 GB/day × 365 days × 5 years = ~730 TB
+
+With media (images/videos) - could be 10x higher:
+~7.3 PB for 5 years (we'll store media in object storage like S3)
+```
+
+### Timeline Generation Load
+
+```
+Critical metric: How many tweets do we need to fetch per timeline?
+
+If user follows 200 people on average:
+- Need to merge recent tweets from 200 users
+- Fetch ~1,000 recent tweets, sort by timestamp, return top 20
+- This is computationally expensive if done on-demand
+
+This reveals our biggest challenge: timeline generation at scale
+```
+
+**You:** "Based on these numbers, our main challenges are:
+1. **Read-heavy load**: 70K timeline requests/second at peak
+2. **Timeline generation complexity**: Can't query 200 followed users' tweets on every request
+3. **Storage**: 7+ PB with media over 5 years
+4. **Celebrity problem**: If someone with 50M followers tweets, we need to update 50M timelines"
+
+## Phase 3: High-Level Design (10-12 minutes)
+
+**You:** "Let me start with the simplest possible design, then we'll iterate to handle scale."
+
+### Version 1: Basic Architecture
+
+```
+[Client Apps]
+     ↓
+[Load Balancer]
+     ↓
+[Application Servers]
+     ↓
+[Database]
+```
+
+**You:** "This won't work at scale, but let's define our data model first."
+
+### Database Schema
+
+```sql
+-- Users table
+CREATE TABLE users (
+  user_id BIGINT PRIMARY KEY,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  INDEX(username)
+);
+
+-- Tweets table
+CREATE TABLE tweets (
+  tweet_id BIGINT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  content VARCHAR(280) NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  like_count INT DEFAULT 0,
+  retweet_count INT DEFAULT 0,
+  INDEX(user_id, created_at),
+  FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+-- Follows table (who follows whom)
+CREATE TABLE follows (
+  follower_id BIGINT NOT NULL,
+  followee_id BIGINT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (follower_id, followee_id),
+  INDEX(follower_id),
+  INDEX(followee_id)
+);
+
+-- Likes table
+CREATE TABLE likes (
+  user_id BIGINT NOT NULL,
+  tweet_id BIGINT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (user_id, tweet_id)
+);
+```
+
+### Core APIs
+
+```
+POST /api/tweets
+Request:
+{
+  "user_id": 12345,
+  "content": "Hello Twitter!"
+}
+Response:
+{
+  "tweet_id": 98765,
+  "user_id": 12345,
+  "content": "Hello Twitter!",
+  "created_at": "2026-01-06T10:00:00Z"
+}
+
+GET /api/timeline/:userId
+Response:
+{
+  "tweets": [
+    {
+      "tweet_id": 98765,
+      "user_id": 12345,
+      "username": "john_doe",
+      "content": "Hello Twitter!",
+      "created_at": "2026-01-06T10:00:00Z",
+      "like_count": 42,
+      "retweet_count": 7
+    },
+    // ... more tweets
+  ],
+  "next_cursor": "abc123"
+}
+
+POST /api/follow
+Request:
+{
+  "follower_id": 12345,
+  "followee_id": 67890
+}
+
+POST /api/tweets/:tweetId/like
+Request:
+{
+  "user_id": 12345
+}
+```
+
+### Version 2: Scaling the Architecture
+
+**You:** "Now let's address the timeline generation problem. There are two main approaches:"
+
+#### Approach 1: Pull Model (Fan-out on Read)
+
+**You:** "When user requests their timeline:
+1. Query follows table to get list of followed users
+2. Query tweets table for recent tweets from those users
+3. Merge and sort by timestamp
+4. Return top 20 tweets"
+
+```sql
+-- Pseudocode for pull model
+SELECT t.* FROM tweets t
+WHERE t.user_id IN (
+  SELECT followee_id FROM follows WHERE follower_id = :current_user
+)
+ORDER BY t.created_at DESC
+LIMIT 20;
+```
+
+**Pros:**
+- ✅ Simple to implement
+- ✅ No storage overhead
+- ✅ Works well for celebrity users (don't need to update 50M timelines)
+
+**Cons:**
+- ❌ Slow for users who follow many people (query becomes expensive)
+- ❌ Hard to scale - each timeline request hits the database hard
+- ❌ Difficult to meet less than 1 second latency requirement
+
+#### Approach 2: Push Model (Fan-out on Write)
+
+**You:** "When someone posts a tweet:
+1. Find all their followers
+2. Pre-generate and store the tweet in each follower's timeline cache
+3. When user requests timeline, just read from their pre-built cache"
+
+```
+Tweet Posted → Fanout Service → Insert into followers' timeline cache
+Timeline Request → Read directly from cache
+```
+
+**Pros:**
+- ✅ Extremely fast reads (just fetch from cache)
+- ✅ Meets less than 1 second latency requirement easily
+- ✅ Scales well for read-heavy workload
+
+**Cons:**
+- ❌ Celebrity problem: If user has 50M followers, we need to write to 50M caches
+- ❌ Storage overhead: Each user's timeline is pre-computed
+- ❌ Slow writes for users with many followers
+
+**You:** "For Twitter's read-heavy nature (100:1), I'd lean toward a **hybrid approach**:"
+
+### Version 3: Hybrid Push/Pull Model (Recommended)
+
+**You:** "Use push model for normal users, pull model for celebrities:"
+
+```
+When tweet is posted:
+1. If user has < 10,000 followers → Push model (fan-out)
+2. If user has > 10,000 followers → Mark as celebrity, use pull model
+
+Timeline generation:
+1. Fetch pre-computed timeline from cache (push tweets)
+2. Merge with tweets from celebrity users (pull on-demand)
+3. Sort by timestamp
+4. Return top 20
+```
+
+**Pros:**
+- ✅ Fast reads for most users
+- ✅ Handles celebrity users efficiently
+- ✅ Balanced trade-off
+
+## Phase 4: Deep Dive (15 minutes)
+
+**Interviewer:** "Good approach. Now let's dive deeper. How would you implement the fan-out service?"
+
+### Fan-out Service Architecture
+
+**You:** "The fan-out service is critical. Here's how I'd design it:"
+
+```
+[Tweet Posted]
+      ↓
+[API Server] → [Message Queue (Kafka)]
+                     ↓
+      [Fan-out Worker Pool (Multiple Workers)]
+                     ↓
+      [Redis Cache] (Timeline storage)
+```
+
+**You:** "Here's the flow:
+
+**Step 1: Async Fan-out**
+1. User posts tweet → API server saves to database
+2. API server publishes event to Kafka: `{tweet_id, user_id}`
+3. Immediately return success to user (don't block on fan-out)
+
+**Step 2: Worker Processing**
+1. Fan-out workers consume from Kafka
+2. Query follows table: Get all follower_ids
+3. For each follower, add tweet to their timeline cache in Redis
+
+**Step 3: Timeline Cache Structure**
+
+```
+Redis Key: timeline:{user_id}
+Data Structure: Sorted Set (sorted by timestamp)
+
+ZADD timeline:12345 1704531600 tweet:98765
+ZADD timeline:12345 1704531500 tweet:98764
+ZADD timeline:12345 1704531400 tweet:98763
+
+// Fetch timeline
+ZREVRANGE timeline:12345 0 19  // Get 20 most recent
+```
+
+**Why Sorted Set?**
+- ✅ Automatically sorted by timestamp
+- ✅ O(log N) insertion
+- ✅ Fast range queries for pagination
+
+### Handling the Celebrity Problem
+
+**Interviewer:** "What if Elon Musk with 50 million followers posts a tweet? Won't that overwhelm your system?"
+
+**You:** "Excellent question. This is the hardest part. Here's my approach:"
+
+**1. Detect Celebrity Users**
+```sql
+CREATE TABLE user_metadata (
+  user_id BIGINT PRIMARY KEY,
+  follower_count INT,
+  is_celebrity BOOLEAN DEFAULT FALSE,
+  INDEX(is_celebrity)
+);
+
+-- Update when follower count crosses threshold
+UPDATE user_metadata
+SET is_celebrity = TRUE
+WHERE follower_count > 10000;
+```
+
+**2. Separate Processing Paths**
+```
+Regular User Tweet:
+→ Fan-out to all followers (fast, less than 1 second)
+
+Celebrity Tweet:
+→ Store in celebrity_tweets table (no fan-out)
+→ Followers pull these tweets on-demand
+```
+
+**3. Hybrid Timeline Generation**
+```python
+def get_timeline(user_id):
+    # Get pre-computed timeline from cache (regular users)
+    regular_tweets = redis.zrevrange(f"timeline:{user_id}", 0, 50)
+
+    # Get celebrity users this user follows
+    celebrity_users = get_followed_celebrities(user_id)
+
+    # Fetch recent tweets from celebrities (pull)
+    celebrity_tweets = fetch_recent_tweets(celebrity_users, limit=50)
+
+    # Merge and sort by timestamp
+    all_tweets = merge_sort(regular_tweets, celebrity_tweets)
+
+    return all_tweets[:20]
+```
+
+**You:** "This way:
+- Regular users' tweets are pre-computed (fast writes)
+- Celebrity tweets are fetched on-demand (avoids fan-out explosion)
+- Timeline generation is still fast (less than 1 second) because we're only pulling from a few celebrity users"
+
+### Database Scaling
+
+**Interviewer:** "With 730TB of data, how would you scale the database?"
+
+**You:** "We need sharding. Here's my strategy:"
+
+**Option 1: Shard by User ID**
+```
+Shard 1: user_id % 4 = 0
+Shard 2: user_id % 4 = 1
+Shard 3: user_id % 4 = 2
+Shard 4: user_id % 4 = 3
+```
+
+**Pros:**
+- ✅ All of a user's tweets are on one shard (single query)
+- ✅ Follows table can be co-located
+
+**Cons:**
+- ❌ Hot users create hot shards
+- ❌ Timeline queries need to scatter-gather across all shards
+
+**Option 2: Shard by Tweet ID (Timeline Service)**
+```
+Use separate service for timeline storage:
+- Timeline sharded by user_id
+- Tweets sharded separately by tweet_id
+- Cache layer abstracts the complexity
+```
+
+**You:** "I'd use a hybrid:
+1. **Tweets table**: Shard by tweet_id (distributes celebrity tweets evenly)
+2. **Users/Follows**: Shard by user_id
+3. **Timeline cache**: Shard by user_id (co-locate with user data)
+
+This separates read and write workloads."
+
+### Caching Strategy
+
+**Interviewer:** "Tell me about your caching approach."
+
+**You:** "Multi-layer caching strategy:"
+
+```
+Layer 1: CDN (for static assets, profile images)
+Layer 2: Redis Timeline Cache (pre-computed timelines)
+Layer 3: Redis Query Cache (hot tweets, user profiles)
+Layer 4: Database Read Replicas
+```
+
+**Timeline Cache:**
+- Store last 1,000 tweet IDs per user
+- TTL: No expiration (invalidate on unfollow)
+- Eviction: LRU if memory pressure
+- Sharded by user_id
+
+**Tweet Cache:**
+- Cache tweet objects (content, metadata)
+- TTL: 24 hours
+- Hot tweets (viral) stay in cache longer
+
+**User Profile Cache:**
+- Cache user objects
+- TTL: 1 hour
+- Update on profile changes
+
+### Likes and Retweets
+
+**Interviewer:** "How do you handle likes updating in real-time?"
+
+**You:** "We need to balance consistency with performance:"
+
+**Write Path (User Likes Tweet):**
+```
+1. Insert into likes table: (user_id, tweet_id)
+2. Increment Redis counter: INCR like_count:{tweet_id}
+3. Async: Update tweets.like_count in database (eventual consistency)
+```
+
+**Read Path (Show Like Count):**
+```
+1. Check Redis: GET like_count:{tweet_id}
+2. If cache miss: Query database → cache result
+3. Return count to user
+```
+
+**You:** "Like counts don't need strong consistency. If count shows 999 but actual is 1,002, users won't notice. This lets us use caching aggressively."
+
+## Phase 5: Bottlenecks & Trade-offs (5-7 minutes)
+
+**You:** "Let me proactively identify weaknesses in this design:"
+
+### Bottleneck 1: Fan-out Write Amplification
+
+**Problem:** User with 10,000 followers posts → 10,000 cache writes
+
+**Solutions:**
+- Throttle fan-out workers to prevent overwhelming Redis
+- Use batching: Write to 100 timelines per batch
+- Monitor queue depth and scale workers horizontally
+- Set ceiling: Max 100K followers for push model
+
+### Bottleneck 2: Timeline Cache Storage
+
+**Problem:** 200M users × 1,000 cached tweets × 8 bytes = 1.6 TB of Redis
+
+**Solutions:**
+- Reduce cache size: Store only 100-200 recent tweets per user
+- Lazy loading: Only populate cache when user requests timeline
+- Use Redis cluster with sharding
+- Tier storage: Hot users in memory, cold users in SSD
+
+### Bottleneck 3: Database Hotspots
+
+**Problem:** Celebrity users' tweets create hot rows
+
+**Solutions:**
+- Shard tweets by tweet_id (not user_id) to distribute celebrity tweets
+- Use read replicas for read-heavy queries
+- Cache aggressively for viral tweets
+
+### Bottleneck 4: Real-time vs Eventual Consistency
+
+**You:** "We chose eventual consistency for timeline generation (2-3 second delay). Let me explain the trade-off:"
+
+```
+Option 1: Strong Consistency
+- User posts tweet → Immediately visible in all followers' timelines
+- Requires synchronous fan-out (slow)
+- Poor user experience for poster (waits 5+ seconds)
+
+Option 2: Eventual Consistency (Chosen)
+- User posts tweet → Returns immediately
+- Async fan-out → Appears in followers' feeds within 2-3 seconds
+- Better UX for poster, slightly delayed for followers
+```
+
+**You:** "For social media, eventual consistency is acceptable. Users don't notice if a tweet appears 2 seconds later. This lets us prioritize performance."
+
+### Bottleneck 5: Global Distribution
+
+**Problem:** Single region = high latency for international users
+
+**Solution:**
+```
+Multi-region deployment:
+- US-East, US-West, EU, Asia regions
+- Geo-DNS routing to nearest region
+- Master-master replication for user data
+- Eventual consistency across regions (acceptable delay: <5 seconds)
+
+Tweet flow:
+1. User in EU posts tweet → Stored in EU region
+2. Async replication to other regions
+3. Followers in Asia see tweet within 3-5 seconds
+```
+
+## The Complete Architecture
+
+**You:** "Here's the full architecture that handles 200M DAU:"
+
+```
+                    [Clients (Web/Mobile/API)]
+                              ↓
+                          [CDN Layer]
+                              ↓
+                    [Global Load Balancer]
+                    (GeoDNS routing)
+                              ↓
+        ┌─────────────────────┴─────────────────────┐
+        ↓                                           ↓
+   [US Region]                               [EU Region]
+        │                                           │
+        ↓                                           ↓
+[API Gateway]                               [API Gateway]
+        ↓                                           ↓
+[App Servers Pool]                         [App Servers Pool]
+        │                                           │
+        ├── POST /tweets → [Kafka]                 │
+        ├── GET /timeline → [Redis Timeline Cache] │
+        ├── GET /tweets → [Redis Tweet Cache]      │
+        └── GET /users → [Redis User Cache]        │
+                ↓                                   ↓
+        [Fan-out Workers]                  [Fan-out Workers]
+                ↓                                   ↓
+        [Redis Cluster]                     [Redis Cluster]
+        (Timeline Cache)                    (Timeline Cache)
+                ↓                                   ↓
+        [PostgreSQL Sharded]               [PostgreSQL Sharded]
+        - Tweets (by tweet_id)             (Master-Master Replication)
+        - Users (by user_id)
+        - Follows (by follower_id)
+                ↓
+        [S3 / Object Storage]
+        (Images, Videos, Media)
+```
+
+### Traffic Handling
+
+**Write Path (Post Tweet):**
+1. Client → API Gateway → App Server
+2. App Server → Save to database (sharded by tweet_id)
+3. App Server → Publish to Kafka
+4. App Server → Return success immediately
+5. Fan-out Workers → Consume from Kafka
+6. Fan-out Workers → Update follower timelines in Redis
+7. Total latency for user: `<200ms`
+
+**Read Path (View Timeline):**
+1. Client → API Gateway → App Server
+2. Check Redis timeline cache
+3. If hit: Return cached tweets (most common)
+4. If miss: Fetch from database → Cache → Return
+5. For celebrity tweets: Pull on-demand, merge with cache
+6. Total latency: `<500ms` (avg), `<1 second` (p99)
+
+**Capacity:**
+- Handles 70,000 timeline requests/second (read)
+- Handles 14,000 tweet posts/second (write)
+- Stores 730TB over 5 years
+- 99.9% uptime via multi-region redundancy
+
+## Common Follow-up Questions
+
+### Q: "How would you add tweet search functionality?"
+
+**You:** "Search requires a different architecture:
+
+**Option 1: Elasticsearch/OpenSearch**
+```
+Write flow:
+Tweet posted → Save to DB → Index in Elasticsearch (async)
+
+Search flow:
+User searches "system design" → Query Elasticsearch → Return results
+```
+
+**Schema:**
+```json
+{
+  "tweet_id": 12345,
+  "content": "Loving system design interviews!",
+  "user_id": 67890,
+  "created_at": "2026-01-06T10:00:00Z",
+  "hashtags": ["systemdesign", "interviews"],
+  "like_count": 42
+}
+```
+
+**Pros:**
+- ✅ Full-text search
+- ✅ Complex queries (hashtags, mentions)
+- ✅ Ranking/relevance scoring
+
+**Cons:**
+- ❌ Eventual consistency
+- ❌ Additional infrastructure
+
+For Twitter-scale search, I'd use Elasticsearch sharded by date (recent tweets searched most often)."
+
+### Q: "What about notifications?"
+
+**You:** "Notifications are event-driven:
+
+```
+Tweet Event → Kafka → Notification Service
+                            ↓
+              ┌─────────────┼─────────────┐
+              ↓             ↓             ↓
+        [Push Service] [Email]    [In-App Notification]
+        (Mobile push)              (Stored in DB)
+```
+
+**Notification Types:**
+1. Mention: Someone mentions you in a tweet
+2. Like: Someone likes your tweet
+3. Retweet: Someone retweets your tweet
+4. Follow: Someone follows you
+
+**Storage:**
+```sql
+CREATE TABLE notifications (
+  notification_id BIGINT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  type ENUM('mention', 'like', 'retweet', 'follow'),
+  actor_user_id BIGINT NOT NULL,
+  tweet_id BIGINT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  is_read BOOLEAN DEFAULT FALSE,
+  INDEX(user_id, is_read, created_at)
+);
+```
+
+**Optimization:**
+- Batch notifications: "John and 5 others liked your tweet"
+- Rate limit: Don't send 1,000 notifications if tweet goes viral
+- Priority: Mention > Follow > Like"
+
+### Q: "How do you handle media (images/videos)?"
+
+**You:** "Media requires specialized infrastructure:
+
+**Upload Flow:**
+```
+1. Client uploads image → API server
+2. API server generates presigned S3 URL
+3. Client uploads directly to S3 (bypass API)
+4. Client notifies API: "Upload complete"
+5. API saves tweet with media_url
+```
+
+**Processing:**
+- Resize images: Generate thumbnails, mobile versions
+- Video transcoding: Convert to multiple resolutions (240p, 480p, 720p)
+- Use AWS Lambda or background workers
+- CDN for delivery (CloudFront, Cloudflare)
+
+**Storage Estimates with Media:**
+- 20% of tweets have images (avg 200 KB)
+- 5% of tweets have videos (avg 5 MB)
+- Daily storage: 400M tweets × (0.2 × 200KB + 0.05 × 5MB) = 116 GB/day
+- 5 years: ~211 TB (manageable with S3)
+
+**Cost Optimization:**
+- Compress images (WebP format)
+- Use S3 Glacier for old media (>1 year)
+- Lazy loading: Don't load images until user scrolls"
+
+### Q: "How do you prevent spam and abuse?"
+
+**You:** "Multi-layer approach:
+
+**1. Rate Limiting**
+```
+Per user:
+- 10 tweets/minute
+- 100 follows/hour
+- 1,000 likes/hour
+
+Implementation: Token bucket in Redis
+```
+
+**2. Content Moderation**
+- ML models to detect spam/offensive content
+- User reports → Review queue
+- Automated bans for repeated violations
+
+**3. Bot Detection**
+- Unusual patterns: 1,000 tweets/day from new account
+- CAPTCHA for suspicious activity
+- Phone verification for new accounts
+
+**4. API Abuse Protection**
+- Require OAuth authentication
+- Monitor API usage patterns
+- Ban API keys exceeding limits"
+
+## What Makes This Answer Strong
+
+This walkthrough demonstrates:
+
+1. **Structured Approach** - Followed 5-phase framework methodically
+2. **Clarifying Questions** - Didn't assume requirements
+3. **Quantitative Thinking** - Did capacity estimation upfront
+4. **Trade-off Analysis** - Compared pull vs push vs hybrid models
+5. **Deep Technical Knowledge** - Discussed sharding, caching, consistency models
+6. **Problem Identification** - Proactively identified celebrity problem
+7. **Real-world Awareness** - Understood that eventual consistency is acceptable for social media
+8. **Scalability Focus** - Designed for 200M users, not 1,000
+9. **Communication** - Explained reasoning at each step
+
+## Practice This Question
+
+Set a timer for 45 minutes and practice this problem:
+
+1. **Gather requirements** (7 min): Write them on paper
+2. **Estimate capacity** (5 min): Calculate QPS, storage
+3. **Draw high-level architecture** (10 min): Boxes and arrows
+4. **Deep dive** (20 min): Pick one area (fan-out, caching, database)
+5. **Identify bottlenecks** (3 min): What could break?
+
+**Key things to practice:**
+- Explaining fan-out on write vs read
+- Drawing the architecture diagram cleanly
+- Discussing the celebrity user problem
+- Justifying your caching strategy
+
+Remember: Twitter is a common question because it reveals how you think about real-world complexity. The interviewer doesn't expect you to design actual Twitter - they want to see how you break down a complex problem, make trade-offs, and communicate your reasoning.
+
+Now go practice. Talk through your design out loud. Time yourself. Get feedback.
+
+You've got this.
