@@ -8,6 +8,7 @@ import { Job } from 'bull';
 import { Logger, Inject } from '@nestjs/common';
 import { InterviewSessionService } from '../services/interview-session.service';
 import { TranscriptService } from '../services/transcript.service';
+import { SignalService } from '../services/signal.service';
 import { DATABASE_CONNECTION } from '../../db/db.module';
 import type { db as DbType } from '../../db/db';
 import { interviewSessions } from '../../db/schema';
@@ -36,6 +37,7 @@ export class PhaseTransitionProcessor {
     private db: typeof DbType,
     private readonly sessionService: InterviewSessionService,
     private readonly transcriptService: TranscriptService,
+    private readonly signalService: SignalService,
   ) {}
 
   @Process('check')
@@ -65,12 +67,57 @@ export class PhaseTransitionProcessor {
       // Check each session for phase transition
       for (const sessionData of activeSessions) {
         const session = this.sessionService['mapToSessionState'](sessionData);
-        const transitionStatus =
+
+        // Get detected signals for this session
+        const signals = await this.signalService.getSessionSignals(session.id);
+        const signalNames = new Set(signals.map((s) => s.signalName));
+
+        // Check for natural transition first (requirements met)
+        const naturalTransition =
+          await this.sessionService.shouldNaturallyTransition(
+            session,
+            signalNames,
+          );
+
+        if (naturalTransition.shouldTransition) {
+          this.logger.log(
+            `[Job ${job.id}] Natural transition for session ${session.id} from phase ${session.currentPhase} (requirements met)`,
+          );
+
+          try {
+            // Advance to next phase naturally
+            const result = await this.sessionService.advancePhase(session.id);
+
+            // Add system message to transcript
+            const elapsedSeconds =
+              this.sessionService.getElapsedSeconds(session);
+            await this.transcriptService.addMessage({
+              sessionId: session.id,
+              role: MessageRole.SYSTEM,
+              text: result.isCompleted
+                ? '✅ Interview completed.'
+                : `✅ Moving to ${this.getPhaseDisplayName(result.currentPhase)}.`,
+              phase: result.currentPhase,
+              secondsElapsed: elapsedSeconds,
+            });
+
+            transitionedCount++;
+          } catch (error) {
+            this.logger.error(
+              `[Job ${job.id}] Failed to naturally transition session ${session.id}:`,
+              error,
+            );
+          }
+          continue;
+        }
+
+        // Check for forced transition (time exceeded)
+        const forceTransitionStatus =
           this.sessionService.shouldForcePhaseTransition(session);
 
-        if (transitionStatus.shouldTransition) {
+        if (forceTransitionStatus.shouldTransition) {
           this.logger.log(
-            `[Job ${job.id}] Force transitioning session ${session.id} from phase ${session.currentPhase} (exceeded by ${transitionStatus.exceededBySeconds}s)`,
+            `[Job ${job.id}] Force transitioning session ${session.id} from phase ${session.currentPhase} (exceeded by ${forceTransitionStatus.exceededBySeconds}s)`,
           );
 
           try {

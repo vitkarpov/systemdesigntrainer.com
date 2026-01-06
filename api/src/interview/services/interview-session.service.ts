@@ -252,6 +252,106 @@ export class InterviewSessionService {
   }
 
   /**
+   * Check if current phase requirements are met for natural transition
+   * (minimum time elapsed + required signals detected + user indicated readiness)
+   */
+  async shouldNaturallyTransition(
+    session: SessionState,
+    detectedSignals: Set<string>,
+  ): Promise<{
+    shouldTransition: boolean;
+    reason?: 'requirements_met';
+  }> {
+    // Only check for in-progress sessions
+    if (session.status !== SessionStatus.IN_PROGRESS) {
+      return { shouldTransition: false };
+    }
+
+    const phaseElapsed = this.getPhaseElapsedSeconds(session);
+    const requirements = PHASE_REQUIREMENTS[session.currentPhase];
+
+    // Check if minimum time has elapsed
+    if (phaseElapsed < requirements.minimumTimeSeconds) {
+      return { shouldTransition: false };
+    }
+
+    // Check if user explicitly indicated readiness to advance
+    const userIsReady = detectedSignals.has('ready_to_advance');
+    if (!userIsReady) {
+      return { shouldTransition: false };
+    }
+
+    // Check if all required signals are detected
+    const requiredSignals = requirements.requiredSignals || [];
+    const allRequiredSignalsDetected = requiredSignals.every((signal) =>
+      detectedSignals.has(signal),
+    );
+
+    if (!allRequiredSignalsDetected) {
+      return { shouldTransition: false };
+    }
+
+    // All requirements met - allow natural transition
+    return {
+      shouldTransition: true,
+      reason: 'requirements_met',
+    };
+  }
+
+  /**
+   * Advance to next phase naturally (requirements met, user ready)
+   * Does not record a phase cutoff since this is a natural progression
+   */
+  async advancePhase(sessionId: number): Promise<AdvancePhaseResult> {
+    const session = await this.getSession(sessionId);
+
+    if (session.status !== SessionStatus.IN_PROGRESS) {
+      throw new InvalidSessionStateException(
+        sessionId,
+        session.status,
+        'advance phase',
+        [SessionStatus.IN_PROGRESS],
+      );
+    }
+
+    const previousPhase = session.currentPhase as InterviewPhase;
+
+    // Check if we can transition to the next phase
+    const transitionResult =
+      this.phaseService.canTransitionToNext(previousPhase);
+
+    if (!transitionResult.success || !transitionResult.nextPhase) {
+      // We're at the final phase - complete the session
+      await this.completeSession(sessionId);
+
+      return {
+        success: true,
+        previousPhase,
+        currentPhase: previousPhase,
+        isCompleted: true,
+      };
+    }
+
+    // Transition to next phase
+    const nextPhase = transitionResult.nextPhase;
+    await this.db
+      .update(interviewSessions)
+      .set({
+        currentPhase: nextPhase,
+        phaseStartedAt: sql`NOW()`,
+        updatedAt: sql`NOW()`,
+      })
+      .where(eq(interviewSessions.id, sessionId));
+
+    return {
+      success: true,
+      previousPhase,
+      currentPhase: nextPhase,
+      isCompleted: false,
+    };
+  }
+
+  /**
    * Force advance to next phase (bypasses signal requirements)
    * Used when time limit is exceeded
    */
