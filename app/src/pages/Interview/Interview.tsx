@@ -5,21 +5,18 @@ import { toast } from 'sonner';
 import { DiagramCanvas } from '@/components/diagram/DiagramCanvas';
 import { PageHeader } from '@/components/PageHeader';
 import { PhaseDisplay } from '@/components/PhaseDisplay';
-import { MessageList, InterviewInput, TimeoutWarningBanner } from './components';
+import { MessageList, InterviewInput } from './components';
 import { Button } from '@/components/ui/button';
 import { formatElapsedTime, parseErrorMessage } from '@/lib/utils';
 import { useInterviewStore, useDiagramStore, useStreamingStore } from '@/stores';
 import {
   useSessionsControllerGetSession,
   useSessionsControllerGetTranscript,
-  useSessionsControllerAdvancePhase,
   useSessionsControllerGenerateFeedback,
   useSessionsControllerGetFailedMessages,
-  getSessionsControllerGetSessionQueryKey,
   getSessionsControllerGetFailedMessagesQueryKey,
 } from '@/api/hooks.gen';
 import { useConversationStream } from '@/hooks/useConversationStream';
-import { useTimeoutStatus } from '@/hooks/useTimeoutStatus';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 function InterviewPage() {
@@ -85,14 +82,7 @@ function InterviewPage() {
   const retryableCount = failedMessagesData?.data?.retryableCount || 0;
   const failedMessageIds = new Set((failedMessagesData?.data?.failedMessages || []).map((m) => m.id));
 
-  const advancePhaseMutation = useSessionsControllerAdvancePhase();
   const generateFeedbackMutation = useSessionsControllerGenerateFeedback();
-
-  // Timeout status polling (only for in-progress sessions)
-  const timeoutStatus = useTimeoutStatus(
-    sessionIdNum,
-    session?.data.session.status === 'in_progress'
-  );
 
   useEffect(() => {
     if (session) {
@@ -144,22 +134,6 @@ function InterviewPage() {
     const diagramData = useDiagramStore.getState().getDiagram(sessionIdNum);
 
     sendMessage(messageContent, isHighLevelPhase ? diagramData : null);
-  };
-
-  const handleAdvancePhase = async () => {
-    if (!sessionId) return;
-
-    try {
-      await advancePhaseMutation.mutateAsync({
-        id: sessionIdNum,
-      });
-      await queryClient.invalidateQueries({
-        queryKey: getSessionsControllerGetSessionQueryKey(sessionIdNum),
-      });
-    } catch (err: any) {
-      const errorMessage = parseErrorMessage(err, 'Failed to advance phase. Please try again.');
-      toast.error(errorMessage);
-    }
   };
 
   const handleEndInterview = async () => {
@@ -226,25 +200,13 @@ function InterviewPage() {
               Total: {formatElapsedTime(elapsedTime)}
             </div>
             {sessionStatus === 'in_progress' && (
-              <>
-                {currentPhase !== 'wrap_up' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAdvancePhase}
-                    disabled={advancePhaseMutation.isPending}
-                  >
-                    Next Phase
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  onClick={handleEndInterview}
-                  disabled={generateFeedbackMutation.isPending}
-                >
-                  {generateFeedbackMutation.isPending ? 'Ending...' : 'End Interview'}
-                </Button>
-              </>
+              <Button
+                size="sm"
+                onClick={handleEndInterview}
+                disabled={generateFeedbackMutation.isPending}
+              >
+                {generateFeedbackMutation.isPending ? 'Ending...' : 'End Interview'}
+              </Button>
             )}
             {sessionStatus === 'completed' && (
               <div className="text-sm font-medium text-muted-foreground">
@@ -262,14 +224,6 @@ function InterviewPage() {
           ) : null
         }
       />
-
-      {/* Timeout Warning Banner */}
-      {timeoutStatus.shouldShowWarning && (
-        <TimeoutWarningBanner
-          inactiveSeconds={timeoutStatus.inactiveSeconds}
-          onDismiss={timeoutStatus.dismissWarning}
-        />
-      )}
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
