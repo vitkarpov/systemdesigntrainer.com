@@ -58,7 +58,7 @@ async function bootstrap() {
   if (process.env.GENERATE_OPENAPI === 'true') {
     const outputPath = path.resolve(
       process.cwd(),
-      '../ui/src/api/openapi.json',
+      '../app/src/api/openapi.json',
     );
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     fs.writeFileSync(outputPath, JSON.stringify(document, null, 2));
