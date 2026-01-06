@@ -44,10 +44,35 @@ export class AuthController {
   async callback(
     @Query('code') code: string,
     @Query('state') state: string,
+    @Query('error') error: string,
+    @Query('error_description') errorDescription: string,
+    @Query('error_uri') errorUri: string,
     @Res() res: Response,
   ) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+    // Handle OAuth errors from WorkOS (e.g., user denied access)
+    if (error) {
+      console.warn('OAuth error:', {
+        error,
+        errorDescription,
+        errorUri,
+      });
+
+      // Redirect to frontend error page with error details
+      const errorParams = new URLSearchParams({
+        error,
+        ...(errorDescription && { error_description: errorDescription }),
+      });
+      return res.redirect(`${frontendUrl}/auth/error?${errorParams}`);
+    }
+
+    // Ensure code is present for successful flow
     if (!code) {
-      throw new UnauthorizedException('Authorization code is required');
+      console.error('Callback called without code or error');
+      return res.redirect(
+        `${frontendUrl}/auth/error?error=missing_code&error_description=No authorization code received`,
+      );
     }
 
     try {
@@ -69,19 +94,17 @@ export class AuthController {
 
       // Set access token cookie
       res.cookie('access_token', accessToken, cookieOptions);
-
-      // Set WorkOS session ID cookie (needed for logout)
       res.cookie('workos_session_id', workosSessionId, cookieOptions);
 
       // Redirect without token in URL
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       const redirectUrl = `${frontendUrl}/auth/callback?state=${state || ''}`;
 
       return res.redirect(redirectUrl);
     } catch (error) {
       console.error('Callback error:', error);
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      return res.redirect(`${frontendUrl}/auth/error`);
+      return res.redirect(
+        `${frontendUrl}/auth/error?error=authentication_failed&error_description=Failed to complete authentication`,
+      );
     }
   }
 
@@ -107,7 +130,7 @@ export class AuthController {
 
   @Get('logout')
   @ApiOperation({ summary: 'Logout current user' })
-  @ApiResponse({ status: 302, description: 'Redirects to WorkOS logout' })
+  @ApiResponse({ status: 302, description: 'Redirects after logout' })
   async logout(@Res() res: Response) {
     const sessionId = res.req.cookies?.['workos_session_id'];
 
@@ -125,9 +148,9 @@ export class AuthController {
 
     // Clear both cookies
     res.clearCookie('access_token', cookieOptions);
-    res.clearCookie('workos_session', cookieOptions);
+    res.clearCookie('workos_session_id', cookieOptions);
 
-    const workosLogoutUrl = await this.authService.getLogoutUrl(sessionId);
+    const workosLogoutUrl = this.authService.getLogoutUrl(sessionId);
     return res.redirect(workosLogoutUrl);
   }
 

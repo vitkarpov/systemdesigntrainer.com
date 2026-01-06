@@ -50,7 +50,7 @@ export class AuthService {
 
   getAuthorizationUrl(state?: string): string {
     const authorizationUrl = this.workos.userManagement.getAuthorizationUrl({
-      provider: 'authkit',
+      provider: 'GitHubOAuth',
       clientId: this.clientId,
       redirectUri: this.redirectUri,
       state: state || '',
@@ -89,7 +89,11 @@ export class AuthService {
 
   async handleCallback(
     code: string,
-  ): Promise<{ user: User; accessToken: string; workosSessionId: string }> {
+  ): Promise<{
+    user: User;
+    accessToken: string;
+    workosSessionId: string | null;
+  }> {
     try {
       const response = await this.workos.userManagement.authenticateWithCode({
         clientId: this.clientId,
@@ -99,13 +103,8 @@ export class AuthService {
       const workosUser = response.user;
       const workosAccessToken = response.accessToken;
 
-      // Extract session ID from the WorkOS access token
       const workosSessionId =
         this.extractSessionIdFromAccessToken(workosAccessToken);
-
-      if (!workosSessionId) {
-        throw new UnauthorizedException('No session ID found in WorkOS token');
-      }
 
       const user = await this.userService.upsertFromWorkos({
         id: workosUser.id,
