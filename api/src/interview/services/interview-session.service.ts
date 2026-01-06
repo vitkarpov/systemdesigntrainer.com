@@ -5,6 +5,7 @@ import type { db as DbType } from '../../db/db';
 import { interviewSessions, interviewCases } from '../../db/schema';
 import { PhaseService } from './phase.service';
 import { PhaseGuardService } from './phase-guard.service';
+import { PhaseCutoffService } from './phase-cutoff.service';
 import {
   SessionStatus,
   InterviewPhase,
@@ -13,6 +14,7 @@ import {
 import { InterviewCaseNotFoundException } from '../exceptions/interview-case-not-found.exception';
 import { SessionNotFoundException } from '../exceptions/session-not-found.exception';
 import { InvalidSessionStateException } from '../exceptions/invalid-session-state.exception';
+import { PHASE_REQUIREMENTS } from '../config/phase-requirements.config';
 
 export interface CreateSessionDto {
   userId: number;
@@ -35,6 +37,7 @@ export class InterviewSessionService {
     private db: typeof DbType,
     private phaseService: PhaseService,
     private phaseGuardService: PhaseGuardService,
+    private phaseCutoffService: PhaseCutoffService,
   ) {}
 
   /**
@@ -163,7 +166,6 @@ export class InterviewSessionService {
       .set({
         status: SessionStatus.IN_PROGRESS,
         startedAt: sql`NOW()`,
-        lastUserMessageAt: sql`NOW()`,
         updatedAt: sql`NOW()`,
       })
       .where(eq(interviewSessions.id, sessionId))
@@ -273,100 +275,6 @@ export class InterviewSessionService {
   }
 
   /**
-   * Update lastUserMessageAt timestamp
-   */
-  async updateLastUserMessageAt(sessionId: number): Promise<void> {
-    await this.db
-      .update(interviewSessions)
-      .set({
-        lastUserMessageAt: sql`NOW()`,
-        updatedAt: sql`NOW()`,
-      })
-      .where(eq(interviewSessions.id, sessionId));
-  }
-
-  /**
-   * Check session timeout status
-   * Returns an object with timeout information
-   */
-  getTimeoutStatus(session: SessionState): {
-    shouldShowWarning: boolean;
-    shouldAutoEnd: boolean;
-    inactiveSeconds: number;
-    totalElapsedSeconds: number;
-    reason?: 'inactive' | 'hard_cap';
-  } {
-    const totalElapsedSeconds = this.getElapsedSeconds(session);
-
-    // Hard cap: 60 minutes (3600 seconds)
-    if (totalElapsedSeconds >= 3600) {
-      return {
-        shouldShowWarning: false,
-        shouldAutoEnd: true,
-        inactiveSeconds: 0,
-        totalElapsedSeconds,
-        reason: 'hard_cap',
-      };
-    }
-
-    // Inactivity check
-    if (!session.lastUserMessageAt || !session.startedAt) {
-      return {
-        shouldShowWarning: false,
-        shouldAutoEnd: false,
-        inactiveSeconds: 0,
-        totalElapsedSeconds,
-      };
-    }
-
-    const now = new Date();
-    const inactiveMs = now.getTime() - session.lastUserMessageAt.getTime();
-    const inactiveSeconds = Math.floor(inactiveMs / 1000);
-
-    // Warning at 10 minutes (600 seconds) of inactivity
-    const shouldShowWarning = inactiveSeconds >= 600 && inactiveSeconds < 780;
-
-    // Auto-end at 13 minutes (780 seconds) of inactivity
-    const shouldAutoEnd = inactiveSeconds >= 780;
-
-    return {
-      shouldShowWarning,
-      shouldAutoEnd,
-      inactiveSeconds,
-      totalElapsedSeconds,
-      reason: shouldAutoEnd ? 'inactive' : undefined,
-    };
-  }
-
-  /**
-   * End session due to timeout
-   */
-  async endSessionDueToTimeout(sessionId: number): Promise<SessionState> {
-    const session = await this.getSession(sessionId);
-
-    if (session.status !== SessionStatus.IN_PROGRESS) {
-      throw new InvalidSessionStateException(
-        sessionId,
-        session.status,
-        'end due to timeout',
-        [SessionStatus.IN_PROGRESS],
-      );
-    }
-
-    const [updated] = await this.db
-      .update(interviewSessions)
-      .set({
-        status: SessionStatus.ABANDONED_TIMEOUT,
-        completedAt: sql`NOW()`,
-        updatedAt: sql`NOW()`,
-      })
-      .where(eq(interviewSessions.id, sessionId))
-      .returning();
-
-    return this.mapToSessionState(updated);
-  }
-
-  /**
    * Get session elapsed time in seconds
    */
   getElapsedSeconds(session: SessionState): number {
@@ -388,6 +296,99 @@ export class InterviewSessionService {
     const endTime = session.completedAt || new Date();
     const elapsed = endTime.getTime() - session.phaseStartedAt.getTime();
     return Math.floor(elapsed / 1000);
+  }
+
+  /**
+   * Check if current phase should be force-transitioned due to time limit
+   */
+  shouldForcePhaseTransition(session: SessionState): {
+    shouldTransition: boolean;
+    reason?: 'time_exceeded';
+    exceededBySeconds?: number;
+  } {
+    // Only check for in-progress sessions
+    if (session.status !== SessionStatus.IN_PROGRESS) {
+      return { shouldTransition: false };
+    }
+
+    const phaseElapsed = this.getPhaseElapsedSeconds(session);
+    const requirements = PHASE_REQUIREMENTS[session.currentPhase];
+
+    if (phaseElapsed >= requirements.maximumTimeSeconds) {
+      return {
+        shouldTransition: true,
+        reason: 'time_exceeded',
+        exceededBySeconds: phaseElapsed - requirements.maximumTimeSeconds,
+      };
+    }
+
+    return { shouldTransition: false };
+  }
+
+  /**
+   * Force advance to next phase (bypasses signal requirements)
+   * Used when time limit is exceeded
+   */
+  async forceAdvancePhase(sessionId: number): Promise<AdvancePhaseResult> {
+    const session = await this.getSession(sessionId);
+
+    if (session.status !== SessionStatus.IN_PROGRESS) {
+      throw new InvalidSessionStateException(
+        sessionId,
+        session.status,
+        'force advance phase',
+        [SessionStatus.IN_PROGRESS],
+      );
+    }
+
+    const previousPhase = session.currentPhase as InterviewPhase;
+    const phaseElapsed = this.getPhaseElapsedSeconds(session);
+    const totalElapsed = this.getElapsedSeconds(session);
+
+    // Check if we can transition to the next phase
+    const transitionResult =
+      this.phaseService.canTransitionToNext(previousPhase);
+
+    if (!transitionResult.success || !transitionResult.nextPhase) {
+      // We're at the final phase - complete the session
+      await this.completeSession(sessionId);
+
+      return {
+        success: true,
+        previousPhase,
+        currentPhase: previousPhase,
+        isCompleted: true,
+      };
+    }
+
+    // Record phase cut-off event
+    const requirements = PHASE_REQUIREMENTS[previousPhase];
+    const exceededBy = phaseElapsed - requirements.maximumTimeSeconds;
+
+    await this.phaseCutoffService.recordPhaseCutoff({
+      sessionId,
+      phase: previousPhase,
+      secondsElapsed: totalElapsed,
+      exceededBySeconds: Math.max(0, exceededBy),
+    });
+
+    // Transition to next phase (bypass guard checks)
+    const nextPhase = transitionResult.nextPhase;
+    await this.db
+      .update(interviewSessions)
+      .set({
+        currentPhase: nextPhase,
+        phaseStartedAt: sql`NOW()`,
+        updatedAt: sql`NOW()`,
+      })
+      .where(eq(interviewSessions.id, sessionId));
+
+    return {
+      success: true,
+      previousPhase,
+      currentPhase: nextPhase,
+      isCompleted: false,
+    };
   }
 
   /**

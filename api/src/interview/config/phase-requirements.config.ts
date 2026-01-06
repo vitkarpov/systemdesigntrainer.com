@@ -8,6 +8,7 @@ import { SignalName } from '../services/signal.service';
 
 export interface PhaseRequirements {
   minimumTimeSeconds: number;
+  maximumTimeSeconds: number;
   requiredSignals?: SignalName[];
   recommendedSignals?: SignalName[];
 }
@@ -15,11 +16,13 @@ export interface PhaseRequirements {
 export const PHASE_REQUIREMENTS: Record<InterviewPhase, PhaseRequirements> = {
   [InterviewPhase.PROBLEM]: {
     minimumTimeSeconds: 60, // 1 minute minimum
+    maximumTimeSeconds: 300, // 5 minutes maximum
     requiredSignals: [SignalName.ASKED_CLARIFYING_QUESTIONS],
     recommendedSignals: [],
   },
   [InterviewPhase.REQUIREMENTS]: {
     minimumTimeSeconds: 120, // 2 minutes minimum
+    maximumTimeSeconds: 600, // 10 minutes maximum
     requiredSignals: [],
     recommendedSignals: [
       SignalName.ASKED_FUNCTIONAL_REQS,
@@ -28,11 +31,13 @@ export const PHASE_REQUIREMENTS: Record<InterviewPhase, PhaseRequirements> = {
   },
   [InterviewPhase.HIGH_LEVEL]: {
     minimumTimeSeconds: 180, // 3 minutes minimum
+    maximumTimeSeconds: 600, // 10 minutes maximum
     requiredSignals: [],
     recommendedSignals: [SignalName.DREW_HIGH_LEVEL_DIAGRAM],
   },
   [InterviewPhase.DEEP_DIVE]: {
     minimumTimeSeconds: 180, // 3 minutes minimum
+    maximumTimeSeconds: 900, // 15 minutes maximum
     requiredSignals: [],
     recommendedSignals: [
       SignalName.DISCUSSED_DATA_MODEL,
@@ -41,6 +46,7 @@ export const PHASE_REQUIREMENTS: Record<InterviewPhase, PhaseRequirements> = {
   },
   [InterviewPhase.BOTTLENECKS]: {
     minimumTimeSeconds: 120, // 2 minutes minimum
+    maximumTimeSeconds: 300, // 5 minutes maximum
     requiredSignals: [],
     recommendedSignals: [
       SignalName.MENTIONED_SCALE,
@@ -49,6 +55,7 @@ export const PHASE_REQUIREMENTS: Record<InterviewPhase, PhaseRequirements> = {
   },
   [InterviewPhase.WRAP_UP]: {
     minimumTimeSeconds: 60, // 1 minute minimum
+    maximumTimeSeconds: 300, // 5 minutes maximum
     requiredSignals: [],
     recommendedSignals: [],
   },
