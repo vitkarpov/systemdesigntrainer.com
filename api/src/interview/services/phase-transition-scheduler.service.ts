@@ -23,7 +23,8 @@ export class PhaseTransitionSchedulerService implements OnModuleInit {
 
     try {
       // Remove any existing repeatable jobs to avoid duplicates
-      const repeatableJobs = await this.phaseTransitionQueue.getRepeatableJobs();
+      const repeatableJobs =
+        await this.phaseTransitionQueue.getRepeatableJobs();
       for (const job of repeatableJobs) {
         await this.phaseTransitionQueue.removeRepeatableByKey(job.key);
         this.logger.log(`Removed existing repeatable job: ${job.key}`);

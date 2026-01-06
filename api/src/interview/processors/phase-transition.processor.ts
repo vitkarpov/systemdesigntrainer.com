@@ -40,7 +40,9 @@ export class PhaseTransitionProcessor {
 
   @Process('check')
   async handlePhaseTransitionCheck(job: Job<PhaseTransitionJobData>) {
-    this.logger.debug(`[Job ${job.id}] Checking active sessions for phase transitions`);
+    this.logger.debug(
+      `[Job ${job.id}] Checking active sessions for phase transitions`,
+    );
 
     try {
       // Get all in-progress sessions

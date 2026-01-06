@@ -165,9 +165,8 @@ export class FeedbackService {
         RED_FLAG_SCORING[RedFlagName.POOR_TIME_MANAGEMENT].timeManagement;
 
     // Penalty for phase cut-offs (force-transitioned phases)
-    const cutOffCount = await this.phaseCutoffService.getPhaseCutoffCount(
-      sessionId,
-    );
+    const cutOffCount =
+      await this.phaseCutoffService.getPhaseCutoffCount(sessionId);
     timeManagementScore -=
       cutOffCount * TIME_MANAGEMENT_PENALTIES.PHASE_CUT_OFF;
 
@@ -226,9 +225,8 @@ export class FeedbackService {
   ): Promise<FeedbackItemData[]> {
     const signals = await this.signalService.getSessionSignals(sessionId);
     const redFlags = await this.redFlagService.getSessionRedFlags(sessionId);
-    const phaseCutoffs = await this.phaseCutoffService.getSessionPhaseCutoffs(
-      sessionId,
-    );
+    const phaseCutoffs =
+      await this.phaseCutoffService.getSessionPhaseCutoffs(sessionId);
 
     const signalNames = new Set(signals.map((s) => s.signalName));
     const redFlagNames = new Set(redFlags.map((f) => f.flagName));
@@ -401,9 +399,8 @@ export class FeedbackService {
     scores: FeedbackScores,
   ): Promise<FeedbackNextStepData[]> {
     const redFlags = await this.redFlagService.getSessionRedFlags(sessionId);
-    const phaseCutoffs = await this.phaseCutoffService.getSessionPhaseCutoffs(
-      sessionId,
-    );
+    const phaseCutoffs =
+      await this.phaseCutoffService.getSessionPhaseCutoffs(sessionId);
     const redFlagNames = new Set(redFlags.map((f) => f.flagName));
 
     const nextSteps: FeedbackNextStepData[] = [];
