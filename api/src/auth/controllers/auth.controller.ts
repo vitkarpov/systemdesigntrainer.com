@@ -51,13 +51,13 @@ export class AuthController {
     }
 
     try {
-      const { accessToken } = await this.authService.handleCallback(code);
+      const { accessToken, workosSessionId } =
+        await this.authService.handleCallback(code);
 
-      // Set HTTP-only cookie (SECURITY: token not in URL)
-      res.cookie('access_token', accessToken, {
+      const cookieOptions = {
         httpOnly: true, // Prevents JavaScript access
         secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
-        sameSite: 'lax', // CSRF protection
+        sameSite: 'lax' as const, // CSRF protection
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: '/',
         // Set domain for cross-subdomain access (api. and app.)
@@ -65,7 +65,13 @@ export class AuthController {
           process.env.NODE_ENV === 'production'
             ? '.systemdesigntrainer.com'
             : undefined,
-      });
+      };
+
+      // Set access token cookie
+      res.cookie('access_token', accessToken, cookieOptions);
+
+      // Set WorkOS session ID cookie (needed for logout)
+      res.cookie('workos_session_id', workosSessionId, cookieOptions);
 
       // Redirect without token in URL
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -99,27 +105,30 @@ export class AuthController {
     };
   }
 
-  @Post('logout')
-  @ApiBearerAuth()
+  @Get('logout')
   @ApiOperation({ summary: 'Logout current user' })
-  @ApiResponse({ status: 200, description: 'Logged out successfully' })
+  @ApiResponse({ status: 302, description: 'Redirects to WorkOS logout' })
   async logout(@Res() res: Response) {
-    // Clear the access_token cookie
-    res.clearCookie('access_token', {
+    const sessionId = res.req.cookies?.['workos_session_id'];
+
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'lax' as const,
       path: '/',
       // Must match domain from cookie creation
       domain:
         process.env.NODE_ENV === 'production'
           ? '.systemdesigntrainer.com'
           : undefined,
-    });
+    };
 
-    return res.json({
-      message: 'Logged out successfully',
-    });
+    // Clear both cookies
+    res.clearCookie('access_token', cookieOptions);
+    res.clearCookie('workos_session', cookieOptions);
+
+    const workosLogoutUrl = await this.authService.getLogoutUrl(sessionId);
+    return res.redirect(workosLogoutUrl);
   }
 
   @Public()
