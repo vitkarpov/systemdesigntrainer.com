@@ -1,5 +1,5 @@
 {
-  "id": "702f639d-35dd-4846-991c-ee1260d0b63e",
+  "id": "91663e58-3c9c-4029-96c2-bafed3b51eac",
   "prevId": "055cfd2d-ba5b-466d-a2a9-ddebf394f63b",
   "version": "7",
   "dialect": "postgresql",
@@ -796,6 +796,79 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.interview_phase_cutoffs": {
+      "name": "interview_phase_cutoffs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phase": {
+          "name": "phase",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cutoff_at": {
+          "name": "cutoff_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "seconds_elapsed": {
+          "name": "seconds_elapsed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "exceeded_by_seconds": {
+          "name": "exceeded_by_seconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "interview_phase_cutoffs_session_id_interview_sessions_id_fk": {
+          "name": "interview_phase_cutoffs_session_id_interview_sessions_id_fk",
+          "tableFrom": "interview_phase_cutoffs",
+          "tableTo": "interview_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "interview_phase_cutoffs_session_id_phase_unique": {
+          "name": "interview_phase_cutoffs_session_id_phase_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "session_id",
+            "phase"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.interview_red_flags": {
       "name": "interview_red_flags",
       "schema": "",
@@ -949,12 +1022,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'mid'"
-        },
-        "phase_cut_off": {
-          "name": "phase_cut_off",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_at": {
           "name": "created_at",
