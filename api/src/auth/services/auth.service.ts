@@ -87,9 +87,7 @@ export class AuthService {
     }
   }
 
-  async handleCallback(
-    code: string,
-  ): Promise<{
+  async handleCallback(code: string): Promise<{
     user: User;
     accessToken: string;
     workosSessionId: string | null;
