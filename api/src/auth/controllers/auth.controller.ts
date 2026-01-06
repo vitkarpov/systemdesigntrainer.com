@@ -15,7 +15,10 @@ import {
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
-import { AuthService } from '../services/auth.service';
+import {
+  AuthService,
+  EmailVerificationRequiredException,
+} from '../services/auth.service';
 import { UserService } from '../services/user.service';
 import { Public } from '../decorators/public.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
@@ -101,6 +104,19 @@ export class AuthController {
 
       return res.redirect(redirectUrl);
     } catch (error) {
+      // Handle email verification required error
+      if (error instanceof EmailVerificationRequiredException) {
+        console.log('Email verification required for:', error.email);
+        const verificationParams = new URLSearchParams({
+          email: error.email,
+          verification_id: error.emailVerificationId,
+          pending_token: error.pendingAuthenticationToken,
+        });
+        return res.redirect(
+          `${frontendUrl}/auth/verify-email?${verificationParams}`,
+        );
+      }
+
       console.error('Callback error:', error);
       return res.redirect(
         `${frontendUrl}/auth/error?error=authentication_failed&error_description=Failed to complete authentication`,
@@ -157,6 +173,53 @@ export class AuthController {
 
     const workosLogoutUrl = this.authService.getLogoutUrl(sessionId);
     return res.redirect(workosLogoutUrl);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
+  @Get('verify-email')
+  async verifyEmail(
+    @Query('code') code: string,
+    @Query('pending_token') pendingToken: string,
+    @Res() res: Response,
+  ) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+    // Validate required parameters
+    if (!code || !pendingToken) {
+      return res.redirect(
+        `${frontendUrl}/auth/error?error=missing_parameters&error_description=Verification code and pending token are required`,
+      );
+    }
+
+    try {
+      const { accessToken, workosSessionId } =
+        await this.authService.completeEmailVerification(code, pendingToken);
+
+      const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax' as const,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/',
+        domain:
+          process.env.NODE_ENV === 'production'
+            ? '.systemdesigntrainer.com'
+            : undefined,
+      };
+
+      // Set access token cookie
+      res.cookie('access_token', accessToken, cookieOptions);
+      res.cookie('workos_session_id', workosSessionId, cookieOptions);
+
+      // Redirect to success page
+      return res.redirect(`${frontendUrl}/auth/callback`);
+    } catch (error) {
+      console.error('Email verification error:', error);
+      return res.redirect(
+        `${frontendUrl}/auth/error?error=verification_failed&error_description=Failed to verify email`,
+      );
+    }
   }
 
   @Public()

@@ -10,6 +10,17 @@ export interface JwtPayload {
   workosUserId: string;
 }
 
+export class EmailVerificationRequiredException extends Error {
+  constructor(
+    public email: string,
+    public pendingAuthenticationToken: string,
+    public emailVerificationId: string,
+  ) {
+    super('Email verification required');
+    this.name = 'EmailVerificationRequiredException';
+  }
+}
+
 @Injectable()
 export class AuthService {
   private workos: WorkOS;
@@ -119,6 +130,19 @@ export class AuthService {
       return { user, accessToken, workosSessionId };
     } catch (error) {
       console.error('WorkOS authentication error:', error);
+
+      // Check if this is an email verification required error
+      if (
+        error?.status === 403 &&
+        error?.rawData?.code === 'email_verification_required'
+      ) {
+        throw new EmailVerificationRequiredException(
+          error.rawData.email,
+          error.rawData.pending_authentication_token,
+          error.rawData.email_verification_id,
+        );
+      }
+
       throw new UnauthorizedException('Authentication failed');
     }
   }
@@ -152,5 +176,46 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async completeEmailVerification(
+    code: string,
+    pendingAuthenticationToken: string,
+  ): Promise<{
+    user: User;
+    accessToken: string;
+    workosSessionId: string | null;
+  }> {
+    try {
+      const response =
+        await this.workos.userManagement.authenticateWithEmailVerification({
+          clientId: this.clientId,
+          code,
+          pendingAuthenticationToken,
+        });
+
+      const workosUser = response.user;
+      const workosAccessToken = response.accessToken;
+
+      const workosSessionId =
+        this.extractSessionIdFromAccessToken(workosAccessToken);
+
+      const user = await this.userService.upsertFromWorkos({
+        id: workosUser.id,
+        email: workosUser.email,
+        firstName: workosUser.firstName,
+        lastName: workosUser.lastName,
+        profilePictureUrl: workosUser.profilePictureUrl,
+      });
+
+      await this.userService.updateLastLogin(user.id);
+
+      const accessToken = this.generateAccessToken(user);
+
+      return { user, accessToken, workosSessionId };
+    } catch (error) {
+      console.error('WorkOS email verification error:', error);
+      throw new UnauthorizedException('Email verification failed');
+    }
   }
 }
