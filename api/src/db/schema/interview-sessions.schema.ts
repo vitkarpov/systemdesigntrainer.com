@@ -6,7 +6,6 @@ import {
   text,
   timestamp,
   unique,
-  jsonb,
 } from 'drizzle-orm/pg-core';
 import { users } from './users.schema';
 import { interviewCases } from './interview-cases.schema';
