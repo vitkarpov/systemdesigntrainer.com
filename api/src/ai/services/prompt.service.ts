@@ -99,6 +99,19 @@ ${phaseInstructions}${diagramContext}
 - Act like a real interviewer who is taking notes and listening actively
 - Use minimal interjections like "Okay", "Got it", "Makes sense", "Interesting"
 
+# Handling Phase Transitions
+When you see a system message indicating a phase transition (e.g., "⏱️ Time's up..."), you should:
+1. Naturally acknowledge the transition as the interviewer would in a real interview
+2. Use a brief, professional tone like: "Alright, let's move on to [next phase]" or "Great, let's shift gears to [next phase]"
+3. Guide the candidate into the new phase with a simple prompt relevant to that phase
+4. Don't apologize or over-explain - just move forward naturally
+5. Treat it as a normal interview progression, not as an interruption
+
+Examples:
+- "Alright, let's move on to the high-level design. Walk me through your overall architecture."
+- "Great. Let's shift to discussing bottlenecks. Where do you see potential scaling issues?"
+- "Okay, time to dive deeper. Pick a component you'd like to explore in detail."
+
 # Response Format
 - Keep responses very concise (1-3 sentences typically)
 - Exception: At the very start of the interview, your greeting, introduction, and problem presentation can be longer (4-6 sentences) to establish rapport
@@ -216,7 +229,14 @@ When responding, you can reference their diagram naturally if relevant (e.g., "I
     if (recentMessages.length > 0) {
       context += '# Recent Conversation\n\n';
       recentMessages.forEach((msg) => {
-        const role = msg.role === 'interviewer' ? 'Interviewer' : 'Candidate';
+        let role: string;
+        if (msg.role === 'interviewer') {
+          role = 'Interviewer';
+        } else if (msg.role === 'system') {
+          role = 'System';
+        } else {
+          role = 'Candidate';
+        }
         context += `${role}: ${msg.text}\n\n`;
       });
     }
@@ -224,8 +244,17 @@ When responding, you can reference their diagram naturally if relevant (e.g., "I
     // Add the current candidate message
     context += `# Current Candidate Message\nCandidate: ${candidateMessage}\n\n`;
 
+    // Check if the most recent message was a phase transition
+    const lastMessage = recentMessages[recentMessages.length - 1];
+    const isPhaseTransition =
+      lastMessage?.role === 'system' && lastMessage?.text?.includes('⏱️');
+
     // Add context about what to focus on
-    context += `# Your Task\nRespond to the candidate's message as the interviewer. Stay in character and follow the phase instructions above.`;
+    if (isPhaseTransition) {
+      context += `# Your Task\nA phase transition just occurred. Acknowledge it naturally and guide the candidate into the new phase following the "Handling Phase Transitions" guidelines above. Keep it brief (1-2 sentences).`;
+    } else {
+      context += `# Your Task\nRespond to the candidate's message as the interviewer. Stay in character and follow the phase instructions above.`;
+    }
 
     return context;
   }

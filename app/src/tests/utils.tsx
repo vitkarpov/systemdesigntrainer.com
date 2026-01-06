@@ -131,14 +131,12 @@ export function setupInterviewMocks() {
   const mockNavigate = vi.fn()
   const mockSendMessage = vi.fn()
   const mockCancel = vi.fn()
-  const mockAdvancePhaseMutate = vi.fn().mockResolvedValue({})
   const mockGenerateFeedbackMutate = vi.fn().mockResolvedValue({})
 
   return {
     mockNavigate,
     mockSendMessage,
     mockCancel,
-    mockAdvancePhaseMutate,
     mockGenerateFeedbackMutate,
     mockSessionQuery: {
       data: createMockSession(),
@@ -153,10 +151,6 @@ export function setupInterviewMocks() {
     mockFailedMessagesQuery: {
       data: createMockFailedMessagesData(),
       refetch: vi.fn(),
-    },
-    mockAdvancePhase: {
-      mutateAsync: mockAdvancePhaseMutate,
-      isPending: false,
     },
     mockGenerateFeedback: {
       mutateAsync: mockGenerateFeedbackMutate,

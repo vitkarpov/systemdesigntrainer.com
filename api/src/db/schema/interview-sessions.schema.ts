@@ -121,6 +121,29 @@ export const interviewRedFlags = pgTable(
   }),
 );
 
+export const interviewPhaseCutoffs = pgTable(
+  'interview_phase_cutoffs',
+  {
+    id: serial('id').primaryKey(),
+    sessionId: integer('session_id')
+      .notNull()
+      .references(() => interviewSessions.id, { onDelete: 'cascade' }),
+
+    // Which phase was force-transitioned
+    phase: varchar('phase', { length: 20 }).notNull(),
+
+    // When did the cut-off happen?
+    cutoffAt: timestamp('cutoff_at').notNull().defaultNow(),
+    secondsElapsed: integer('seconds_elapsed').notNull(),
+
+    // How much time was exceeded?
+    exceededBySeconds: integer('exceeded_by_seconds').notNull(),
+  },
+  (table) => ({
+    uniqueSessionPhase: unique().on(table.sessionId, table.phase),
+  }),
+);
+
 export type InterviewSession = typeof interviewSessions.$inferSelect;
 export type NewInterviewSession = typeof interviewSessions.$inferInsert;
 export type TranscriptMessage = typeof transcriptMessages.$inferSelect;
@@ -129,3 +152,5 @@ export type InterviewSignal = typeof interviewSignals.$inferSelect;
 export type NewInterviewSignal = typeof interviewSignals.$inferInsert;
 export type InterviewRedFlag = typeof interviewRedFlags.$inferSelect;
 export type NewInterviewRedFlag = typeof interviewRedFlags.$inferInsert;
+export type InterviewPhaseCutoff = typeof interviewPhaseCutoffs.$inferSelect;
+export type NewInterviewPhaseCutoff = typeof interviewPhaseCutoffs.$inferInsert;

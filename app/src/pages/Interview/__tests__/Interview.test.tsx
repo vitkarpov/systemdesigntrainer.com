@@ -15,7 +15,6 @@ vi.mock('@/api/hooks.gen', async (importOriginal) => {
     useSessionsControllerGetSession: vi.fn(),
     useSessionsControllerGetTranscript: vi.fn(),
     useSessionsControllerGetFailedMessages: vi.fn(),
-    useSessionsControllerAdvancePhase: vi.fn(),
     useSessionsControllerGenerateFeedback: vi.fn(),
     useSessionsControllerRetryConversation: vi.fn(),
     getSessionsControllerGetSessionQueryKey: vi.fn((id) => ['session', id]),
@@ -29,7 +28,6 @@ import * as apiHooks from '@/api/hooks.gen'
 const mockUseSessionsControllerGetSession = apiHooks.useSessionsControllerGetSession as ReturnType<typeof vi.fn>
 const mockUseSessionsControllerGetTranscript = apiHooks.useSessionsControllerGetTranscript as ReturnType<typeof vi.fn>
 const mockUseSessionsControllerGetFailedMessages = apiHooks.useSessionsControllerGetFailedMessages as ReturnType<typeof vi.fn>
-const mockUseSessionsControllerAdvancePhase = apiHooks.useSessionsControllerAdvancePhase as ReturnType<typeof vi.fn>
 const mockUseSessionsControllerGenerateFeedback = apiHooks.useSessionsControllerGenerateFeedback as ReturnType<typeof vi.fn>
 
 // Mock router hooks
@@ -102,7 +100,6 @@ describe('Interview Page', () => {
     mockUseSessionsControllerGetSession.mockReturnValue(mocks.mockSessionQuery)
     mockUseSessionsControllerGetTranscript.mockReturnValue(mocks.mockTranscriptQuery)
     mockUseSessionsControllerGetFailedMessages.mockReturnValue(mocks.mockFailedMessagesQuery)
-    mockUseSessionsControllerAdvancePhase.mockReturnValue(mocks.mockAdvancePhase)
     mockUseSessionsControllerGenerateFeedback.mockReturnValue(mocks.mockGenerateFeedback)
 
     // Reset mock functions
@@ -596,55 +593,6 @@ describe('Interview Page', () => {
       // Should not crash and should render normally without retry banner
       expect(screen.getByTestId('diagram-canvas')).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /view & retry/i })).not.toBeInTheDocument()
-    })
-  })
-
-  describe('Phase Management', () => {
-    it('should advance phase when Next Phase button is clicked', async () => {
-      const user = userEvent.setup()
-      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries')
-      renderWithProviders(<Interview />, { queryClient })
-
-      const nextPhaseButton = screen.getByRole('button', { name: /next phase/i })
-      await user.click(nextPhaseButton)
-
-      await waitFor(() => {
-        expect(mocks.mockAdvancePhaseMutate).toHaveBeenCalledWith({ id: 123 })
-      })
-
-      await waitFor(() => {
-        expect(invalidateQueriesSpy).toHaveBeenCalledWith(expect.objectContaining({
-          queryKey: ['session', 123],
-        }))
-      })
-    })
-
-    it('should not show Next Phase button in wrap_up phase', () => {
-      mockUseSessionsControllerGetSession.mockReturnValue({
-        ...mocks.mockSessionQuery,
-        data: createMockSession({
-          session: { currentPhase: 'wrap_up' },
-        }),
-      })
-
-      renderWithProviders(<Interview />, { queryClient })
-
-      expect(screen.queryByRole('button', { name: /next phase/i })).not.toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /end interview/i })).toBeInTheDocument()
-    })
-
-    it('should show error toast if phase advancement fails', async () => {
-      const user = userEvent.setup()
-      mocks.mockAdvancePhaseMutate.mockRejectedValueOnce(new Error('Failed to advance'))
-
-      renderWithProviders(<Interview />, { queryClient })
-
-      const nextPhaseButton = screen.getByRole('button', { name: /next phase/i })
-      await user.click(nextPhaseButton)
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Failed to advance'))
-      })
     })
   })
 

@@ -91,9 +91,13 @@ export const COMMUNICATION_BONUSES = {
   MESSAGE_COUNT_MAX: 10, // Maximum bonus points for message count
 } as const;
 
-// Time management bonuses
+// Time management bonuses/penalties
 export const TIME_MANAGEMENT_BONUSES = {
   COMPLETED_SESSION: 10, // Bonus for completing the interview
+} as const;
+
+export const TIME_MANAGEMENT_PENALTIES = {
+  PHASE_CUT_OFF: 5, // Penalty per phase that was force-transitioned
 } as const;
 
 // Overall score weights (must sum to 1.0)

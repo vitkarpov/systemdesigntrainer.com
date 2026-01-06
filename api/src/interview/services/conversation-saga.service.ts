@@ -66,15 +66,6 @@ export class ConversationSagaService {
       status: 'pending', // Mark as pending until AI responds
     });
 
-    // Step 2: Update lastUserMessageAt timestamp for timeout tracking
-    await this.db
-      .update(schema.interviewSessions)
-      .set({
-        lastUserMessageAt: sql`NOW()`,
-        updatedAt: sql`NOW()`,
-      })
-      .where(eq(schema.interviewSessions.id, session.id));
-
     this.logger.log(
       `Conversation turn started for session ${session.id}, candidate message ${candidateMessage.id}`,
     );

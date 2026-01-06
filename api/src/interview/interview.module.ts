@@ -7,11 +7,14 @@ import { PhaseGuardService } from './services/phase-guard.service';
 import { TranscriptService } from './services/transcript.service';
 import { SignalService } from './services/signal.service';
 import { RedFlagService } from './services/red-flag.service';
+import { PhaseCutoffService } from './services/phase-cutoff.service';
 import { FeedbackService } from './services/feedback.service';
 import { DiagramService } from './services/diagram.service';
 import { ConversationSagaService } from './services/conversation-saga.service';
 import { StreamingLimiterService } from './services/streaming-limiter.service';
+import { PhaseTransitionSchedulerService } from './services/phase-transition-scheduler.service';
 import { FeedbackProcessor } from './processors/feedback.processor';
+import { PhaseTransitionProcessor } from './processors/phase-transition.processor';
 import { SessionsController } from './controllers/sessions.controller';
 import { CasesController } from './controllers/cases.controller';
 import { DatabaseModule } from '../db/db.module';
@@ -37,6 +40,10 @@ import { AuthModule } from '../auth/auth.module';
     BullModule.registerQueue({
       name: 'feedback',
     }),
+    // Register phase-transition queue
+    BullModule.registerQueue({
+      name: 'phase-transition',
+    }),
   ],
   controllers: [SessionsController, CasesController],
   providers: [
@@ -47,11 +54,14 @@ import { AuthModule } from '../auth/auth.module';
     TranscriptService,
     SignalService,
     RedFlagService,
+    PhaseCutoffService,
     FeedbackService,
     DiagramService,
     ConversationSagaService,
     StreamingLimiterService,
+    PhaseTransitionSchedulerService,
     FeedbackProcessor,
+    PhaseTransitionProcessor,
   ],
   exports: [
     InterviewSessionService,

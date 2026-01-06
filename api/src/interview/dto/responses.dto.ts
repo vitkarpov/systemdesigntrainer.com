@@ -289,22 +289,6 @@ export class GetPhasesResponseDto {
   };
 }
 
-export class AdvancePhaseResponseDto {
-  @ApiProperty({ default: true })
-  success: boolean;
-
-  @ApiProperty()
-  message: string;
-
-  @ApiProperty()
-  data: {
-    session: SessionResponseDto;
-    currentPhase: string;
-    isCompleted: boolean;
-    detectedRedFlags: RedFlagResponseDto[];
-  };
-}
-
 export class AddMessageResponseDto {
   @ApiProperty({ default: true })
   success: boolean;
