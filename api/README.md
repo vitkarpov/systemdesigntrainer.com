@@ -50,20 +50,7 @@ $ npm install
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and configure:
-
-```bash
-cp .env.example .env
-```
-
-Required environment variables:
-- `DATABASE_URL` - PostgreSQL connection string
-- `REDIS_HOST`, `REDIS_PORT` - Redis connection for Bull queue
-- `ANTHROPIC_API_KEY` - Anthropic Claude API key for AI features
-- `WORKOS_CLIENT_ID`, `WORKOS_API_KEY`, `WORKOS_REDIRECT_URI` - WorkOS authentication
-- `JWT_SECRET` - JWT secret key (minimum 32 characters)
-- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` - Stripe payment integration
-- `SENTRY_DSN` - (Optional) Sentry error tracking
+See [sops](./SOPS.md).
 
 ## Running the app
 
@@ -136,6 +123,19 @@ docker rm sd-sim-backend
 # Remove image
 docker rmi sd-sim-backend
 ```
+
+## Stripe Webhook Testing
+
+For local development with Stripe webhooks, use the Stripe CLI to forward webhook events to your local server:
+
+```bash
+stripe listen --forward-to localhost:5173/api/webhooks/stripe
+```
+
+This command will:
+- Forward Stripe webhook events to your local development server
+- Provide a webhook signing secret that you'll need to add to your `.env` file as `STRIPE_WEBHOOK_SECRET`
+- Allow you to test webhook integrations without deploying
 
 ## Database
 

@@ -1,0 +1,5 @@
+creation_rules:
+  # Encrypt only api/.env
+  - path_regex: api/\.env$
+    age: age1rvr5t7qrt8tc8778n3ukrhaxsd2zew5570n44pklwr5jyh7ytuaqw20gw4
+    encrypted_regex: "^.*$"

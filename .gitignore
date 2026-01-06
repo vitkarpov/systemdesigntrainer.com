@@ -61,12 +61,21 @@ pids/
 
 # Environment variables
 # =====================
-.env
+# Ignore api .env files (contains secrets, use encrypted version)
+api/.env
+api/.env.local
+# Allow app/.env (no secrets, just API URL)
+!app/.env
+# Other env files
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-!.env.example
+# Commit encrypted .env.enc files
+!.env.enc
+
+# SOPS encryption keys (NEVER commit this!)
+keys/
 
 # Testing
 # =======

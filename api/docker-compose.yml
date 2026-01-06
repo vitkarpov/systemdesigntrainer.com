@@ -16,7 +16,6 @@ services:
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: ${DB_NAME:-sd_sim_dev}
-      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-sd_sim_dev}
       PORT: 3000
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       REDIS_HOST: redis
