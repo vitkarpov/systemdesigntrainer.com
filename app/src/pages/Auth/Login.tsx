@@ -61,9 +61,9 @@ const Login = () => {
 
         <div className="text-center pt-4 border-t border-gray-200">
           <p className="text-sm text-gray-600">
-            Don't have an account?{' '}
+            First time here?{' '}
             <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-              Sign up to see what you'll get
+              See what you'll get
             </Link>
           </p>
         </div>

@@ -1,8 +1,9 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { useAuthControllerGetUser, useAuthControllerLogout, type UserResponseDto } from '@/api/hooks.gen';
+import { useAuthControllerGetUser, type UserResponseDto } from '@/api/hooks.gen';
 import { useQueryClient } from '@tanstack/react-query';
+import { getApiBaseUrl } from '@/api/client';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = getApiBaseUrl();
 
 export type User = UserResponseDto;
 
@@ -38,24 +39,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     },
   });
 
-  const logoutMutation = useAuthControllerLogout();
-
   const loading = isLoading;
 
   const login = () => {
     window.location.href = `${API_URL}/auth/login`;
   };
 
-  const logout = async () => {
-    try {
-      await logoutMutation.mutateAsync();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      queryClient.clear();
-      // Redirect to home after logout
-      window.location.href = '/';
-    }
+  const logout = () => {
+    // Clear React Query cache before navigating
+    queryClient.clear();
+    // Navigate to logout endpoint - backend will clear cookies and redirect to WorkOS logout
+    window.location.href = `${API_URL}/auth/logout`;
   };
 
   const value = {

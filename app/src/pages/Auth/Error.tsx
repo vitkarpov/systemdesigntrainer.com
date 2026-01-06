@@ -1,6 +1,28 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 const AuthError = () => {
+  const [searchParams] = useSearchParams();
+  const error = searchParams.get('error');
+  const errorDescription = searchParams.get('error_description');
+
+  // Map error codes to user-friendly messages
+  const getErrorMessage = () => {
+    if (error === 'access_denied') {
+      return 'You cancelled the sign in process. No worries, you can try again whenever you\'re ready.';
+    }
+    if (errorDescription) {
+      return errorDescription;
+    }
+    return 'We couldn\'t complete your sign in. Please try again.';
+  };
+
+  const getErrorTitle = () => {
+    if (error === 'access_denied') {
+      return 'Sign In Cancelled';
+    }
+    return 'Authentication Failed';
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg text-center">
@@ -22,10 +44,10 @@ const AuthError = () => {
 
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Authentication Failed
+            {getErrorTitle()}
           </h2>
           <p className="mt-2 text-gray-600">
-            We couldn't complete your sign in. Please try again.
+            {getErrorMessage()}
           </p>
         </div>
 

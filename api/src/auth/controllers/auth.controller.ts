@@ -44,20 +44,45 @@ export class AuthController {
   async callback(
     @Query('code') code: string,
     @Query('state') state: string,
+    @Query('error') error: string,
+    @Query('error_description') errorDescription: string,
+    @Query('error_uri') errorUri: string,
     @Res() res: Response,
   ) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+    // Handle OAuth errors from WorkOS (e.g., user denied access)
+    if (error) {
+      console.warn('OAuth error:', {
+        error,
+        errorDescription,
+        errorUri,
+      });
+
+      // Redirect to frontend error page with error details
+      const errorParams = new URLSearchParams({
+        error,
+        ...(errorDescription && { error_description: errorDescription }),
+      });
+      return res.redirect(`${frontendUrl}/auth/error?${errorParams}`);
+    }
+
+    // Ensure code is present for successful flow
     if (!code) {
-      throw new UnauthorizedException('Authorization code is required');
+      console.error('Callback called without code or error');
+      return res.redirect(
+        `${frontendUrl}/auth/error?error=missing_code&error_description=No authorization code received`,
+      );
     }
 
     try {
-      const { accessToken } = await this.authService.handleCallback(code);
+      const { accessToken, workosSessionId } =
+        await this.authService.handleCallback(code);
 
-      // Set HTTP-only cookie (SECURITY: token not in URL)
-      res.cookie('access_token', accessToken, {
+      const cookieOptions = {
         httpOnly: true, // Prevents JavaScript access
         secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
-        sameSite: 'lax', // CSRF protection
+        sameSite: 'lax' as const, // CSRF protection
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: '/',
         // Set domain for cross-subdomain access (api. and app.)
@@ -65,17 +90,21 @@ export class AuthController {
           process.env.NODE_ENV === 'production'
             ? '.systemdesigntrainer.com'
             : undefined,
-      });
+      };
+
+      // Set access token cookie
+      res.cookie('access_token', accessToken, cookieOptions);
+      res.cookie('workos_session_id', workosSessionId, cookieOptions);
 
       // Redirect without token in URL
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       const redirectUrl = `${frontendUrl}/auth/callback?state=${state || ''}`;
 
       return res.redirect(redirectUrl);
     } catch (error) {
       console.error('Callback error:', error);
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      return res.redirect(`${frontendUrl}/auth/error`);
+      return res.redirect(
+        `${frontendUrl}/auth/error?error=authentication_failed&error_description=Failed to complete authentication`,
+      );
     }
   }
 
@@ -99,27 +128,30 @@ export class AuthController {
     };
   }
 
-  @Post('logout')
-  @ApiBearerAuth()
+  @Get('logout')
   @ApiOperation({ summary: 'Logout current user' })
-  @ApiResponse({ status: 200, description: 'Logged out successfully' })
+  @ApiResponse({ status: 302, description: 'Redirects after logout' })
   async logout(@Res() res: Response) {
-    // Clear the access_token cookie
-    res.clearCookie('access_token', {
+    const sessionId = res.req.cookies?.['workos_session_id'];
+
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'lax' as const,
       path: '/',
       // Must match domain from cookie creation
       domain:
         process.env.NODE_ENV === 'production'
           ? '.systemdesigntrainer.com'
           : undefined,
-    });
+    };
 
-    return res.json({
-      message: 'Logged out successfully',
-    });
+    // Clear both cookies
+    res.clearCookie('access_token', cookieOptions);
+    res.clearCookie('workos_session_id', cookieOptions);
+
+    const workosLogoutUrl = this.authService.getLogoutUrl(sessionId);
+    return res.redirect(workosLogoutUrl);
   }
 
   @Public()

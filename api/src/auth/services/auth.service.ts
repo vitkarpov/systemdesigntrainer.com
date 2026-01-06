@@ -50,7 +50,7 @@ export class AuthService {
 
   getAuthorizationUrl(state?: string): string {
     const authorizationUrl = this.workos.userManagement.getAuthorizationUrl({
-      provider: 'authkit',
+      provider: 'GitHubOAuth',
       clientId: this.clientId,
       redirectUri: this.redirectUri,
       state: state || '',
@@ -59,15 +59,52 @@ export class AuthService {
     return authorizationUrl;
   }
 
+  getLogoutUrl(sessionId: string): string {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+    return this.workos.userManagement.getLogoutUrl({
+      sessionId,
+      returnTo: frontendUrl,
+    });
+  }
+
+  private extractSessionIdFromAccessToken(accessToken: string): string | null {
+    try {
+      // Decode the JWT without verifying (we just need to read the sid claim)
+      const parts = accessToken.split('.');
+      if (parts.length !== 3) {
+        return null;
+      }
+
+      const payload = JSON.parse(
+        Buffer.from(parts[1], 'base64').toString('utf8'),
+      );
+
+      return payload.sid || null;
+    } catch (error) {
+      console.error('Error extracting session ID from token:', error);
+      return null;
+    }
+  }
+
   async handleCallback(
     code: string,
-  ): Promise<{ user: User; accessToken: string }> {
+  ): Promise<{
+    user: User;
+    accessToken: string;
+    workosSessionId: string | null;
+  }> {
     try {
-      const { user: workosUser } =
-        await this.workos.userManagement.authenticateWithCode({
-          clientId: this.clientId,
-          code,
-        });
+      const response = await this.workos.userManagement.authenticateWithCode({
+        clientId: this.clientId,
+        code,
+      });
+
+      const workosUser = response.user;
+      const workosAccessToken = response.accessToken;
+
+      const workosSessionId =
+        this.extractSessionIdFromAccessToken(workosAccessToken);
 
       const user = await this.userService.upsertFromWorkos({
         id: workosUser.id,
@@ -81,7 +118,7 @@ export class AuthService {
 
       const accessToken = this.generateAccessToken(user);
 
-      return { user, accessToken };
+      return { user, accessToken, workosSessionId };
     } catch (error) {
       console.error('WorkOS authentication error:', error);
       throw new UnauthorizedException('Authentication failed');
