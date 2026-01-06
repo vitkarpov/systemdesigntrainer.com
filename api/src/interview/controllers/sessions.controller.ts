@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Patch,
   Param,
   Body,
   ParseIntPipe,
@@ -52,7 +51,6 @@ import {
   GetSignalsResponseDto,
   GetRedFlagsResponseDto,
   GetPhasesResponseDto,
-  AdvancePhaseResponseDto,
   RetryConversationDto,
   GetFeedbackResponseDto,
   GetFeedbackStatusResponseDto,
@@ -421,47 +419,6 @@ export class SessionsController {
       success: true,
       message: 'Session started',
       data: { session },
-    };
-  }
-
-  /**
-   * PATCH /sessions/:id/phase
-   * Advance to next phase and check for red flags
-   */
-  @Patch(':id/phase')
-  @ApiOperation({ summary: 'Advance to next phase' })
-  @ApiParam({ name: 'id', description: 'Session ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Phase advanced',
-    type: AdvancePhaseResponseDto,
-  })
-  async advancePhase(
-    @CurrentUser() user: User,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    await this.verifySessionOwnership(id, user.id);
-    const session = await this.sessionService.getSession(id);
-    const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
-
-    // Check for red flags before advancing
-    const detectedRedFlags = await this.redFlagService.checkRedFlags({
-      sessionId: id,
-      currentPhase: session.currentPhase as InterviewPhase,
-      secondsElapsed: elapsedSeconds,
-    });
-
-    const result = await this.sessionService.advancePhase(id);
-
-    return {
-      success: true,
-      message: result.isCompleted
-        ? 'Session completed'
-        : `Advanced to ${result.currentPhase}`,
-      data: {
-        ...result,
-        detectedRedFlags,
-      },
     };
   }
 

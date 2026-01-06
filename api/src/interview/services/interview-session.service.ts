@@ -1,10 +1,9 @@
-import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { eq, sql } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../db/db.module';
 import type { db as DbType } from '../../db/db';
 import { interviewSessions, interviewCases } from '../../db/schema';
 import { PhaseService } from './phase.service';
-import { PhaseGuardService } from './phase-guard.service';
 import { PhaseCutoffService } from './phase-cutoff.service';
 import {
   SessionStatus,
@@ -36,7 +35,6 @@ export class InterviewSessionService {
     @Inject(DATABASE_CONNECTION)
     private db: typeof DbType,
     private phaseService: PhaseService,
-    private phaseGuardService: PhaseGuardService,
     private phaseCutoffService: PhaseCutoffService,
   ) {}
 
@@ -172,78 +170,6 @@ export class InterviewSessionService {
       .returning();
 
     return this.mapToSessionState(updated);
-  }
-
-  /**
-   * Advance to the next phase
-   */
-  async advancePhase(sessionId: number): Promise<AdvancePhaseResult> {
-    const session = await this.getSession(sessionId);
-
-    if (session.status !== SessionStatus.IN_PROGRESS) {
-      throw new InvalidSessionStateException(
-        sessionId,
-        session.status,
-        'advance phase',
-        [SessionStatus.IN_PROGRESS],
-      );
-    }
-
-    const previousPhase = session.currentPhase as InterviewPhase;
-
-    // Check if we can transition to the next phase
-    const transitionResult =
-      this.phaseService.canTransitionToNext(previousPhase);
-
-    if (!transitionResult.success || !transitionResult.nextPhase) {
-      // We're at the final phase - complete the session
-      await this.completeSession(sessionId);
-
-      return {
-        success: true,
-        previousPhase,
-        currentPhase: previousPhase,
-        isCompleted: true,
-      };
-    }
-
-    // Calculate elapsed times
-    const phaseElapsedSeconds = this.getPhaseElapsedSeconds(session);
-    const totalElapsedSeconds = this.getElapsedSeconds(session);
-
-    // Check phase guard requirements
-    const guardResult = await this.phaseGuardService.canAdvancePhase(
-      sessionId,
-      previousPhase,
-      phaseElapsedSeconds,
-      totalElapsedSeconds,
-    );
-
-    if (!guardResult.allowed) {
-      throw new BadRequestException({
-        message: 'Cannot advance to next phase',
-        reason: guardResult.reason,
-        errorCode: 'PHASE_REQUIREMENTS_NOT_MET',
-      });
-    }
-
-    // Transition to next phase
-    const nextPhase = transitionResult.nextPhase;
-    await this.db
-      .update(interviewSessions)
-      .set({
-        currentPhase: nextPhase,
-        phaseStartedAt: sql`NOW()`,
-        updatedAt: sql`NOW()`,
-      })
-      .where(eq(interviewSessions.id, sessionId));
-
-    return {
-      success: true,
-      previousPhase,
-      currentPhase: nextPhase,
-      isCompleted: false,
-    };
   }
 
   /**
