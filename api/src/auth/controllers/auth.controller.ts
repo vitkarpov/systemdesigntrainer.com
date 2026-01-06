@@ -150,7 +150,6 @@ export class AuthController {
     res.clearCookie('access_token', cookieOptions);
     res.clearCookie('workos_session_id', cookieOptions);
 
-    // If no session ID exists, redirect directly to frontend
     if (!sessionId) {
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       return res.redirect(frontendUrl);
