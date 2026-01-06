@@ -13,6 +13,7 @@ import {
   feedbackItems,
   feedbackNextSteps,
 } from './schema';
+import { seedInterviewCasesWithDb } from './seed-interview-cases';
 
 /**
  * Development/Test seed - creates test users and sample sessions
@@ -54,19 +55,23 @@ async function seed() {
   console.log(`✓ Created test user: ${testUser.email}`);
 
   // Find an existing interview case to create a session with
-  // (Assumes you've run seed-interview-cases.ts first)
-  const existingCases = await db
+  let existingCases = await db
     .select()
     .from(interviewCases)
     .where(eq(interviewCases.slug, 'url-shortener'))
     .limit(1);
 
+  // If no cases exist, seed them automatically
   if (existingCases.length === 0) {
-    console.log(
-      '\n⚠️  No interview cases found. Please run seed-interview-cases.ts first:',
-    );
-    console.log('   npm run seed:cases\n');
-    process.exit(1);
+    console.log('\n📚 No interview cases found. Seeding interview cases...\n');
+    await seedInterviewCasesWithDb(db);
+
+    // Query again after seeding
+    existingCases = await db
+      .select()
+      .from(interviewCases)
+      .where(eq(interviewCases.slug, 'url-shortener'))
+      .limit(1);
   }
 
   const urlShortenerCase = existingCases[0];
