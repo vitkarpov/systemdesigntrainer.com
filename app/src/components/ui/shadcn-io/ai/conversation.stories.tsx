@@ -5,7 +5,7 @@ import {
   ConversationScrollButton,
 } from './conversation';
 import { Message, MessageContent, MessageAvatar } from './message';
-import { createMockConversation, MOCK_AVATAR_URLS } from './__stories__/mock-data';
+import { createMockConversation, MOCK_AVATAR_URLS, getMessageText } from './__stories__/mock-data';
 
 const meta: Meta<typeof Conversation> = {
   title: 'AI Components/Layout/Conversation',
@@ -48,7 +48,7 @@ export const Default: Story = {
                   }
                   name={msg.role === 'user' ? 'User' : 'AI'}
                 />
-                <MessageContent>{String(msg.content || '')}</MessageContent>
+                <MessageContent>{getMessageText(msg)}</MessageContent>
               </Message>
             ))}
           </ConversationContent>
@@ -83,7 +83,7 @@ export const ManyMessages: Story = {
                   }
                   name={msg.role === 'user' ? 'User' : 'AI'}
                 />
-                <MessageContent>{String(msg.content || '')}</MessageContent>
+                <MessageContent>{getMessageText(msg)}</MessageContent>
               </Message>
             ))}
           </ConversationContent>
@@ -123,7 +123,7 @@ export const WithScrollButton: Story = {
                     }
                     name={msg.role === 'user' ? 'User' : 'AI'}
                   />
-                  <MessageContent>{String(msg.content || '')}</MessageContent>
+                  <MessageContent>{getMessageText(msg)}</MessageContent>
                 </Message>
               ))}
             </div>
@@ -170,14 +170,22 @@ export const WithLongMessages: Story = {
     const messages = [
       {
         id: '1',
-        role: 'user',
-        content: 'Can you explain distributed systems architecture in detail?',
+        role: 'user' as const,
+        parts: [
+          {
+            type: 'text' as const,
+            text: 'Can you explain distributed systems architecture in detail?',
+          },
+        ],
         createdAt: new Date(),
       },
       {
         id: '2',
-        role: 'assistant',
-        content: `Distributed systems architecture involves multiple interconnected components working together to achieve a common goal. Here are the key principles:
+        role: 'assistant' as const,
+        parts: [
+          {
+            type: 'text' as const,
+            text: `Distributed systems architecture involves multiple interconnected components working together to achieve a common goal. Here are the key principles:
 
 ## Core Components
 
@@ -203,6 +211,8 @@ export const WithLongMessages: Story = {
 - Saga pattern for distributed transactions
 
 Each pattern has specific use cases and trade-offs that must be considered based on your requirements.`,
+          },
+        ],
         createdAt: new Date(),
       },
     ];
@@ -221,7 +231,7 @@ Each pattern has specific use cases and trade-offs that must be considered based
                   }
                   name={msg.role === 'user' ? 'User' : 'AI'}
                 />
-                <MessageContent>{msg.content}</MessageContent>
+                <MessageContent>{getMessageText(msg as any)}</MessageContent>
               </Message>
             ))}
           </ConversationContent>
@@ -263,7 +273,7 @@ export const InChatInterface: Story = {
                   }
                   name={msg.role === 'user' ? 'User' : 'AI'}
                 />
-                <MessageContent>{String(msg.content || '')}</MessageContent>
+                <MessageContent>{getMessageText(msg)}</MessageContent>
               </Message>
             ))}
           </ConversationContent>

@@ -8,6 +8,21 @@ function generateId(): string {
 }
 
 /**
+ * Extract text content from a UIMessage
+ */
+export function getMessageText(message: UIMessage): string {
+  if (!message.parts) {
+    return "";
+  }
+  const textParts = message.parts
+    .filter(
+      (part): part is { type: "text"; text: string } => part.type === "text",
+    )
+    .map((part) => part.text);
+  return textParts.join("");
+}
+
+/**
  * Create a mock UIMessage with optional overrides
  */
 export function createMockUIMessage(overrides?: Partial<UIMessage>): UIMessage {
@@ -15,7 +30,12 @@ export function createMockUIMessage(overrides?: Partial<UIMessage>): UIMessage {
   return {
     id,
     role: "assistant",
-    content: "This is a mock AI response with **bold text** and `code`.",
+    parts: [
+      {
+        type: "text",
+        text: "This is a mock AI response with **bold text** and `code`.",
+      },
+    ],
     createdAt: new Date(),
     ...overrides,
   } as UIMessage;
@@ -53,7 +73,12 @@ export function createMockConversation(count: number = 5): UIMessage[] {
 
     return createMockUIMessage({
       role,
-      content: messageArray[messageIndex],
+      parts: [
+        {
+          type: "text",
+          text: messageArray[messageIndex],
+        },
+      ],
     });
   });
 }
@@ -63,8 +88,11 @@ export function createMockConversation(count: number = 5): UIMessage[] {
  */
 export function createMockToolInvocation(
   state: ToolUIPart["state"] = "output-available",
-  type: string = "search_database",
+  type: string = "tool-search_database",
 ): ToolUIPart {
+  // Remove "tool-" prefix for lookup
+  const typeKey = type.startsWith("tool-") ? type.slice(5) : type;
+
   const mockInputs: Record<string, unknown> = {
     search_database: { query: "system design patterns", limit: 10 },
     analyze_code: { language: "typescript", code: "function hello() {}" },
@@ -102,11 +130,14 @@ export function createMockToolInvocation(
     },
   };
 
+  // Ensure type has "tool-" prefix
+  const toolType = type.startsWith("tool-") ? type : `tool-${type}`;
+
   return {
-    type,
+    type: toolType as `tool-${string}`,
     state,
-    input: mockInputs[type] || { param: "value" },
-    output: state === "output-available" ? mockOutputs[type] : undefined,
+    input: mockInputs[typeKey] || { param: "value" },
+    output: state === "output-available" ? mockOutputs[typeKey] : undefined,
     errorText:
       state === "output-error"
         ? "Connection timeout: Unable to reach the service after 30s"
@@ -125,8 +156,11 @@ export function createMockBranches(branchCount: number = 3): UIMessage[][] {
     // Add branch-specific variation to the last message
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === "assistant") {
-        lastMessage.content = `${lastMessage.content}\n\n*This is branch ${branchIndex + 1} with a different response.*`;
+      if (lastMessage.role === "assistant" && lastMessage.parts) {
+        const textPart = lastMessage.parts.find((part) => part.type === "text");
+        if (textPart && textPart.type === "text") {
+          textPart.text = `${textPart.text}\n\n*This is branch ${branchIndex + 1} with a different response.*`;
+        }
       }
     }
 
@@ -323,7 +357,7 @@ $$\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$$`,
  * ChatStatus values for PromptInput component
  */
 export const MOCK_CHAT_STATUSES: ChatStatus[] = [
-  "idle",
+  "ready",
   "submitted",
   "streaming",
   "error",

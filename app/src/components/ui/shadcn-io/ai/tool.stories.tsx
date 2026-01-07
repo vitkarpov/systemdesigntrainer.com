@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Tool, ToolHeader, ToolContent, ToolInput, ToolOutput } from './tool';
 import { createMockToolInvocation } from './__stories__/mock-data';
-import type { ToolUIPart } from 'ai';
 
 const meta: Meta<typeof Tool> = {
   title: 'AI Components/Advanced Features/Tool',
@@ -244,7 +243,7 @@ export const WithComplexOutput: Story = {
 
     return (
       <Tool defaultOpen>
-        <ToolHeader type="fetch_users" state={tool.state} />
+        <ToolHeader type="tool-fetch_users" state={tool.state} />
         <ToolContent>
           <ToolInput input={{ endpoint: '/api/users', method: 'GET' }} />
           <ToolOutput
