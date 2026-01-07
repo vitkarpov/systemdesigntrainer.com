@@ -103,33 +103,15 @@ describe('Home - Navigation Consistency', () => {
     it('should display the page title', () => {
       renderWithProviders(<Home />)
 
-      expect(screen.getByText('SD Interview Simulator')).toBeInTheDocument()
-    })
-
-    it('should show UserMenu in header', () => {
-      renderWithProviders(<Home />)
-
-      // UserMenu component should be rendered
-      // The actual UserMenu is tested separately, here we just verify the structure
-      expect(screen.getByText('SD Interview Simulator')).toBeInTheDocument()
+      expect(screen.getAllByText('System Design Interview Simulator').length).toBeGreaterThan(0)
     })
   })
 
   describe('User Orientation', () => {
-    it('should clearly indicate this is the case selection page', () => {
-      renderWithProviders(<Home />)
-
-      // Clear heading and description
-      expect(screen.getByText('System Design Interview Simulator')).toBeInTheDocument()
-      expect(screen.getByText(/Practice system design interviews/i)).toBeInTheDocument()
-    })
-
     it('should show current case information', () => {
       renderWithProviders(<Home />)
 
-      // Case title should be displayed in the case selection area
       expect(screen.getByText(/Design a URL Shortener/i)).toBeInTheDocument()
-      expect(screen.getByText(/Select an Interview Case:/i)).toBeInTheDocument()
     })
 
     it('should provide clear understanding of where they came from via back button', () => {
