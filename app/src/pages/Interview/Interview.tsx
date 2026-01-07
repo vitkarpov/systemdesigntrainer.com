@@ -124,7 +124,7 @@ function InterviewPage() {
         id: sessionIdNum,
       });
       navigate(`/feedback/${sessionId}`);
-    } catch (err: any) {
+    } catch (err) {
       const errorMessage = parseErrorMessage(err, 'Failed to end interview. Please try again.');
       toast.error(errorMessage);
     }

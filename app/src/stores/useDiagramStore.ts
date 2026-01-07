@@ -1,7 +1,13 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import type { Node, Edge, ReactFlowInstance } from "@xyflow/react";
+import type {
+  Node,
+  Edge,
+  ReactFlowInstance,
+  NodeChange,
+  EdgeChange,
+} from "@xyflow/react";
 import { applyNodeChanges, applyEdgeChanges } from "@xyflow/react";
 
 interface DiagramData {
@@ -40,8 +46,8 @@ interface DiagramState {
   removeEdge: (sessionId: number, edgeId: string) => void;
 
   // ReactFlow change handlers
-  onNodesChange: (sessionId: number, changes: any[]) => void;
-  onEdgesChange: (sessionId: number, changes: any[]) => void;
+  onNodesChange: (sessionId: number, changes: NodeChange[]) => void;
+  onEdgesChange: (sessionId: number, changes: EdgeChange[]) => void;
 
   // ReactFlow instance management
   setReactFlowInstance: (

@@ -126,7 +126,7 @@ describe("useDiagramStore", () => {
       setNodes(sessionId, nodes);
 
       // Apply a selection change
-      const changes = [{ id: "1", type: "select", selected: true }];
+      const changes = [{ id: "1", type: "select" as const, selected: true }];
       onNodesChange(sessionId, changes);
 
       const diagram = getDiagram(sessionId);
@@ -189,7 +189,7 @@ describe("useDiagramStore", () => {
       setEdges(sessionId, edges);
 
       // Apply a selection change
-      const changes = [{ id: "e1-2", type: "select", selected: true }];
+      const changes = [{ id: "e1-2", type: "select" as const, selected: true }];
       onEdgesChange(sessionId, changes);
 
       const diagram = getDiagram(sessionId);

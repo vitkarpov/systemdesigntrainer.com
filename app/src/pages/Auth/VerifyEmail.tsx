@@ -35,7 +35,7 @@ const VerifyEmail = () => {
       });
 
       window.location.href = `${apiUrl}/auth/verify-email?${params}`;
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.');
       setIsSubmitting(false);
     }

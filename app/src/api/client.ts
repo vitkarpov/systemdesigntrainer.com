@@ -21,16 +21,16 @@ export const getApiBaseUrl = () => {
 export const customInstance = async <T>(config: {
   url: string;
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  params?: any;
-  data?: any;
+  params?: Record<string, string | number>;
+  data?: unknown;
   signal?: AbortSignal;
-  headers?: any;
+  headers?: Record<string, string>;
 }): Promise<T> => {
   // Build URL with path parameters
   let url = config.url;
   if (config.params) {
     Object.keys(config.params).forEach((key) => {
-      url = url.replace(`{${key}}`, String(config.params[key]));
+      url = url.replace(`{${key}}`, String(config.params![key]));
     });
   }
 

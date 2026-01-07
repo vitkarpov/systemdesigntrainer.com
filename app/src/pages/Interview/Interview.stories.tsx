@@ -4,7 +4,7 @@ import { http, HttpResponse, delay } from 'msw';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Interview from './Interview';
-import type { GetSessionResponseDtoData, MessageResponseDto, SessionResponseDto, SessionResponseDtoStatus } from '@/api/hooks.gen';
+import type { GetSessionResponseDtoData, MessageResponseDto, SessionResponseDtoStatus } from '@/api/hooks.gen';
 import { AuthProvider } from '@/contexts/AuthContext';
 
 // Predefined interviewer responses for random selection
