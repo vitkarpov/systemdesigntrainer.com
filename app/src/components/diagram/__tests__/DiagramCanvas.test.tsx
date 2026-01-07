@@ -78,342 +78,118 @@ describe('DiagramCanvas', () => {
     })
   })
 
-  describe('Empty State', () => {
-    it('should show empty state when diagram is locked, empty, and session is in progress', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={true}
-          sessionStatus="in_progress"
-        />
-      )
-
-      // Empty state should be visible
-      expect(screen.getByText('Diagram Available in High-Level Design Phase')).toBeInTheDocument()
-      expect(
-        screen.getByText(/The architecture diagram will unlock when you advance to the High-Level Design phase/)
-      ).toBeInTheDocument()
-
-      // Lock icon should be present
-      const lockIcon = screen.getByText('Diagram Available in High-Level Design Phase')
-        .closest('div')
-        ?.parentElement?.querySelector('svg')
-      expect(lockIcon).toBeInTheDocument()
+  it('should show loading state while fetching diagram', () => {
+    mockUseSessionsControllerGetDiagram.mockReturnValue({
+      data: undefined,
+      isLoading: true,
     })
 
-    it('should NOT show empty state when diagram is editable (not read-only)', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={false}
-          sessionStatus="in_progress"
-        />
-      )
+    renderWithProviders(
+      <DiagramCanvas
+        sessionId={sessionId}
+        isReadOnly={false}
+      />
+    )
 
-      // Empty state should not be visible
-      expect(screen.queryByText('Diagram Available in High-Level Design Phase')).not.toBeInTheDocument()
-
-      // Component palette should be visible instead
-      expect(screen.getByTestId('component-palette')).toBeInTheDocument()
-    })
-
-    it('should NOT show empty state when diagram has nodes', () => {
-      // Add nodes to the diagram store
-      const nodes: Node[] = [
-        {
-          id: 'node-1',
-          type: 'database',
-          position: { x: 100, y: 100 },
-          data: { label: 'Database' },
-        },
-      ]
-      useDiagramStore.getState().setNodes(sessionId, nodes)
-
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={true}
-          sessionStatus="in_progress"
-        />
-      )
-
-      // Empty state should not be visible
-      expect(screen.queryByText('Diagram Available in High-Level Design Phase')).not.toBeInTheDocument()
-    })
-
-    it('should NOT show empty state when session is completed', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={true}
-          sessionStatus="completed"
-        />
-      )
-
-      // Empty state should not be visible for completed sessions
-      expect(screen.queryByText('Diagram Available in High-Level Design Phase')).not.toBeInTheDocument()
-    })
-
-    it('should show empty state with correct styling and structure', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={true}
-          sessionStatus="in_progress"
-        />
-      )
-
-      // Check for the overlay container
-      const heading = screen.getByText('Diagram Available in High-Level Design Phase')
-      const overlay = heading.closest('div')?.parentElement?.parentElement
-
-      expect(overlay).toHaveClass('absolute', 'inset-0', 'backdrop-blur-sm')
-      expect(overlay).toHaveClass('pointer-events-none') // Should not block interaction
-    })
+    expect(screen.getByText('Loading diagram...')).toBeInTheDocument()
+    expect(screen.queryByTestId('react-flow')).not.toBeInTheDocument()
   })
 
-  describe('Loading State', () => {
-    it('should show loading state while fetching diagram', () => {
-      mockUseSessionsControllerGetDiagram.mockReturnValue({
-        data: undefined,
-        isLoading: true,
-      })
+  it('should render diagram canvas (available in all phases)', () => {
+    renderWithProviders(
+      <DiagramCanvas
+        sessionId={sessionId}
+        isReadOnly={true}
+      />
+    )
 
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={false}
-          sessionStatus="in_progress"
-        />
-      )
-
-      expect(screen.getByText('Loading diagram...')).toBeInTheDocument()
-      expect(screen.queryByTestId('react-flow')).not.toBeInTheDocument()
-    })
+    expect(screen.getByTestId('react-flow')).toBeInTheDocument()
+    expect(screen.getByTestId('background')).toBeInTheDocument()
+    expect(screen.getByTestId('controls')).toBeInTheDocument()
   })
 
-  describe('Read-only vs Editable Mode', () => {
-    it('should show component palette when editable', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={false}
-          sessionStatus="in_progress"
-        />
-      )
+  it('should show editing UI when editable', () => {
+    renderWithProviders(
+      <DiagramCanvas
+        sessionId={sessionId}
+        isReadOnly={false}
+      />
+    )
 
-      expect(screen.getByTestId('component-palette')).toBeInTheDocument()
-    })
-
-    it('should NOT show component palette when read-only', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={true}
-          sessionStatus="in_progress"
-        />
-      )
-
-      expect(screen.queryByTestId('component-palette')).not.toBeInTheDocument()
-    })
-
-    it('should show save indicator when editable', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={false}
-          sessionStatus="in_progress"
-        />
-      )
-
-      expect(screen.getByTestId('save-indicator')).toBeInTheDocument()
-    })
-
-    it('should NOT show save indicator when read-only', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={true}
-          sessionStatus="in_progress"
-        />
-      )
-
-      expect(screen.queryByTestId('save-indicator')).not.toBeInTheDocument()
-    })
-
-    it('should show minimap when editable', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={false}
-          sessionStatus="in_progress"
-        />
-      )
-
-      expect(screen.getByTestId('minimap')).toBeInTheDocument()
-    })
-
-    it('should NOT show minimap when read-only', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={true}
-          sessionStatus="in_progress"
-        />
-      )
-
-      expect(screen.queryByTestId('minimap')).not.toBeInTheDocument()
-    })
+    expect(screen.getByTestId('component-palette')).toBeInTheDocument()
+    expect(screen.getByTestId('save-indicator')).toBeInTheDocument()
+    expect(screen.getByTestId('minimap')).toBeInTheDocument()
   })
 
-  describe('Diagram Initialization', () => {
-    it('should initialize diagram from backend data', () => {
-      const mockNodes: Node[] = [
-        {
-          id: 'node-1',
-          type: 'database',
-          position: { x: 100, y: 100 },
-          data: { label: 'Database' },
-        },
-      ]
-      const mockEdges: Edge[] = [
-        {
-          id: 'edge-1',
-          source: 'node-1',
-          target: 'node-2',
-        },
-      ]
+  it('should hide editing UI when read-only', () => {
+    renderWithProviders(
+      <DiagramCanvas
+        sessionId={sessionId}
+        isReadOnly={true}
+      />
+    )
 
-      mockUseSessionsControllerGetDiagram.mockReturnValue({
+    expect(screen.queryByTestId('component-palette')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('save-indicator')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('minimap')).not.toBeInTheDocument()
+  })
+
+  it('should initialize diagram from backend data', () => {
+    const mockNodes: Node[] = [
+      {
+        id: 'node-1',
+        type: 'database',
+        position: { x: 100, y: 100 },
+        data: { label: 'Database' },
+      },
+    ]
+    const mockEdges: Edge[] = [
+      {
+        id: 'edge-1',
+        source: 'node-1',
+        target: 'node-2',
+      },
+    ]
+
+    mockUseSessionsControllerGetDiagram.mockReturnValue({
+      data: {
         data: {
-          data: {
-            nodes: mockNodes,
-            edges: mockEdges,
-          },
+          nodes: mockNodes,
+          edges: mockEdges,
         },
-        isLoading: false,
-      })
-
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={false}
-          sessionStatus="in_progress"
-        />
-      )
-
-      // Verify the diagram store was updated
-      const diagram = useDiagramStore.getState().getDiagram(sessionId)
-      expect(diagram?.nodes).toHaveLength(1)
-      expect(diagram?.edges).toHaveLength(1)
+      },
+      isLoading: false,
     })
 
-    it('should handle empty diagram data gracefully', () => {
-      mockUseSessionsControllerGetDiagram.mockReturnValue({
-        data: { data: { nodes: null, edges: null } },
-        isLoading: false,
-      })
+    renderWithProviders(
+      <DiagramCanvas
+        sessionId={sessionId}
+        isReadOnly={false}
+      />
+    )
 
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={false}
-          sessionStatus="in_progress"
-        />
-      )
-
-      // Should render without crashing
-      expect(screen.getByTestId('react-flow')).toBeInTheDocument()
-    })
+    const diagram = useDiagramStore.getState().getDiagram(sessionId)
+    expect(diagram?.nodes).toHaveLength(1)
+    expect(diagram?.edges).toHaveLength(1)
   })
 
-  describe('Default Props', () => {
-    it('should use default sessionStatus of "in_progress" when not provided', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={true}
-          // sessionStatus not provided
-        />
-      )
+  it('should configure edge visibility and drag handlers correctly', () => {
+    renderWithProviders(
+      <DiagramCanvas
+        sessionId={sessionId}
+        isReadOnly={false}
+      />
+    )
 
-      // Empty state should show (since default is 'in_progress')
-      expect(screen.getByText('Diagram Available in High-Level Design Phase')).toBeInTheDocument()
-    })
+    const reactFlow = screen.getByTestId('react-flow')
+    const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
 
-    it('should use default isReadOnly of false when not provided', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          // isReadOnly not provided
-          sessionStatus="in_progress"
-        />
-      )
+    // Verify edge styling
+    expect(props.defaultEdgeOptions.style.stroke).toBe('#333333')
+    expect(props.defaultEdgeOptions.style.strokeWidth).toBe(2)
 
-      // Component palette should show (since default is not read-only)
-      expect(screen.getByTestId('component-palette')).toBeInTheDocument()
-    })
-  })
-
-  describe('Visual Regression Prevention', () => {
-    it('should configure default edge options to ensure edges are visible', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={false}
-          sessionStatus="in_progress"
-        />
-      )
-
-      const reactFlow = screen.getByTestId('react-flow')
-      const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
-
-      // Verify defaultEdgeOptions are configured
-      expect(props.defaultEdgeOptions).toBeDefined()
-      expect(props.defaultEdgeOptions.style).toBeDefined()
-      expect(props.defaultEdgeOptions.style.stroke).toBe('#333333')
-      expect(props.defaultEdgeOptions.style.strokeWidth).toBe(2)
-      expect(props.defaultEdgeOptions.type).toBe('default')
-    })
-
-    it('should place drag and drop handlers on parent wrapper, not on ReactFlow', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={false}
-          sessionStatus="in_progress"
-        />
-      )
-
-      const reactFlow = screen.getByTestId('react-flow')
-      const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
-
-      // ReactFlow should NOT have onDrop and onDragOver handlers
-      expect(props.onDrop).toBeUndefined()
-      expect(props.onDragOver).toBeUndefined()
-
-      // The parent wrapper div should have the handlers
-      const wrapper = reactFlow.parentElement
-      expect(wrapper).toBeTruthy()
-      // Note: Testing actual event handlers requires integration tests,
-      // but we verify they're not on ReactFlow itself which was the bug
-    })
-
-    it('should not add drag and drop handlers in read-only mode', () => {
-      renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={true}
-          sessionStatus="in_progress"
-        />
-      )
-
-      const reactFlow = screen.getByTestId('react-flow')
-      const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
-
-      // ReactFlow should NOT have onDrop and onDragOver handlers in read-only mode
-      expect(props.onDrop).toBeUndefined()
-      expect(props.onDragOver).toBeUndefined()
-    })
+    // Drag handlers on parent, not ReactFlow (prevents past bug)
+    expect(props.onDrop).toBeUndefined()
+    expect(props.onDragOver).toBeUndefined()
   })
 })

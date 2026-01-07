@@ -126,14 +126,10 @@ function InterviewPage() {
       timestamp: Date.now(),
     });
 
-    // Determine if we should send diagram data (only in HIGH_LEVEL phase)
-    const currentPhase = session?.data.session.currentPhase;
-    const isHighLevelPhase = currentPhase === 'high_level';
-
     // Get diagram data from store
     const diagramData = useDiagramStore.getState().getDiagram(sessionIdNum);
 
-    sendMessage(messageContent, isHighLevelPhase ? diagramData : null);
+    sendMessage(messageContent, diagramData);
   };
 
   const handleEndInterview = async () => {
@@ -172,10 +168,6 @@ function InterviewPage() {
     });
   };
 
-  // Determine phase-based display
-  const currentPhase = session?.data.session.currentPhase;
-  const isHighLevelPhase = currentPhase === 'high_level';
-
   const isLoading = isLoadingSession || isLoadingMessages;
 
   if (isLoading) {
@@ -187,6 +179,7 @@ function InterviewPage() {
   }
 
   const sessionStatus = (session?.data.session.status as 'in_progress' | 'completed') || 'in_progress';
+  const isReadOnly = sessionStatus === 'completed';
 
   return (
     <div className="h-screen flex flex-col">
@@ -228,16 +221,15 @@ function InterviewPage() {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Diagram Canvas */}
-        <div className={isHighLevelPhase ? 'w-2/3 border-r border-border' : 'w-1/2 border-r border-border'}>
+        <div className="w-1/2 border-r border-border">
           <DiagramCanvas
             sessionId={sessionIdNum}
-            isReadOnly={!isHighLevelPhase}
-            sessionStatus={sessionStatus}
+            isReadOnly={isReadOnly}
           />
         </div>
 
         {/* Chat Area (Messages + Input) */}
-        <div className={`flex flex-col ${isHighLevelPhase ? 'w-1/3' : 'w-1/2'}`}>
+        <div className="flex flex-col w-1/2">
           <MessageList
             ref={messagesEndRef}
             messages={messages as any}

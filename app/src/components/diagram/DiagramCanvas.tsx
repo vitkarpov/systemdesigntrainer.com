@@ -9,7 +9,6 @@ import {
   type Connection,
   type OnConnect,
 } from '@xyflow/react';
-import { Lock } from 'lucide-react';
 import { ComponentPalette } from './ComponentPalette';
 import { SaveIndicator } from './SaveIndicator';
 import { useDiagramAutoSave } from '@/hooks/useDiagramAutoSave';
@@ -40,13 +39,11 @@ const EMPTY_EDGES: Edge[] = [];
 interface DiagramCanvasProps {
   sessionId: number;
   isReadOnly?: boolean;
-  sessionStatus?: 'in_progress' | 'completed';
 }
 
 export function DiagramCanvas({
   sessionId,
-  isReadOnly = false,
-  sessionStatus = 'in_progress',
+  isReadOnly = false
 }: DiagramCanvasProps) {
   const nodes = useDiagramStore((state) => state.getDiagram(sessionId)?.nodes ?? EMPTY_NODES);
   const edges = useDiagramStore((state) => state.getDiagram(sessionId)?.edges ?? EMPTY_EDGES);
@@ -167,26 +164,6 @@ export function DiagramCanvas({
           <Controls className="bg-card border-border" />
           {!isReadOnly && <MiniMap className="bg-card border-border" />}
         </ReactFlow>
-
-        {/* Empty State Overlay - shown when diagram is locked and empty during active session */}
-        {isReadOnly && nodes.length === 0 && sessionStatus === 'in_progress' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-20 pointer-events-none">
-            <div className="text-center space-y-4 max-w-md px-6">
-              <div className="flex justify-center">
-                <div className="rounded-full bg-muted p-4">
-                  <Lock className="h-8 w-8 text-muted-foreground" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Diagram Available in High-Level Design Phase</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  The architecture diagram will unlock when you advance to the High-Level Design phase.
-                  You'll be able to create and edit your system design using drag-and-drop components.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

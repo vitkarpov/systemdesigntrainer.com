@@ -151,43 +151,15 @@ describe('Interview Page', () => {
       expect(screen.getByPlaceholderText(/Type your response/i)).toBeInTheDocument()
     })
 
-    it('should display correct layout for high_level phase', () => {
+    it('should display diagram canvas editable with 50/50 layout during in_progress sessions', () => {
       renderWithProviders(<Interview />, { queryClient })
 
       const diagramCanvas = screen.getByTestId('diagram-canvas')
       expect(diagramCanvas).toHaveAttribute('data-readonly', 'false')
-
-      // Check layout classes (w-2/3 for diagram, w-1/3 for chat)
-      const diagramContainer = diagramCanvas.parentElement
-      expect(diagramContainer).toHaveClass('w-2/3')
+      expect(diagramCanvas.parentElement).toHaveClass('w-1/2')
     })
 
-    it('should display correct layout for non-high_level phase', () => {
-      mockUseSessionsControllerGetSession.mockReturnValue({
-        ...mocks.mockSessionQuery,
-        data: createMockSession({
-          session: { currentPhase: 'deep_dive' },
-        }),
-      })
-
-      renderWithProviders(<Interview />, { queryClient })
-
-      const diagramCanvas = screen.getByTestId('diagram-canvas')
-      expect(diagramCanvas).toHaveAttribute('data-readonly', 'true')
-
-      // Check layout classes (w-1/2 for both)
-      const diagramContainer = diagramCanvas.parentElement
-      expect(diagramContainer).toHaveClass('w-1/2')
-    })
-
-    it('should pass sessionStatus prop to DiagramCanvas for in_progress session', () => {
-      renderWithProviders(<Interview />, { queryClient })
-
-      const diagramCanvas = screen.getByTestId('diagram-canvas')
-      expect(diagramCanvas).toHaveAttribute('data-session-status', 'in_progress')
-    })
-
-    it('should pass sessionStatus prop to DiagramCanvas for completed session', () => {
+    it('should set diagram to read-only for completed sessions', () => {
       mockUseSessionsControllerGetSession.mockReturnValue({
         ...mocks.mockSessionQuery,
         data: createMockSession({
@@ -198,6 +170,7 @@ describe('Interview Page', () => {
       renderWithProviders(<Interview />, { queryClient })
 
       const diagramCanvas = screen.getByTestId('diagram-canvas')
+      expect(diagramCanvas).toHaveAttribute('data-readonly', 'true')
       expect(diagramCanvas).toHaveAttribute('data-session-status', 'completed')
     })
 
@@ -324,55 +297,7 @@ describe('Interview Page', () => {
       expect(mockSendMessage).not.toHaveBeenCalled()
     })
 
-    it('should send message without diagram data in non-high_level phase', async () => {
-      mockUseSessionsControllerGetSession.mockReturnValue({
-        ...mocks.mockSessionQuery,
-        data: createMockSession({ session: { currentPhase: 'deep_dive', status: 'in_progress' } }),
-      })
-
-      // Set up diagram data (should not be sent in deep_dive phase)
-      useDiagramStore.getState().setDiagram(123, {
-        nodes: [{ id: '1', position: { x: 0, y: 0 }, data: {} }],
-        edges: []
-      })
-
-      const user = userEvent.setup()
-      renderWithProviders(<Interview />, { queryClient })
-
-      const textarea = screen.getByPlaceholderText(/Type your response/i) as HTMLTextAreaElement
-      const sendButton = screen.getByRole('button', { name: /send/i })
-
-      // Type message
-      await user.type(textarea, 'Deep dive question')
-
-      // Verify the text is in the textarea
-      expect(textarea.value).toBe('Deep dive question')
-
-      // Click the send button instead of using Enter key
-      await user.click(sendButton)
-
-      // Should call sendMessage with null for diagram data
-      expect(mockSendMessage).toHaveBeenCalledWith('Deep dive question', null)
-    })
-
-    it('should prevent sending message while streaming', async () => {
-      // Set streaming state
-      useStreamingStore.getState().startStreaming(123, new AbortController())
-
-      renderWithProviders(<Interview />, { queryClient })
-
-      const textarea = screen.getByPlaceholderText(/Type your response/i)
-      const sendButton = screen.getByRole('button', { name: /streaming/i })
-
-      expect(textarea).toBeDisabled()
-      expect(sendButton).toBeDisabled()
-
-      // Try to send (won't work because input is disabled)
-      expect(mockSendMessage).not.toHaveBeenCalled()
-    })
-
-    it('should disable input during streaming', () => {
-      // Set streaming state
+    it('should disable input and prevent messages while streaming', async () => {
       useStreamingStore.getState().startStreaming(123, new AbortController())
       useStreamingStore.getState().appendStreamText(123, 'AI is typing...')
 
@@ -383,6 +308,7 @@ describe('Interview Page', () => {
 
       expect(textarea).toBeDisabled()
       expect(sendButton).toBeDisabled()
+      expect(mockSendMessage).not.toHaveBeenCalled()
     })
 
     it('should display streaming text', () => {
