@@ -1,5 +1,7 @@
 # System Design Interview Simulator
 
+[![App CI](https://github.com/vitkarpov/systemdesigntrainer.com/actions/workflows/app-ci.yml/badge.svg)](https://github.com/vitkarpov/systemdesigntrainer.com/actions/workflows/app-ci.yml)
+
 **Practice real system design interviews under pressure — before the real one.**
 
 A B2C SaaS platform that helps mid-to-senior software engineers prepare for system design interviews at top tech companies by simulating realistic 45-minute interview sessions with AI-powered interviewers.
