@@ -175,7 +175,6 @@ function InterviewPage() {
           session?.data.phaseMetadata ? (
             <PhaseDisplay
               phaseMetadata={session.data.phaseMetadata}
-              phaseElapsedSeconds={session.data.phaseElapsedSeconds ?? 0}
             />
           ) : null
         }
