@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { renderWithProviders, setupInterviewMocks, createMockSession, createMockFailedMessagesData, createMockFailedMessage, createTestQueryClient } from '@/tests/utils'
+import { renderWithProviders, setupInterviewMocks, createMockSession, createTestQueryClient } from '@/tests/utils'
 import Interview from '@/pages/Interview/Interview'
 import { useInterviewStore, useStreamingStore, useDiagramStore } from '@/stores'
 import { toast } from 'sonner'
@@ -14,11 +14,8 @@ vi.mock('@/api/hooks.gen', async (importOriginal) => {
     ...actual,
     useSessionsControllerGetSession: vi.fn(),
     useSessionsControllerGetTranscript: vi.fn(),
-    useSessionsControllerGetFailedMessages: vi.fn(),
     useSessionsControllerGenerateFeedback: vi.fn(),
-    useSessionsControllerRetryConversation: vi.fn(),
     getSessionsControllerGetSessionQueryKey: vi.fn((id) => ['session', id]),
-    getSessionsControllerGetFailedMessagesQueryKey: vi.fn((id) => ['failedMessages', id]),
     getSessionsControllerGetTranscriptQueryKey: vi.fn((id) => ['transcript', id]),
   };
 })
@@ -27,7 +24,6 @@ vi.mock('@/api/hooks.gen', async (importOriginal) => {
 import * as apiHooks from '@/api/hooks.gen'
 const mockUseSessionsControllerGetSession = apiHooks.useSessionsControllerGetSession as ReturnType<typeof vi.fn>
 const mockUseSessionsControllerGetTranscript = apiHooks.useSessionsControllerGetTranscript as ReturnType<typeof vi.fn>
-const mockUseSessionsControllerGetFailedMessages = apiHooks.useSessionsControllerGetFailedMessages as ReturnType<typeof vi.fn>
 const mockUseSessionsControllerGenerateFeedback = apiHooks.useSessionsControllerGenerateFeedback as ReturnType<typeof vi.fn>
 
 // Mock router hooks
@@ -58,6 +54,37 @@ vi.mock('sonner', () => ({
     error: vi.fn(),
     success: vi.fn(),
   },
+}))
+
+// Mock react-syntax-highlighter to avoid ES Module import issues
+vi.mock('react-syntax-highlighter', () => ({
+  Prism: ({ children, ...props }: any) => <pre {...props}>{children}</pre>,
+}))
+
+vi.mock('react-syntax-highlighter/dist/esm/styles/prism', () => ({
+  oneDark: {},
+  oneLight: {},
+}))
+
+// Mock react-markdown and related plugins to avoid ES Module import issues
+vi.mock('react-markdown', () => ({
+  default: ({ children }: any) => <div data-testid="markdown">{children}</div>,
+}))
+
+vi.mock('harden-react-markdown', () => ({
+  default: (Component: any) => Component,
+}))
+
+vi.mock('remark-gfm', () => ({
+  default: () => {},
+}))
+
+vi.mock('remark-math', () => ({
+  default: () => {},
+}))
+
+vi.mock('rehype-katex', () => ({
+  default: () => {},
 }))
 
 // Mock DiagramCanvas
@@ -99,7 +126,6 @@ describe('Interview Page', () => {
     // Apply mocks to API hooks
     mockUseSessionsControllerGetSession.mockReturnValue(mocks.mockSessionQuery)
     mockUseSessionsControllerGetTranscript.mockReturnValue(mocks.mockTranscriptQuery)
-    mockUseSessionsControllerGetFailedMessages.mockReturnValue(mocks.mockFailedMessagesQuery)
     mockUseSessionsControllerGenerateFeedback.mockReturnValue(mocks.mockGenerateFeedback)
 
     // Reset mock functions
@@ -171,7 +197,6 @@ describe('Interview Page', () => {
 
       const diagramCanvas = screen.getByTestId('diagram-canvas')
       expect(diagramCanvas).toHaveAttribute('data-readonly', 'true')
-      expect(diagramCanvas).toHaveAttribute('data-session-status', 'completed')
     })
 
     it('should poll session data when status is in_progress', () => {
@@ -234,7 +259,7 @@ describe('Interview Page', () => {
       )
     })
 
-    it('should send message with Enter key', async () => {
+    it('should send message with Enter key (via form submit)', async () => {
       const user = userEvent.setup()
 
       // Set up diagram data
@@ -245,12 +270,13 @@ describe('Interview Page', () => {
       const textarea = screen.getByPlaceholderText(/Type your response/i)
 
       await user.type(textarea, 'Test message')
+      // The PromptInput component handles Enter key internally via form submit
       await user.keyboard('{Enter}')
 
       expect(mockSendMessage).toHaveBeenCalledWith('Test message', { nodes: [], edges: [] })
     })
 
-    it('should not send message with Shift+Enter', async () => {
+    it('should not send message with Shift+Enter (adds new line)', async () => {
       const user = userEvent.setup()
       renderWithProviders(<Interview />, { queryClient })
 
@@ -259,7 +285,7 @@ describe('Interview Page', () => {
       await user.type(textarea, 'Test message')
       await user.keyboard('{Shift>}{Enter}{/Shift}')
 
-      // Should not send (Shift+Enter adds new line)
+      // Shift+Enter adds new line, doesn't submit form
       expect(mockSendMessage).not.toHaveBeenCalled()
     })
 
@@ -417,110 +443,6 @@ describe('Interview Page', () => {
     })
   })
 
-  describe('Failed Messages & Retry', () => {
-    it('should display failed message banner when messages fail', () => {
-      mockUseSessionsControllerGetFailedMessages.mockReturnValue({
-        data: createMockFailedMessagesData([createMockFailedMessage(5)], 2),
-      })
-
-      renderWithProviders(<Interview />, { queryClient })
-
-      expect(screen.getByText(/2 messages failed/i)).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /view & retry/i })).toBeInTheDocument()
-    })
-
-    it('should display retry banner when messages fail', () => {
-      mockUseSessionsControllerGetFailedMessages.mockReturnValue({
-        data: createMockFailedMessagesData([createMockFailedMessage(5)], 1),
-      })
-
-      renderWithProviders(<Interview />, { queryClient })
-
-      // Verify retry banner is visible based on retryableCount
-      expect(screen.getByRole('button', { name: /view & retry/i })).toBeInTheDocument()
-      expect(screen.getByText(/1 message failed/i)).toBeInTheDocument()
-    })
-
-    it('should not show retry banner when retryableCount is zero', () => {
-      mockUseSessionsControllerGetFailedMessages.mockReturnValue({
-        data: createMockFailedMessagesData([], 0), // No failed messages
-        refetch: vi.fn(),
-      })
-
-      renderWithProviders(<Interview />, { queryClient })
-
-      // Banner should not be visible when there are no failed messages
-      expect(screen.queryByRole('button', { name: /view & retry/i })).not.toBeInTheDocument()
-    })
-
-    it('should handle View & Retry button click', async () => {
-      mockUseSessionsControllerGetFailedMessages.mockReturnValue({
-        data: createMockFailedMessagesData([createMockFailedMessage(2)], 1),
-      })
-
-      const user = userEvent.setup()
-      const scrollIntoViewMock = vi.fn()
-
-      // Mock scrollIntoView
-      Element.prototype.scrollIntoView = scrollIntoViewMock
-
-      renderWithProviders(<Interview />, { queryClient })
-
-      const viewRetryButton = screen.getByRole('button', { name: /view & retry/i })
-      await user.click(viewRetryButton)
-
-      // The handleViewRetry function should trigger scroll behavior
-      // This is a simple test to ensure the button is clickable and doesn't crash
-      expect(viewRetryButton).toBeInTheDocument()
-    })
-
-    it('should invalidate failed messages query on retry success', async () => {
-      mockUseSessionsControllerGetFailedMessages.mockReturnValue({
-        data: createMockFailedMessagesData([createMockFailedMessage(2)], 1),
-      })
-
-      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries')
-
-      renderWithProviders(<Interview />, { queryClient })
-
-      // To test handleRetrySuccess, we would need to trigger a successful retry
-      // Since the retry logic is in MessageList, we'll verify the callback is passed correctly
-      // and test it gets called during actual retry (integration test in MessageList)
-
-      // For now, verify the Interview component renders with failed messages
-      expect(screen.getByRole('button', { name: /view & retry/i })).toBeInTheDocument()
-
-      // The spy will be used when MessageList triggers the retry success callback
-      expect(invalidateQueriesSpy).toBeDefined()
-    })
-
-    it('should show error toast when retry fails', () => {
-      mockUseSessionsControllerGetFailedMessages.mockReturnValue({
-        data: createMockFailedMessagesData([createMockFailedMessage(2)], 1),
-      })
-
-      renderWithProviders(<Interview />, { queryClient })
-
-      // Verify the Interview component provides the onRetryError callback to MessageList
-      // The actual error handling is tested when MessageList invokes this callback
-      expect(screen.getByRole('button', { name: /view & retry/i })).toBeInTheDocument()
-
-      // We can't easily test the callback without triggering actual retry logic
-      // This would be better tested in an integration test or by mocking MessageList
-    })
-
-    it('should handle undefined failed messages data gracefully', () => {
-      mockUseSessionsControllerGetFailedMessages.mockReturnValue({
-        data: { data: { failedMessages: undefined, retryableCount: 0 } },
-      })
-
-      renderWithProviders(<Interview />, { queryClient })
-
-      // Should not crash and should render normally without retry banner
-      expect(screen.getByTestId('diagram-canvas')).toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: /view & retry/i })).not.toBeInTheDocument()
-    })
-  })
 
   describe('Interview Lifecycle', () => {
     it('should end interview and navigate to feedback page', async () => {
@@ -562,7 +484,6 @@ describe('Interview Page', () => {
 
       const textarea = screen.getByPlaceholderText(/interview has ended/i)
       expect(textarea).toBeDisabled()
-      expect(screen.getByText(/interview has ended/i)).toBeInTheDocument()
     })
   })
 

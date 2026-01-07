@@ -78,10 +78,10 @@ describe('PageHeader - Navigation Consistency', () => {
   describe('Title Display', () => {
     it('should always display the title', () => {
       renderWithProviders(
-        <PageHeader title="SD Interview Simulator" />
+        <PageHeader title="System Design Interview Simulator" />
       )
 
-      expect(screen.getByText('SD Interview Simulator')).toBeInTheDocument()
+      expect(screen.getByText('System Design Interview Simulator')).toBeInTheDocument()
     })
 
     it('should display title even when back button is shown', () => {

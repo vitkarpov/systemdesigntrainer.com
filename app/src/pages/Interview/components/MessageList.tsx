@@ -1,7 +1,14 @@
-import { forwardRef } from 'react';
-import { FailedMessageBanner } from '@/components/FailedMessageBanner';
-import { MessageItem } from './MessageItem';
+import {
+  Conversation,
+  ConversationContent,
+} from '@/components/ui/shadcn-io/ai/conversation';
+import {
+  Message,
+  MessageContent,
+} from '@/components/ui/shadcn-io/ai/message';
+import { Response } from '@/components/ui/shadcn-io/ai/response';
 import { formatElapsedTime } from '@/lib/utils';
+import type { MessageResponseDto } from '@/api/hooks.gen';
 
 interface OptimisticMessage {
   text: string;
@@ -9,105 +16,63 @@ interface OptimisticMessage {
 }
 
 interface MessageListProps {
-  messages: Array<{
-    id: number;
-    role: 'candidate' | 'interviewer';
-    text: string;
-    secondsElapsed: number;
-  }>;
-  failedMessageIds: Set<number>;
-  failedMessages: Array<{
-    id: number;
-    partialText?: string | null;
-  }>;
-  retryableCount: number;
+  messages: MessageResponseDto[];
   optimisticMessage: OptimisticMessage | null;
   streamingText: string;
   isStreaming: boolean;
-  sessionId: number;
   elapsedTime: number;
-  onViewRetry: () => void;
-  onRetrySuccess: () => void;
-  onRetryError: (error: Error) => void;
 }
 
-export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
-  (
-    {
-      messages,
-      failedMessageIds,
-      failedMessages,
-      retryableCount,
-      optimisticMessage,
-      streamingText,
-      isStreaming,
-      sessionId,
-      elapsedTime,
-      onViewRetry,
-      onRetrySuccess,
-      onRetryError,
-    },
-    messagesEndRef
-  ) => {
-    return (
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-        {/* Failed Messages Banner */}
-        {retryableCount > 0 && (
-          <FailedMessageBanner
-            retryableCount={retryableCount}
-            onViewRetry={onViewRetry}
-          />
-        )}
-
-        {/* Message Items */}
-        {messages.map((message) => {
-          const isFailed = failedMessageIds.has(message.id);
-          const failedMessage = failedMessages.find((m) => m.id === message.id);
-
-          return (
-            <MessageItem
-              key={message.id}
-              message={message}
-              isFailed={isFailed}
-              failedMessage={failedMessage}
-              sessionId={sessionId}
-              onRetrySuccess={onRetrySuccess}
-              onRetryError={onRetryError}
-            />
-          );
-        })}
+export function MessageList({
+  messages,
+  optimisticMessage,
+  streamingText,
+  isStreaming,
+  elapsedTime,
+}: MessageListProps) {
+  return (
+    <Conversation className="flex-1">
+      <ConversationContent className="space-y-4">
+        {/* Regular messages */}
+        {messages.map((message) => (
+          <Message key={message.id} from={message.role === 'candidate' ? 'user' : 'assistant'}>
+            <MessageContent>
+              <div className="text-xs opacity-70 mb-1">
+                {message.role === 'candidate' ? 'You' : 'Interviewer'} •{' '}
+                {formatElapsedTime(message.secondsElapsed)}
+              </div>
+              <Response>{message.text}</Response>
+            </MessageContent>
+          </Message>
+        ))}
 
         {/* Optimistic candidate message */}
         {optimisticMessage && (
-          <div className="flex justify-end">
-            <div className="max-w-[80%] rounded-lg px-4 py-3 bg-primary text-primary-foreground opacity-90">
+          <Message from="user">
+            <MessageContent className="opacity-90">
               <div className="text-xs opacity-70 mb-1">
                 You • {formatElapsedTime(elapsedTime)}
               </div>
-              <div className="whitespace-pre-wrap">{optimisticMessage.text}</div>
-            </div>
-          </div>
+              <Response>{optimisticMessage.text}</Response>
+            </MessageContent>
+          </Message>
         )}
 
         {/* Streaming interviewer message */}
         {isStreaming && streamingText && (
-          <div className="flex justify-start">
-            <div className="max-w-[80%] rounded-lg px-4 py-3 bg-muted">
+          <Message from="assistant">
+            <MessageContent>
               <div className="text-xs opacity-70 mb-1">
                 Interviewer • {formatElapsedTime(elapsedTime)}
               </div>
-              <div className="whitespace-pre-wrap">
+              <Response parseIncompleteMarkdown={true}>
                 {streamingText}
-                <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />
-              </div>
-            </div>
-          </div>
+              </Response>
+              <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />
+            </MessageContent>
+          </Message>
         )}
-
-        <div ref={messagesEndRef} />
-      </div>
-    );
-  }
-);
-
-MessageList.displayName = 'MessageList';
+      </ConversationContent>
+    </Conversation>
+  );
+}

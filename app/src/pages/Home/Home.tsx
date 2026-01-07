@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/PageHeader';
 import { InterviewCounter } from '@/components/InterviewCounter';
 import { PaywallModal } from '@/components/PaywallModal';
@@ -86,7 +86,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <PageHeader
-        title="SD Interview Simulator"
+        title="System Design Interview Simulator"
         backLabel="Back to Dashboard"
         onBack={() => navigate('/')}
         rightContent={
@@ -97,13 +97,7 @@ export default function Home() {
       />
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-3.5rem)]">
         <Card className="w-full max-w-6xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-4xl mb-2">System Design Interview Simulator</CardTitle>
-            <CardDescription className="text-lg">
-              Practice system design interviews with an AI interviewer
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-6">
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold mb-3">Select an Interview Case:</h3>

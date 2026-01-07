@@ -33,7 +33,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background space-y-6">
       <PageHeader
-        title="SD Interview Simulator"
+        title="System Design Interview Simulator"
         rightContent={
           <div className="flex items-center gap-3">
             <InterviewCounter />

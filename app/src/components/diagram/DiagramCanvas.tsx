@@ -161,7 +161,7 @@ export function DiagramCanvas({
           className="bg-background"
         >
           <Background className="bg-muted/20" />
-          <Controls className="bg-card border-border" />
+          <Controls className="bg-card border-border" showInteractive={false} />
           {!isReadOnly && <MiniMap className="bg-card border-border" />}
         </ReactFlow>
       </div>

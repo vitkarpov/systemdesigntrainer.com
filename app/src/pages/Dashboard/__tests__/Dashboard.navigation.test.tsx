@@ -59,7 +59,7 @@ describe('Dashboard - Navigation Consistency', () => {
     it('should display the page title', () => {
       renderWithProviders(<Dashboard />)
 
-      expect(screen.getByText('SD Interview Simulator')).toBeInTheDocument()
+      expect(screen.getByText('System Design Interview Simulator')).toBeInTheDocument()
     })
 
     it('should show "New Interview" button', () => {
@@ -216,7 +216,7 @@ describe('Dashboard - Navigation Consistency', () => {
       renderWithProviders(<Dashboard />)
 
       // Page title should be visible
-      expect(screen.getByText('SD Interview Simulator')).toBeInTheDocument()
+      expect(screen.getByText('System Design Interview Simulator')).toBeInTheDocument()
 
       // Stats section should be visible (indicating this is the overview page)
       expect(screen.getByText('Total Interviews')).toBeInTheDocument()

@@ -9,12 +9,12 @@ afterEach(() => {
 // Mock fetch for SSE
 global.fetch = vi.fn();
 
-// Mock ResizeObserver (used by ReactFlow)
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+// Mock ResizeObserver (used by ReactFlow and use-stick-to-bottom)
+global.ResizeObserver = class ResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+};
 
 // Mock auth API hooks to prevent AuthProvider from making real API calls
 vi.mock("@/api/hooks.gen", async (importOriginal) => {

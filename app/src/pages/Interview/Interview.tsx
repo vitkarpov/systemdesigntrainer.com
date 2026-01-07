@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -13,8 +13,6 @@ import {
   useSessionsControllerGetSession,
   useSessionsControllerGetTranscript,
   useSessionsControllerGenerateFeedback,
-  useSessionsControllerGetFailedMessages,
-  getSessionsControllerGetFailedMessagesQueryKey,
 } from '@/api/hooks.gen';
 import { useConversationStream } from '@/hooks/useConversationStream';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -22,7 +20,6 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 function InterviewPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const inputValue = useInterviewStore((state) => state.inputValue);
   const setInputValue = useInterviewStore((state) => state.setInputValue);
@@ -30,7 +27,6 @@ function InterviewPage() {
   const optimisticMessage = useInterviewStore((state) => state.optimisticMessage);
   const setOptimisticMessage = useInterviewStore((state) => state.setOptimisticMessage);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
 
   const sessionIdNum = Number(sessionId);
@@ -71,16 +67,7 @@ function InterviewPage() {
     },
   });
 
-  const { data: failedMessagesData } = useSessionsControllerGetFailedMessages(sessionIdNum, {
-    query: {
-      enabled: !!sessionId && !isNaN(sessionIdNum),
-      refetchInterval: 5000,
-    },
-  });
-
   const messages = transcriptData?.data.messages || [];
-  const retryableCount = failedMessagesData?.data?.retryableCount || 0;
-  const failedMessageIds = new Set((failedMessagesData?.data?.failedMessages || []).map((m) => m.id));
 
   const generateFeedbackMutation = useSessionsControllerGenerateFeedback();
 
@@ -100,9 +87,6 @@ function InterviewPage() {
     return () => clearInterval(timer);
   }, [session]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamingText, optimisticMessage]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -146,27 +130,6 @@ function InterviewPage() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const handleViewRetry = () => {
-    // Scroll to the first failed message
-    const firstFailedMessage = messages.find((m) => failedMessageIds.has(m.id));
-    if (firstFailedMessage) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const handleRetrySuccess = () => {
-    // Invalidate failed messages query to refresh the count
-    queryClient.invalidateQueries({
-      queryKey: getSessionsControllerGetFailedMessagesQueryKey(sessionIdNum),
-    });
-  };
 
   const isLoading = isLoadingSession || isLoadingMessages;
 
@@ -212,7 +175,6 @@ function InterviewPage() {
           session?.data.phaseMetadata ? (
             <PhaseDisplay
               phaseMetadata={session.data.phaseMetadata}
-              phaseElapsedSeconds={session.data.phaseElapsedSeconds ?? 0}
             />
           ) : null
         }
@@ -231,22 +193,11 @@ function InterviewPage() {
         {/* Chat Area (Messages + Input) */}
         <div className="flex flex-col w-1/2">
           <MessageList
-            ref={messagesEndRef}
-            messages={messages as any}
-            failedMessageIds={failedMessageIds}
-            failedMessages={failedMessagesData?.data?.failedMessages || []}
-            retryableCount={retryableCount}
+            messages={messages}
             optimisticMessage={optimisticMessage}
             streamingText={streamingText}
             isStreaming={isStreaming}
-            sessionId={sessionIdNum}
             elapsedTime={elapsedTime}
-            onViewRetry={handleViewRetry}
-            onRetrySuccess={handleRetrySuccess}
-            onRetryError={(error) => {
-              const errorMessage = parseErrorMessage(error, 'Failed to retry message. Please try again.');
-              toast.error(errorMessage);
-            }}
           />
 
           <InterviewInput
@@ -256,7 +207,6 @@ function InterviewPage() {
             sessionStatus={session?.data.session.status || 'in_progress'}
             onChange={setInputValue}
             onSend={handleSendMessage}
-            onKeyDown={handleKeyDown}
           />
         </div>
       </div>

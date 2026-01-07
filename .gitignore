@@ -139,3 +139,5 @@ terraform/terraform.tfvars
 .terraform.lock.hcl
 *tfstate*
 *_accessKeys.csv
+*storybook.log
+storybook-static
