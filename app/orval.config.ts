@@ -1,21 +1,21 @@
-import { defineConfig } from 'orval';
+import { defineConfig } from "orval";
 
 export default defineConfig({
   api: {
     input: {
-      target: './src/api/openapi.json',
+      target: "./src/api/openapi.json",
       filters: {
-        tags: ['auth', 'sessions', 'cases'],
+        tags: ["auth", "sessions", "cases"],
       },
     },
     output: {
-      target: './src/api/hooks.gen.ts',
-      client: 'react-query',
-      mode: 'single',
+      target: "./src/api/hooks.gen.ts",
+      client: "react-query",
+      mode: "single",
       override: {
         mutator: {
-          path: './src/api/client.ts',
-          name: 'customInstance',
+          path: "./src/api/client.ts",
+          name: "customInstance",
         },
         query: {
           useQuery: true,
