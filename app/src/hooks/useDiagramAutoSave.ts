@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Node, Edge } from "@xyflow/react";
 import {
@@ -48,8 +48,8 @@ export function useDiagramAutoSave({
 }: UseDiagramAutoSaveOptions) {
   // Read from store
   const diagram = useDiagramStore((state) => state.getDiagram(sessionId));
-  const nodes = diagram?.nodes || [];
-  const edges = diagram?.edges || [];
+  const nodes = useMemo(() => diagram?.nodes || [], [diagram?.nodes]);
+  const edges = useMemo(() => diagram?.edges || [], [diagram?.edges]);
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
     "saved",
   );

@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import type { Node, Edge } from "@xyflow/react";
 import { useStreamingStore } from "@/stores";
 import {
   getSessionsControllerGetSessionQueryKey,
@@ -22,7 +23,7 @@ export interface UseConversationStreamOptions {
 
 interface StreamEvent {
   type: "start" | "delta" | "complete" | "error";
-  data: any;
+  data: Record<string, unknown>;
 }
 
 export function useConversationStream({
@@ -34,7 +35,7 @@ export function useConversationStream({
   const queryClient = useQueryClient();
 
   const sendMessage = useCallback(
-    async (text: string, diagram?: { nodes: any[]; edges: any[] } | null) => {
+    async (text: string, diagram?: { nodes: Node[]; edges: Edge[] } | null) => {
       // Check if already streaming
       const isStreaming =
         useStreamingStore.getState().streams[sessionId]?.isStreaming ?? false;

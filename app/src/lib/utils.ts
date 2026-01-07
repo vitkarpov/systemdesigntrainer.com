@@ -12,8 +12,8 @@ export function formatElapsedTime(seconds: number): string {
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
-export function parseErrorMessage(error: Error, fallback: string): string {
-  if (!error.message) {
+export function parseErrorMessage(error: unknown, fallback: string): string {
+  if (!(error instanceof Error) || !error.message) {
     return fallback;
   }
 

@@ -5,7 +5,6 @@ import { renderWithProviders, setupInterviewMocks, createMockSession, createTest
 import Interview from '@/pages/Interview/Interview'
 import { useInterviewStore, useStreamingStore, useDiagramStore } from '@/stores'
 import { toast } from 'sonner'
-import type { UseConversationStreamOptions } from '@/hooks/useConversationStream'
 
 // Mock API hooks
 vi.mock('@/api/hooks.gen', async (importOriginal) => {
@@ -40,7 +39,8 @@ vi.mock('react-router-dom', async () => {
 // Mock SSE streaming hook
 const mockSendMessage = vi.fn()
 const mockCancel = vi.fn()
-const mockUseConversationStreamImpl = vi.fn((_config: UseConversationStreamOptions) => ({
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const mockUseConversationStreamImpl = vi.fn((_config) => ({
   sendMessage: mockSendMessage,
   cancel: mockCancel,
 }))
