@@ -4,7 +4,6 @@ import { DATABASE_CONNECTION } from '../../db/db.module';
 import type { db as DbType } from '../../db/db';
 import { interviewSessions, interviewCases } from '../../db/schema';
 import { PhaseService } from './phase.service';
-import { PhaseCutoffService } from './phase-cutoff.service';
 import {
   SessionStatus,
   InterviewPhase,
@@ -35,7 +34,6 @@ export class InterviewSessionService {
     @Inject(DATABASE_CONNECTION)
     private db: typeof DbType,
     private phaseService: PhaseService,
-    private phaseCutoffService: PhaseCutoffService,
   ) {}
 
   /**
@@ -225,82 +223,21 @@ export class InterviewSessionService {
   }
 
   /**
-   * Check if current phase should be force-transitioned due to time limit
+   * Check if current phase time limit has been exceeded
    */
-  shouldForcePhaseTransition(session: SessionState): {
-    shouldTransition: boolean;
-    reason?: 'time_exceeded';
-    exceededBySeconds?: number;
-  } {
-    // Only check for in-progress sessions
+  shouldAdvancePhase(session: SessionState): boolean {
     if (session.status !== SessionStatus.IN_PROGRESS) {
-      return { shouldTransition: false };
+      return false;
     }
 
     const phaseElapsed = this.getPhaseElapsedSeconds(session);
     const requirements = PHASE_REQUIREMENTS[session.currentPhase];
 
-    if (phaseElapsed >= requirements.maximumTimeSeconds) {
-      return {
-        shouldTransition: true,
-        reason: 'time_exceeded',
-        exceededBySeconds: phaseElapsed - requirements.maximumTimeSeconds,
-      };
-    }
-
-    return { shouldTransition: false };
+    return phaseElapsed >= requirements.maximumTimeSeconds;
   }
 
   /**
-   * Check if current phase requirements are met for natural transition
-   * (minimum time elapsed + required signals detected + user indicated readiness)
-   */
-  async shouldNaturallyTransition(
-    session: SessionState,
-    detectedSignals: Set<string>,
-  ): Promise<{
-    shouldTransition: boolean;
-    reason?: 'requirements_met';
-  }> {
-    // Only check for in-progress sessions
-    if (session.status !== SessionStatus.IN_PROGRESS) {
-      return { shouldTransition: false };
-    }
-
-    const phaseElapsed = this.getPhaseElapsedSeconds(session);
-    const requirements = PHASE_REQUIREMENTS[session.currentPhase];
-
-    // Check if minimum time has elapsed
-    if (phaseElapsed < requirements.minimumTimeSeconds) {
-      return { shouldTransition: false };
-    }
-
-    // Check if user explicitly indicated readiness to advance
-    const userIsReady = detectedSignals.has('ready_to_advance');
-    if (!userIsReady) {
-      return { shouldTransition: false };
-    }
-
-    // Check if all required signals are detected
-    const requiredSignals = requirements.requiredSignals || [];
-    const allRequiredSignalsDetected = requiredSignals.every((signal) =>
-      detectedSignals.has(signal),
-    );
-
-    if (!allRequiredSignalsDetected) {
-      return { shouldTransition: false };
-    }
-
-    // All requirements met - allow natural transition
-    return {
-      shouldTransition: true,
-      reason: 'requirements_met',
-    };
-  }
-
-  /**
-   * Advance to next phase naturally (requirements met, user ready)
-   * Does not record a phase cutoff since this is a natural progression
+   * Advance to next phase
    */
   async advancePhase(sessionId: number): Promise<AdvancePhaseResult> {
     const session = await this.getSession(sessionId);
@@ -315,13 +252,10 @@ export class InterviewSessionService {
     }
 
     const previousPhase = session.currentPhase as InterviewPhase;
+    const nextPhase = this.phaseService.getNextPhase(previousPhase);
 
-    // Check if we can transition to the next phase
-    const transitionResult =
-      this.phaseService.canTransitionToNext(previousPhase);
-
-    if (!transitionResult.success || !transitionResult.nextPhase) {
-      // We're at the final phase - complete the session
+    if (!nextPhase) {
+      // At final phase - complete the session
       await this.completeSession(sessionId);
 
       return {
@@ -333,73 +267,6 @@ export class InterviewSessionService {
     }
 
     // Transition to next phase
-    const nextPhase = transitionResult.nextPhase;
-    await this.db
-      .update(interviewSessions)
-      .set({
-        currentPhase: nextPhase,
-        phaseStartedAt: sql`NOW()`,
-        updatedAt: sql`NOW()`,
-      })
-      .where(eq(interviewSessions.id, sessionId));
-
-    return {
-      success: true,
-      previousPhase,
-      currentPhase: nextPhase,
-      isCompleted: false,
-    };
-  }
-
-  /**
-   * Force advance to next phase (bypasses signal requirements)
-   * Used when time limit is exceeded
-   */
-  async forceAdvancePhase(sessionId: number): Promise<AdvancePhaseResult> {
-    const session = await this.getSession(sessionId);
-
-    if (session.status !== SessionStatus.IN_PROGRESS) {
-      throw new InvalidSessionStateException(
-        sessionId,
-        session.status,
-        'force advance phase',
-        [SessionStatus.IN_PROGRESS],
-      );
-    }
-
-    const previousPhase = session.currentPhase as InterviewPhase;
-    const phaseElapsed = this.getPhaseElapsedSeconds(session);
-    const totalElapsed = this.getElapsedSeconds(session);
-
-    // Check if we can transition to the next phase
-    const transitionResult =
-      this.phaseService.canTransitionToNext(previousPhase);
-
-    if (!transitionResult.success || !transitionResult.nextPhase) {
-      // We're at the final phase - complete the session
-      await this.completeSession(sessionId);
-
-      return {
-        success: true,
-        previousPhase,
-        currentPhase: previousPhase,
-        isCompleted: true,
-      };
-    }
-
-    // Record phase cut-off event
-    const requirements = PHASE_REQUIREMENTS[previousPhase];
-    const exceededBy = phaseElapsed - requirements.maximumTimeSeconds;
-
-    await this.phaseCutoffService.recordPhaseCutoff({
-      sessionId,
-      phase: previousPhase,
-      secondsElapsed: totalElapsed,
-      exceededBySeconds: Math.max(0, exceededBy),
-    });
-
-    // Transition to next phase (bypass guard checks)
-    const nextPhase = transitionResult.nextPhase;
     await this.db
       .update(interviewSessions)
       .set({

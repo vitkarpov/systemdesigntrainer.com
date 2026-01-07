@@ -17,7 +17,6 @@ export enum SignalName {
   DISCUSSED_TRADEOFFS = 'discussed_tradeoffs',
   STRUCTURED_APPROACH = 'structured_approach',
   ASKED_CLARIFYING_QUESTIONS = 'asked_clarifying_questions',
-  READY_TO_ADVANCE = 'ready_to_advance',
 }
 
 export interface DetectedSignal {
@@ -146,14 +145,6 @@ export class SignalService {
       /\bjust\s+to\s+confirm\b/i,
       /\bto\s+clarify\b/i,
       /\blet\s+me\s+(first\s+)?clarify\b/i,
-    ],
-    [SignalName.READY_TO_ADVANCE]: [
-      /\blet'?s\s+move\s+(to|on\s+to|forward\s+to)\b/i,
-      /\bmove\s+to\s+(the\s+)?(next|requirements|high[- ]level|deep[- ]dive|bottlenecks?|wrap[- ]up)\b/i,
-      /\bready\s+(to\s+)?(move|proceed|continue|advance)\b/i,
-      /\bI\s+think\s+(I\s+)?understand.*(move|proceed|next)\b/i,
-      /\b(shall\s+we|let'?s)\s+(proceed|continue|move\s+on)\b/i,
-      /\bI'?m\s+ready\s+for\s+(the\s+)?next\b/i,
     ],
   };
 

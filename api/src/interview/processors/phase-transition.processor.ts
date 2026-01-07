@@ -8,7 +8,6 @@ import { Job } from 'bull';
 import { Logger, Inject } from '@nestjs/common';
 import { InterviewSessionService } from '../services/interview-session.service';
 import { TranscriptService } from '../services/transcript.service';
-import { SignalService } from '../services/signal.service';
 import { DATABASE_CONNECTION } from '../../db/db.module';
 import type { db as DbType } from '../../db/db';
 import { interviewSessions } from '../../db/schema';
@@ -25,7 +24,7 @@ export interface PhaseTransitionJobData {
  * Background worker that checks all active interview sessions
  * and auto-advances phases when time limits are exceeded.
  *
- * This processor runs on a schedule (every 10 seconds) to enforce
+ * This processor runs on a schedule (every 60 seconds) to enforce
  * rigid time constraints on interview phases, mimicking real interview pressure.
  */
 @Processor('phase-transition')
@@ -37,7 +36,6 @@ export class PhaseTransitionProcessor {
     private db: typeof DbType,
     private readonly sessionService: InterviewSessionService,
     private readonly transcriptService: TranscriptService,
-    private readonly signalService: SignalService,
   ) {}
 
   @Process('check')
@@ -68,63 +66,17 @@ export class PhaseTransitionProcessor {
       for (const sessionData of activeSessions) {
         const session = this.sessionService['mapToSessionState'](sessionData);
 
-        // Get detected signals for this session
-        const signals = await this.signalService.getSessionSignals(session.id);
-        const signalNames = new Set(signals.map((s) => s.signalName));
+        // Check if time's up for current phase
+        const shouldAdvance = this.sessionService.shouldAdvancePhase(session);
 
-        // Check for natural transition first (requirements met)
-        const naturalTransition =
-          await this.sessionService.shouldNaturallyTransition(
-            session,
-            signalNames,
-          );
-
-        if (naturalTransition.shouldTransition) {
+        if (shouldAdvance) {
           this.logger.log(
-            `[Job ${job.id}] Natural transition for session ${session.id} from phase ${session.currentPhase} (requirements met)`,
+            `[Job ${job.id}] Advancing session ${session.id} from phase ${session.currentPhase} (time limit reached)`,
           );
 
           try {
-            // Advance to next phase naturally
+            // Advance to next phase
             const result = await this.sessionService.advancePhase(session.id);
-
-            // Add system message to transcript
-            const elapsedSeconds =
-              this.sessionService.getElapsedSeconds(session);
-            await this.transcriptService.addMessage({
-              sessionId: session.id,
-              role: MessageRole.SYSTEM,
-              text: result.isCompleted
-                ? '✅ Interview completed.'
-                : `✅ Moving to ${this.getPhaseDisplayName(result.currentPhase)}.`,
-              phase: result.currentPhase,
-              secondsElapsed: elapsedSeconds,
-            });
-
-            transitionedCount++;
-          } catch (error) {
-            this.logger.error(
-              `[Job ${job.id}] Failed to naturally transition session ${session.id}:`,
-              error,
-            );
-          }
-          continue;
-        }
-
-        // Check for forced transition (time exceeded)
-        const forceTransitionStatus =
-          this.sessionService.shouldForcePhaseTransition(session);
-
-        if (forceTransitionStatus.shouldTransition) {
-          this.logger.log(
-            `[Job ${job.id}] Force transitioning session ${session.id} from phase ${session.currentPhase} (exceeded by ${forceTransitionStatus.exceededBySeconds}s)`,
-          );
-
-          try {
-            // Force advance to next phase
-            const result = await this.sessionService.forceAdvancePhase(
-              session.id,
-            );
 
             // Add system message to transcript
             const elapsedSeconds =
@@ -142,7 +94,7 @@ export class PhaseTransitionProcessor {
             transitionedCount++;
           } catch (error) {
             this.logger.error(
-              `[Job ${job.id}] Failed to force transition session ${session.id}:`,
+              `[Job ${job.id}] Failed to advance session ${session.id}:`,
               error,
             );
           }

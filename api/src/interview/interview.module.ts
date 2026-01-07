@@ -3,11 +3,9 @@ import { BullModule } from '@nestjs/bull';
 import { InterviewSessionService } from './services/interview-session.service';
 import { InterviewCasesService } from './services/interview-cases.service';
 import { PhaseService } from './services/phase.service';
-import { PhaseGuardService } from './services/phase-guard.service';
 import { TranscriptService } from './services/transcript.service';
 import { SignalService } from './services/signal.service';
 import { RedFlagService } from './services/red-flag.service';
-import { PhaseCutoffService } from './services/phase-cutoff.service';
 import { FeedbackService } from './services/feedback.service';
 import { DiagramService } from './services/diagram.service';
 import { ConversationSagaService } from './services/conversation-saga.service';
@@ -50,11 +48,9 @@ import { AuthModule } from '../auth/auth.module';
     InterviewSessionService,
     InterviewCasesService,
     PhaseService,
-    PhaseGuardService,
     TranscriptService,
     SignalService,
     RedFlagService,
-    PhaseCutoffService,
     FeedbackService,
     DiagramService,
     ConversationSagaService,
@@ -67,7 +63,6 @@ import { AuthModule } from '../auth/auth.module';
     InterviewSessionService,
     InterviewCasesService,
     PhaseService,
-    PhaseGuardService,
     TranscriptService,
     SignalService,
     RedFlagService,

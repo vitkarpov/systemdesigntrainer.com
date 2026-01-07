@@ -11,7 +11,6 @@ import {
 } from '../../db/schema';
 import { SignalService, SignalName } from './signal.service';
 import { RedFlagService, RedFlagName } from './red-flag.service';
-import { PhaseCutoffService } from './phase-cutoff.service';
 import { InterviewSessionService } from './interview-session.service';
 import {
   BASE_SCORES,
@@ -67,7 +66,6 @@ export class FeedbackService {
     private db: typeof DbType,
     private signalService: SignalService,
     private redFlagService: RedFlagService,
-    private phaseCutoffService: PhaseCutoffService,
     private sessionService: InterviewSessionService,
   ) {}
 
@@ -164,12 +162,6 @@ export class FeedbackService {
       timeManagementScore -=
         RED_FLAG_SCORING[RedFlagName.POOR_TIME_MANAGEMENT].timeManagement;
 
-    // Penalty for phase cut-offs (force-transitioned phases)
-    const cutOffCount =
-      await this.phaseCutoffService.getPhaseCutoffCount(sessionId);
-    timeManagementScore -=
-      cutOffCount * TIME_MANAGEMENT_PENALTIES.PHASE_CUT_OFF;
-
     // Bonus for completing interview
     if (session.status === 'completed')
       timeManagementScore += TIME_MANAGEMENT_BONUSES.COMPLETED_SESSION;
@@ -225,8 +217,6 @@ export class FeedbackService {
   ): Promise<FeedbackItemData[]> {
     const signals = await this.signalService.getSessionSignals(sessionId);
     const redFlags = await this.redFlagService.getSessionRedFlags(sessionId);
-    const phaseCutoffs =
-      await this.phaseCutoffService.getSessionPhaseCutoffs(sessionId);
 
     const signalNames = new Set(signals.map((s) => s.signalName));
     const redFlagNames = new Set(redFlags.map((f) => f.flagName));
@@ -320,27 +310,6 @@ export class FeedbackService {
       });
     }
 
-    // Phase timing weaknesses
-    if (phaseCutoffs.length > 0) {
-      const phaseNames = phaseCutoffs
-        .map((cutoff) => this.getPhaseDisplayName(cutoff.phase))
-        .join(', ');
-
-      if (phaseCutoffs.length === 1) {
-        items.push({
-          type: 'weakness',
-          description: `You ran out of time during ${phaseNames}. In real interviews, the interviewer will move you along regardless of completion.`,
-          displayOrder: order++,
-        });
-      } else {
-        items.push({
-          type: 'weakness',
-          description: `You ran out of time in ${phaseCutoffs.length} phases (${phaseNames}). This indicates you need to be more concise and prioritize critical information.`,
-          displayOrder: order++,
-        });
-      }
-    }
-
     // Suggestions
     if (scores.requirements < SUGGESTION_THRESHOLDS.REQUIREMENTS) {
       items.push({
@@ -378,16 +347,6 @@ export class FeedbackService {
       });
     }
 
-    // Phase timing suggestions
-    if (phaseCutoffs.length > 0) {
-      items.push({
-        type: 'suggestion',
-        description:
-          'Practice with a timer: Set phase boundaries (5, 15, 25, 40 min) and force yourself to move on when time is up. This builds the discipline needed for real interviews.',
-        displayOrder: order++,
-      });
-    }
-
     return items;
   }
 
@@ -399,8 +358,6 @@ export class FeedbackService {
     scores: FeedbackScores,
   ): Promise<FeedbackNextStepData[]> {
     const redFlags = await this.redFlagService.getSessionRedFlags(sessionId);
-    const phaseCutoffs =
-      await this.phaseCutoffService.getSessionPhaseCutoffs(sessionId);
     const redFlagNames = new Set(redFlags.map((f) => f.flagName));
 
     const nextSteps: FeedbackNextStepData[] = [];
@@ -442,21 +399,13 @@ export class FeedbackService {
 
     if (
       weakestArea === 'timeManagement' ||
-      redFlagNames.has(RedFlagName.POOR_TIME_MANAGEMENT) ||
-      phaseCutoffs.length > 0
+      redFlagNames.has(RedFlagName.POOR_TIME_MANAGEMENT)
     ) {
-      if (phaseCutoffs.length > 0) {
-        nextSteps.push({
-          description: `Improve time management: You exceeded time limits in ${phaseCutoffs.length} phase${phaseCutoffs.length > 1 ? 's' : ''}. Practice being more concise and prioritizing essential information over details.`,
-          displayOrder: order++,
-        });
-      } else {
-        nextSteps.push({
-          description:
-            'Improve time management: Set a timer and practice phase transitions at 5, 15, 25, and 40-minute marks.',
-          displayOrder: order++,
-        });
-      }
+      nextSteps.push({
+        description:
+          'Improve time management: Set a timer and practice phase transitions at 5, 15, 25, and 40-minute marks.',
+        displayOrder: order++,
+      });
     }
 
     if (weakestArea === 'depth') {
