@@ -24,23 +24,19 @@ export class StripeService {
     {
       productType: '3_interviews' | '5_interviews' | 'unlimited';
       interviewsGranted: number;
-      amountPaid: number;
     }
   > = {
     [ProductTier.THREE_INTERVIEWS]: {
       productType: '3_interviews' as const,
       interviewsGranted: 3,
-      amountPaid: 3900,
     },
     [ProductTier.FIVE_INTERVIEWS]: {
       productType: '5_interviews' as const,
       interviewsGranted: 5,
-      amountPaid: 5900,
     },
     [ProductTier.UNLIMITED]: {
       productType: 'unlimited' as const,
       interviewsGranted: 9999,
-      amountPaid: 14900,
     },
   };
 

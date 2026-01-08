@@ -23,7 +23,7 @@ export function InterviewCounter() {
     >
       <Zap className="h-4 w-4" />
       {isUnlimited ? (
-        <span>Unlimited</span>
+        <span>∞</span>
       ) : (
         <>
           <span>{remaining}</span>

@@ -36,9 +36,9 @@ const tiers: PricingTier[] = [
   {
     id: 'starter',
     name: 'Starter Pack',
-    price: '$39',
+    price: '$9',
     productTier: ProductTier.THREE_INTERVIEWS,
-    pricePerInterview: '$13 per interview',
+    pricePerInterview: '$3 per interview',
     description: 'Perfect for trying out the platform',
     features: [
       '3 interview simulations',
@@ -51,9 +51,9 @@ const tiers: PricingTier[] = [
   {
     id: 'power',
     name: 'Power Pack',
-    price: '$59',
+    price: '$12',
     productTier: ProductTier.FIVE_INTERVIEWS,
-    pricePerInterview: '$11.80 per interview',
+    pricePerInterview: '$2.40 per interview',
     description: 'Best value for comprehensive prep',
     features: [
       '5 interview simulations',
@@ -68,7 +68,7 @@ const tiers: PricingTier[] = [
   {
     id: 'unlimited',
     name: 'Pro Unlimited',
-    price: '$149',
+    price: '$49',
     productTier: ProductTier.UNLIMITED,
     description: 'Unlimited practice for serious prep',
     features: [
