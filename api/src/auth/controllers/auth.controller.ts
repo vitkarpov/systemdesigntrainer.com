@@ -106,7 +106,6 @@ export class AuthController {
     } catch (error) {
       // Handle email verification required error
       if (error instanceof EmailVerificationRequiredException) {
-        console.log('Email verification required for:', error.email);
         const verificationParams = new URLSearchParams({
           email: error.email,
           verification_id: error.emailVerificationId,
@@ -117,7 +116,7 @@ export class AuthController {
         );
       }
 
-      console.error('Callback error:', error);
+      console.error('Authentication callback failed:', error.message || error);
       return res.redirect(
         `${frontendUrl}/auth/error?error=authentication_failed&error_description=Failed to complete authentication`,
       );
@@ -215,7 +214,10 @@ export class AuthController {
       // Redirect to success page
       return res.redirect(`${frontendUrl}/auth/callback`);
     } catch (error) {
-      console.error('Email verification error:', error);
+      console.error(
+        'Email verification callback failed:',
+        error.message || error,
+      );
       return res.redirect(
         `${frontendUrl}/auth/error?error=verification_failed&error_description=Failed to verify email`,
       );

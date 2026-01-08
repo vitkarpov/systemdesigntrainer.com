@@ -129,19 +129,27 @@ export class AuthService {
 
       return { user, accessToken, workosSessionId };
     } catch (error) {
-      console.error('WorkOS authentication error:', error);
-
       // Check if this is an email verification required error
       if (
         error?.status === 403 &&
         error?.rawData?.code === 'email_verification_required'
       ) {
+        console.log(
+          `Email verification required for: ${error.rawData.email} (verification_id: ${error.rawData.email_verification_id})`,
+        );
         throw new EmailVerificationRequiredException(
           error.rawData.email,
           error.rawData.pending_authentication_token,
           error.rawData.email_verification_id,
         );
       }
+
+      // Log unexpected authentication errors with details
+      console.error('WorkOS authentication failed:', {
+        status: error?.status,
+        code: error?.rawData?.code,
+        message: error?.message || error,
+      });
 
       throw new UnauthorizedException('Authentication failed');
     }
@@ -214,7 +222,11 @@ export class AuthService {
 
       return { user, accessToken, workosSessionId };
     } catch (error) {
-      console.error('WorkOS email verification error:', error);
+      console.error('WorkOS email verification failed:', {
+        status: error?.status,
+        code: error?.rawData?.code,
+        message: error?.message || error,
+      });
       throw new UnauthorizedException('Email verification failed');
     }
   }
