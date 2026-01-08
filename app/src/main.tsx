@@ -12,6 +12,10 @@ if (import.meta.env.MODE === 'production') {
     ],
     replaysSessionSampleRate: 1.0,
     replaysOnErrorSampleRate: 1.0,
+    ignoreErrors: [
+      'Error invoking post',
+      'Method not found',
+    ],
   });
 }
 
