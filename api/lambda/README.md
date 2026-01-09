@@ -75,6 +75,67 @@ cat response.json
 }
 ```
 
+### `generate-feedback`
+
+Manually trigger feedback generation for a completed interview session. This enqueues a job to the Bull queue, which will asynchronously generate feedback using the existing feedback processor.
+
+**Use case:** When the UI never calls the POST feedback endpoint, use this to manually generate feedback for a session.
+
+**Payload:**
+```typescript
+{
+  sessionId: number;  // Required: Session ID to generate feedback for
+  userId?: number;    // Optional: User ID (defaults to session owner)
+}
+```
+
+**Example:**
+```bash
+aws lambda invoke \
+  --function-name sd-sim-production-admin \
+  --cli-binary-format raw-in-base64-out \
+  --payload '{
+    "operation": "generate-feedback",
+    "payload": {
+      "sessionId": 123
+    }
+  }' \
+  --region eu-west-1 \
+  response.json
+
+cat response.json
+```
+
+**Response (success - job enqueued):**
+```json
+{
+  "success": true,
+  "operation": "generate-feedback",
+  "data": {
+    "sessionId": 123,
+    "jobId": "abc123",
+    "status": "queued",
+    "alreadyExists": false
+  }
+}
+```
+
+**Response (feedback already exists):**
+```json
+{
+  "success": true,
+  "operation": "generate-feedback",
+  "data": {
+    "sessionId": 123,
+    "jobId": "N/A",
+    "status": "already_exists",
+    "alreadyExists": true
+  }
+}
+```
+
+**Note:** The job is processed asynchronously by the existing `FeedbackProcessor`. Check the Bull queue or database for completion status.
+
 ## Deployment
 
 ### Initial Setup

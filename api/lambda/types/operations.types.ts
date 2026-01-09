@@ -61,3 +61,35 @@ export type AddCreditsEvent = AdminOperationEvent<AddCreditsPayload> & {
 export type AddCreditsResponse = AdminOperationResponse<AddCreditsData> & {
   operation: 'add-credits';
 };
+
+/**
+ * Generate Feedback Operation Types
+ */
+export interface GenerateFeedbackPayload {
+  /** Session ID to generate feedback for */
+  sessionId: number;
+  /** User ID (optional, for admin context) */
+  userId?: number;
+}
+
+export interface GenerateFeedbackData {
+  /** Session ID */
+  sessionId: number;
+  /** Bull queue job ID */
+  jobId: string | number;
+  /** Job status */
+  status: 'queued' | 'processing' | 'already_exists';
+  /** If feedback already exists */
+  alreadyExists?: boolean;
+}
+
+/**
+ * Type-safe operation events
+ */
+export type GenerateFeedbackEvent = AdminOperationEvent<GenerateFeedbackPayload> & {
+  operation: 'generate-feedback';
+};
+
+export type GenerateFeedbackResponse = AdminOperationResponse<GenerateFeedbackData> & {
+  operation: 'generate-feedback';
+};

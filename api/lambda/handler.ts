@@ -3,10 +3,12 @@ import type {
   AdminOperationEvent,
   AdminOperationResponse,
   AddCreditsPayload,
+  GenerateFeedbackPayload,
 } from './types/operations.types';
 
 // Import operation handlers
 import { addCredits } from './operations/add-credits';
+import { generateFeedback } from './operations/generate-feedback';
 
 /**
  * Main Lambda handler that routes to different admin operations
@@ -42,14 +44,12 @@ export async function handler(
         result = await addCredits(db, event.payload as AddCreditsPayload);
         break;
 
-      // Add more operations here:
-      // case 'update-subscription':
-      //   result = await updateSubscription(db, event.payload);
-      //   break;
-
-      // case 'reset-password':
-      //   result = await resetPassword(db, event.payload);
-      //   break;
+      case 'generate-feedback':
+        result = await generateFeedback(
+          db,
+          event.payload as GenerateFeedbackPayload,
+        );
+        break;
 
       default:
         result = {
