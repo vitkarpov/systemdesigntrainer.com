@@ -266,15 +266,6 @@ resource "aws_security_group" "rds" {
   description = "Security group for RDS PostgreSQL"
   vpc_id      = aws_vpc.main.id
 
-  # Allow PostgreSQL from ECS
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs.id]
-    description     = "Allow PostgreSQL from ECS tasks"
-  }
-
   # Allow all outbound
   egress {
     from_port   = 0
@@ -287,6 +278,17 @@ resource "aws_security_group" "rds" {
   tags = {
     Name = "${var.project_name}-${var.environment}-rds-sg"
   }
+}
+
+# Allow PostgreSQL from ECS (separate rule to avoid conflicts with other modules)
+resource "aws_security_group_rule" "rds_from_ecs" {
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.ecs.id
+  security_group_id        = aws_security_group.rds.id
+  description              = "Allow PostgreSQL from ECS tasks"
 }
 
 # Redis Security Group
@@ -348,3 +350,4 @@ resource "aws_security_group" "nat" {
     Name = "${var.project_name}-${var.environment}-nat-sg"
   }
 }
+
