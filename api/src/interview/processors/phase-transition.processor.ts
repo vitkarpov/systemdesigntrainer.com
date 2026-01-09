@@ -3,8 +3,9 @@ import {
   Process,
   OnQueueCompleted,
   OnQueueFailed,
+  InjectQueue,
 } from '@nestjs/bull';
-import { Job } from 'bull';
+import { Job, Queue } from 'bull';
 import { Logger, Inject } from '@nestjs/common';
 import { InterviewSessionService } from '../services/interview-session.service';
 import { TranscriptService } from '../services/transcript.service';
@@ -36,6 +37,7 @@ export class PhaseTransitionProcessor {
     private db: typeof DbType,
     private readonly sessionService: InterviewSessionService,
     private readonly transcriptService: TranscriptService,
+    @InjectQueue('feedback') private feedbackQueue: Queue,
   ) {}
 
   @Process('check')
@@ -77,6 +79,30 @@ export class PhaseTransitionProcessor {
           try {
             // Advance to next phase
             const result = await this.sessionService.advancePhase(session.id);
+
+            // Enqueue feedback generation if session completed
+            if (result.isCompleted) {
+              this.logger.log(
+                `[Job ${job.id}] Session ${session.id} auto-completed, enqueuing feedback generation`,
+              );
+
+              await this.feedbackQueue.add(
+                'generate',
+                {
+                  sessionId: session.id,
+                  userId: sessionData.userId,
+                },
+                {
+                  attempts: 3,
+                  backoff: {
+                    type: 'exponential',
+                    delay: 2000,
+                  },
+                  removeOnComplete: 100,
+                  removeOnFail: 1000,
+                },
+              );
+            }
 
             // Add system message to transcript
             const elapsedSeconds =
