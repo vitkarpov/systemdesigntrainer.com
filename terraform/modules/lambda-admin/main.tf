@@ -140,6 +140,15 @@ resource "aws_security_group" "lambda" {
     description     = "Allow PostgreSQL to RDS"
   }
 
+  # Egress to Redis
+  egress {
+    from_port       = var.redis_port
+    to_port         = var.redis_port
+    protocol        = "tcp"
+    security_groups = [var.redis_security_group_id]
+    description     = "Allow Redis access"
+  }
+
   # Egress to Secrets Manager API (HTTPS)
   egress {
     from_port   = 443
@@ -165,6 +174,17 @@ resource "aws_security_group_rule" "lambda_to_rds" {
   source_security_group_id = aws_security_group.lambda.id
   security_group_id        = var.rds_security_group_id
   description              = "Allow PostgreSQL from Lambda admin functions"
+}
+
+# Allow Lambda to access Redis (ingress rule on Redis security group)
+resource "aws_security_group_rule" "lambda_to_redis" {
+  type                     = "ingress"
+  from_port                = var.redis_port
+  to_port                  = var.redis_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.lambda.id
+  security_group_id        = var.redis_security_group_id
+  description              = "Allow Redis from Lambda admin functions"
 }
 
 # CloudWatch Log Group
@@ -202,6 +222,8 @@ resource "aws_lambda_function" "admin" {
       DB_USER                = var.rds_username
       DB_NAME                = var.rds_database_name
       DB_PASSWORD_SECRET_ARN = var.secrets_arn
+      REDIS_HOST             = var.redis_endpoint
+      REDIS_PORT             = tostring(var.redis_port)
       NODE_ENV               = var.environment
     }
   }

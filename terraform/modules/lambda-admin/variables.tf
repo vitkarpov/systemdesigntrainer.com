@@ -29,6 +29,11 @@ variable "rds_security_group_id" {
   type        = string
 }
 
+variable "redis_security_group_id" {
+  description = "ID of the Redis security group"
+  type        = string
+}
+
 # Database
 variable "rds_endpoint" {
   description = "RDS instance endpoint (host:port or just host)"
@@ -55,6 +60,18 @@ variable "rds_database_name" {
 variable "secrets_arn" {
   description = "ARN of the Secrets Manager secret containing database password"
   type        = string
+}
+
+# Redis
+variable "redis_endpoint" {
+  description = "Redis cluster endpoint (configuration endpoint for cluster mode, or primary endpoint)"
+  type        = string
+}
+
+variable "redis_port" {
+  description = "Redis port"
+  type        = number
+  default     = 6379
 }
 
 # Lambda

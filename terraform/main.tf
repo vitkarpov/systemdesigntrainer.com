@@ -94,9 +94,10 @@ module "lambda_admin" {
   aws_region   = var.aws_region
 
   # Networking
-  vpc_id                = module.networking.vpc_id
-  private_subnet_ids    = module.networking.private_subnet_ids
-  rds_security_group_id = module.networking.rds_security_group_id
+  vpc_id                  = module.networking.vpc_id
+  private_subnet_ids      = module.networking.private_subnet_ids
+  rds_security_group_id   = module.networking.rds_security_group_id
+  redis_security_group_id = module.networking.redis_security_group_id
 
   # Database
   rds_endpoint      = module.storage.rds_address
@@ -104,6 +105,10 @@ module "lambda_admin" {
   rds_username      = module.storage.rds_username
   rds_database_name = module.storage.rds_database_name
   secrets_arn       = module.secrets.secret_arn
+
+  # Redis
+  redis_endpoint = module.storage.redis_endpoint
+  redis_port     = module.storage.redis_port
 
   # Lambda image (use placeholder for initial deployment, then update with actual image)
   # After initial terraform apply, build and push the image, then update this
