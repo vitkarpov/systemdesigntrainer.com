@@ -4,7 +4,7 @@ import { BullModule } from '@nestjs/bull';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { AppController } from './app.controller';
-import { DatabaseModule } from './db/db.module';
+import { DatabaseModule } from '../db/db.module';
 import { InterviewModule } from './interview/interview.module';
 import { AuthModule } from './auth/auth.module';
 import { RedisModule } from './redis/redis.module';

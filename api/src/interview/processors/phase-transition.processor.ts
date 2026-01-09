@@ -9,9 +9,9 @@ import { Job, Queue } from 'bull';
 import { Logger, Inject } from '@nestjs/common';
 import { InterviewSessionService } from '../services/interview-session.service';
 import { TranscriptService } from '../services/transcript.service';
-import { DATABASE_CONNECTION } from '../../db/db.module';
-import type { db as DbType } from '../../db/db';
-import { interviewSessions } from '../../db/schema';
+import { DATABASE_CONNECTION } from '../../../db/db.module';
+import type { db as DbType } from '../../../db/db';
+import { interviewSessions } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import { InterviewPhase, MessageRole } from '../types/session.types';
 

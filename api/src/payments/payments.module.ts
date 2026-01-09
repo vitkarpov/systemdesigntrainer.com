@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PaymentsController } from './controllers/payments.controller';
 import { StripeService } from './services/stripe.service';
-import { DatabaseModule } from '../db/db.module';
+import { DatabaseModule } from '../../db/db.module';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({

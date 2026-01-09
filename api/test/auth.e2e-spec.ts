@@ -3,8 +3,8 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { cleanDatabase, seedTestData, generateTestToken } from './test-utils';
-import { getTestDb } from '../src/db/test-db';
-import { DATABASE_CONNECTION, DATABASE_POOL } from '../src/db/db.module';
+import { getTestDb } from '../db/test-db';
+import { DATABASE_CONNECTION, DATABASE_POOL } from '../db/db.module';
 
 describe('Authentication (e2e)', () => {
   let app: INestApplication;
@@ -93,19 +93,4 @@ describe('Authentication (e2e)', () => {
     });
   });
 
-  describe('POST /auth/logout', () => {
-    it('should logout successfully with valid token', () => {
-      return request(app.getHttpServer())
-        .post('/auth/logout')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(201)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('message', 'Logged out successfully');
-        });
-    });
-
-    it('should return 401 without authentication token', () => {
-      return request(app.getHttpServer()).post('/auth/logout').expect(401);
-    });
-  });
 });

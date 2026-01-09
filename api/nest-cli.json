@@ -6,8 +6,9 @@
     "deleteOutDir": true,
     "assets": [
       {
-        "include": "db/migrations/**/*",
-        "outDir": "dist"
+        "include": "../db/migrations/**/*",
+        "outDir": "dist",
+        "watchAssets": true
       }
     ],
     "plugins": [

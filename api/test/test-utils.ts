@@ -1,4 +1,4 @@
-import { getTestDb } from '../src/db/test-db';
+import { getTestDb } from '../db/test-db';
 import {
   users,
   interviewCases,
@@ -13,7 +13,7 @@ import {
   feedbackReports,
   feedbackItems,
   feedbackNextSteps,
-} from '../src/db/schema';
+} from '../db/schema';
 
 /**
  * Clean all tables in the test database

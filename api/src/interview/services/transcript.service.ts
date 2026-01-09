@@ -1,8 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { eq, desc, and } from 'drizzle-orm';
-import { DATABASE_CONNECTION } from '../../db/db.module';
-import type { db as DbType } from '../../db/db';
-import { transcriptMessages } from '../../db/schema';
+import { DATABASE_CONNECTION } from '../../../db/db.module';
+import type { db as DbType } from '../../../db/db';
+import { transcriptMessages } from '../../../db/schema';
 import { MessageRole, InterviewPhase } from '../types/session.types';
 
 export interface AddMessageDto {

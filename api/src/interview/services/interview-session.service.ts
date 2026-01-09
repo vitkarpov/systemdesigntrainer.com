@@ -1,8 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { eq, sql } from 'drizzle-orm';
-import { DATABASE_CONNECTION } from '../../db/db.module';
-import type { db as DbType } from '../../db/db';
-import { interviewSessions, interviewCases } from '../../db/schema';
+import { DATABASE_CONNECTION } from '../../../db/db.module';
+import type { db as DbType } from '../../../db/db';
+import { interviewSessions, interviewCases } from '../../../db/schema';
 import { PhaseService } from './phase.service';
 import {
   SessionStatus,

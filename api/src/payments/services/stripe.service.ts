@@ -2,8 +2,8 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
-import { DATABASE_CONNECTION } from '../../db/db.module';
-import * as schema from '../../db/schema';
+import { DATABASE_CONNECTION } from '../../../db/db.module';
+import * as schema from '../../../db/schema';
 import { ProductTier } from '../dto/checkout.dto';
 
 @Injectable()

@@ -9,8 +9,8 @@ import {
   generateTestToken,
   createTestSession,
 } from './test-utils';
-import { getTestDb } from '../src/db/test-db';
-import { DATABASE_CONNECTION, DATABASE_POOL } from '../src/db/db.module';
+import { getTestDb } from '../db/test-db';
+import { DATABASE_CONNECTION, DATABASE_POOL } from '../db/db.module';
 import { AiService } from '../src/ai/services/ai.service';
 import { MockAiService } from './mocks/ai.service.mock';
 
@@ -60,7 +60,7 @@ describe('Conversation & AI Integration (e2e)', () => {
 
     // Set startedAt for the session
     const { db } = getTestDb();
-    const { interviewSessions } = await import('../src/db/schema');
+    const { interviewSessions } = await import('../db/schema');
     await db
       .update(interviewSessions)
       .set({ startedAt: new Date() })
@@ -125,7 +125,7 @@ describe('Conversation & AI Integration (e2e)', () => {
 
     it('should return 403 for unauthorized session access', async () => {
       const { db } = getTestDb();
-      const { users, interviewSessions } = await import('../src/db/schema');
+      const { users, interviewSessions } = await import('../db/schema');
 
       const [otherUser] = await db
         .insert(users)
@@ -242,7 +242,7 @@ describe('Conversation & AI Integration (e2e)', () => {
     it('should detect implementation details in early phase', async () => {
       // Move back to problem phase
       const { db } = getTestDb();
-      const { interviewSessions } = await import('../src/db/schema');
+      const { interviewSessions } = await import('../db/schema');
       await db
         .update(interviewSessions)
         .set({ currentPhase: 'problem' })
@@ -274,7 +274,7 @@ describe('Conversation & AI Integration (e2e)', () => {
     it('should detect poor time management', async () => {
       // Set session to have started 11 minutes ago, still in problem phase
       const { db } = getTestDb();
-      const { interviewSessions } = await import('../src/db/schema');
+      const { interviewSessions } = await import('../db/schema');
       const elevenMinutesAgo = new Date(Date.now() - 11 * 60 * 1000);
 
       await db

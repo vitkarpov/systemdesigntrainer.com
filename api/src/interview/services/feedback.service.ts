@@ -2,13 +2,13 @@ import { Injectable, Inject } from '@nestjs/common';
 import { FeedbackNotFoundException } from '../exceptions/feedback-not-found.exception';
 import { SessionNotFoundException } from '../exceptions/session-not-found.exception';
 import { eq } from 'drizzle-orm';
-import { DATABASE_CONNECTION } from '../../db/db.module';
-import type { db as DbType } from '../../db/db';
+import { DATABASE_CONNECTION } from '../../../db/db.module';
+import type { db as DbType } from '../../../db/db';
 import {
   feedbackReports,
   feedbackItems,
   feedbackNextSteps,
-} from '../../db/schema';
+} from '../../../db/schema';
 import { SignalService, SignalName } from './signal.service';
 import { RedFlagService, RedFlagName } from './red-flag.service';
 import { InterviewSessionService } from './interview-session.service';

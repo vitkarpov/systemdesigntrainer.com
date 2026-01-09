@@ -1,9 +1,9 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import { DATABASE_CONNECTION } from '../../db/db.module';
-import type { db as DbType } from '../../db/db';
-import { interviewCases } from '../../db/schema';
-import type { InterviewCase } from '../../db/schema/interview-cases.schema';
+import { DATABASE_CONNECTION } from '../../../db/db.module';
+import type { db as DbType } from '../../../db/db';
+import { interviewCases } from '../../../db/schema';
+import type { InterviewCase } from '../../../db/schema/interview-cases.schema';
 
 @Injectable()
 export class InterviewCasesService {

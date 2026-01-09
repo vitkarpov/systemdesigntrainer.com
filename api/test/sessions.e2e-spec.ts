@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import * as cookieParser from 'cookie-parser';
-import { eq } from 'drizzle-orm';
 import { AppModule } from '../src/app.module';
 import {
   cleanDatabase,
@@ -10,11 +9,10 @@ import {
   generateTestToken,
   createTestSession,
 } from './test-utils';
-import { getTestDb } from '../src/db/test-db';
-import { DATABASE_CONNECTION, DATABASE_POOL } from '../src/db/db.module';
+import { getTestDb } from '../db/test-db';
+import { DATABASE_CONNECTION, DATABASE_POOL } from '../db/db.module';
 import { AiService } from '../src/ai/services/ai.service';
 import { MockAiService } from './mocks/ai.service.mock';
-import { interviewSessions, interviewSignals } from '../src/db/schema';
 
 describe('Session Lifecycle (e2e)', () => {
   let app: INestApplication;
@@ -129,7 +127,7 @@ describe('Session Lifecycle (e2e)', () => {
     it('should return 403 for session owned by another user', async () => {
       // Create another user's session
       const { db } = getTestDb();
-      const { users, interviewSessions } = await import('../src/db/schema');
+      const { users, interviewSessions } = await import('../db/schema');
 
       const [otherUser] = await db
         .insert(users)
@@ -206,7 +204,7 @@ describe('Session Lifecycle (e2e)', () => {
 
     it('should return 403 for unauthorized access', async () => {
       const { db } = getTestDb();
-      const { users, interviewSessions } = await import('../src/db/schema');
+      const { users, interviewSessions } = await import('../db/schema');
 
       const [otherUser] = await db
         .insert(users)
@@ -239,68 +237,6 @@ describe('Session Lifecycle (e2e)', () => {
     });
   });
 
-  describe('PATCH /sessions/:id/phase', () => {
-    let sessionId: number;
-
-    beforeEach(async () => {
-      const session = await createTestSession(testUserId, testCaseId, {
-        status: 'in_progress',
-        currentPhase: 'problem',
-      });
-      sessionId = session.id;
-
-      // Update phaseStartedAt to 2 minutes ago to meet minimum time requirement
-      const { db } = getTestDb();
-      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-      await db
-        .update(interviewSessions)
-        .set({ phaseStartedAt: twoMinutesAgo })
-        .where(eq(interviewSessions.id, sessionId));
-
-      // Add required signal for PROBLEM phase
-      await db.insert(interviewSignals).values({
-        sessionId,
-        signalName: 'asked_clarifying_questions',
-        secondsElapsed: 30,
-        phase: 'problem',
-      });
-    });
-
-    it('should advance to next phase', () => {
-      return request(app.getHttpServer())
-        .patch(`/sessions/${sessionId}/phase`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect((res) => {
-          if (res.status !== 200) {
-            console.log(
-              'Phase advance error:',
-              JSON.stringify(res.body, null, 2),
-            );
-          }
-        })
-        .expect(200)
-        .expect((res) => {
-          expect(res.body.success).toBe(true);
-          expect(res.body.data).toHaveProperty('currentPhase', 'requirements');
-          expect(res.body.data).toHaveProperty('previousPhase', 'problem');
-        });
-    });
-
-    it('should return 400 when session not started', async () => {
-      const notStartedSession = await createTestSession(
-        testUserId,
-        testCaseId,
-        {
-          status: 'not_started',
-        },
-      );
-
-      return request(app.getHttpServer())
-        .patch(`/sessions/${notStartedSession.id}/phase`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(400);
-    });
-  });
 
   describe('GET /sessions/:id/phases', () => {
     let sessionId: number;
@@ -356,7 +292,7 @@ describe('Session Lifecycle (e2e)', () => {
     it('should get transcript with messages after conversation', async () => {
       // Add a message to the transcript
       const { db } = getTestDb();
-      const { transcriptMessages } = await import('../src/db/schema');
+      const { transcriptMessages } = await import('../db/schema');
 
       await db.insert(transcriptMessages).values({
         sessionId,

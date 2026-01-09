@@ -1,4 +1,4 @@
-import { closeTestDb } from '../src/db/test-db';
+import { closeTestDb } from '../db/test-db';
 import * as dotenv from 'dotenv';
 import { resolve } from 'path';
 

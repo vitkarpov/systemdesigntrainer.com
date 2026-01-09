@@ -1,8 +1,8 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq, sql } from 'drizzle-orm';
-import * as schema from '../../db/schema';
-import { DATABASE_CONNECTION } from '../../db/db.module';
+import * as schema from '../../../db/schema';
+import { DATABASE_CONNECTION } from '../../../db/db.module';
 import { TranscriptService } from './transcript.service';
 import { SignalService } from './signal.service';
 import { RedFlagService } from './red-flag.service';

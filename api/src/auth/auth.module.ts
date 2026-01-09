@@ -5,7 +5,7 @@ import { UserService } from './services/user.service';
 import { PaymentGuardService } from './services/payment-guard.service';
 import { AuthController } from './controllers/auth.controller';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { DatabaseModule } from '../db/db.module';
+import { DatabaseModule } from '../../db/db.module';
 
 @Module({
   imports: [DatabaseModule],

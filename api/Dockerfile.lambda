@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Build the lambda separately (now in /lambda instead of /src/lambda)
-RUN npx tsc lambda/**/*.ts --outDir dist/lambda --module commonjs --target ES2021 --esModuleInterop --skipLibCheck
+RUN npx tsc --project tsconfig.lambda.json
 
 # Lambda runtime stage
 FROM public.ecr.aws/lambda/nodejs:20

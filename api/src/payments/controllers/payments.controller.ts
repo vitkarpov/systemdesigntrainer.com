@@ -25,7 +25,7 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Public } from '../../auth/decorators/public.decorator';
-import { User } from '../../db/schema';
+import { User } from '../../../db/schema';
 
 @ApiTags('Payments')
 @Controller('payments')

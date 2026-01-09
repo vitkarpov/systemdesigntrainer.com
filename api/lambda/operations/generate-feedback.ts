@@ -1,8 +1,8 @@
 import { Queue } from 'bull';
 import Bull from 'bull';
 import { eq } from 'drizzle-orm';
-import { interviewSessions } from '../../src/db/schema/interview-sessions.schema';
-import { feedbackReports } from '../../src/db/schema/feedback.schema';
+import { interviewSessions } from '../../db/schema/interview-sessions.schema';
+import { feedbackReports } from '../../db/schema/feedback.schema';
 import type {
   GenerateFeedbackPayload,
   GenerateFeedbackResponse,

@@ -47,7 +47,6 @@ tmp
 temp
 *.tmp
 
-# Lambda (separate deployment)
-lambda
+# Lambda files (keep lambda directory - needed for Dockerfile.lambda build)
 Dockerfile.lambda
 build-lambda.sh

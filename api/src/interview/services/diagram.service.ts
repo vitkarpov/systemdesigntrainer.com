@@ -1,8 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../db/db.module';
-import type { db as DbType } from '../../db/db';
+import { DATABASE_CONNECTION } from '../../../db/db.module';
+import type { db as DbType } from '../../../db/db';
 import { eq, desc } from 'drizzle-orm';
-import { diagramSnapshots, diagramElements } from '../../db/schema';
+import { diagramSnapshots, diagramElements } from '../../../db/schema';
 import { InterviewPhase } from '../types/session.types';
 
 export interface SaveDiagramDto {

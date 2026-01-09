@@ -9,8 +9,8 @@ import {
   generateTestToken,
   createTestSession,
 } from './test-utils';
-import { getTestDb } from '../src/db/test-db';
-import { DATABASE_CONNECTION, DATABASE_POOL } from '../src/db/db.module';
+import { getTestDb } from '../db/test-db';
+import { DATABASE_CONNECTION, DATABASE_POOL } from '../db/db.module';
 import { eq } from 'drizzle-orm';
 import { getQueueToken } from '@nestjs/bull';
 import { Queue } from 'bull';
@@ -64,7 +64,7 @@ describe('Feedback Generation (e2e)', () => {
 
     // Set session times
     const { db } = getTestDb();
-    const { interviewSessions } = await import('../src/db/schema');
+    const { interviewSessions } = await import('../db/schema');
     const now = new Date();
     const startTime = new Date(now.getTime() - 45 * 60 * 1000); // 45 minutes ago
 
@@ -109,7 +109,7 @@ describe('Feedback Generation (e2e)', () => {
     it('should start async feedback generation for completed session', async () => {
       // Add some signals to make feedback more meaningful
       const { db } = getTestDb();
-      const { interviewSignals } = await import('../src/db/schema');
+      const { interviewSignals } = await import('../db/schema');
 
       await db.insert(interviewSignals).values([
         {
@@ -173,7 +173,7 @@ describe('Feedback Generation (e2e)', () => {
     it('should calculate higher scores with more positive signals', async () => {
       // Add comprehensive signals
       const { db } = getTestDb();
-      const { interviewSignals } = await import('../src/db/schema');
+      const { interviewSignals } = await import('../db/schema');
 
       await db.insert(interviewSignals).values([
         {
@@ -265,7 +265,7 @@ describe('Feedback Generation (e2e)', () => {
     it('should penalize scores with red flags', async () => {
       // Add red flags
       const { db } = getTestDb();
-      const { interviewRedFlags } = await import('../src/db/schema');
+      const { interviewRedFlags } = await import('../db/schema');
 
       await db.insert(interviewRedFlags).values([
         {
@@ -325,7 +325,7 @@ describe('Feedback Generation (e2e)', () => {
 
     it('should return 403 for unauthorized session access', async () => {
       const { db } = getTestDb();
-      const { users, interviewSessions } = await import('../src/db/schema');
+      const { users, interviewSessions } = await import('../db/schema');
 
       const [otherUser] = await db
         .insert(users)
@@ -408,7 +408,7 @@ describe('Feedback Generation (e2e)', () => {
 
     it('should return 403 for unauthorized session access', async () => {
       const { db } = getTestDb();
-      const { users, interviewSessions } = await import('../src/db/schema');
+      const { users, interviewSessions } = await import('../db/schema');
 
       const [otherUser] = await db
         .insert(users)
@@ -447,7 +447,7 @@ describe('Feedback Generation (e2e)', () => {
     it('should include detailed feedback items', async () => {
       // Add diverse signals
       const { db } = getTestDb();
-      const { interviewSignals } = await import('../src/db/schema');
+      const { interviewSignals } = await import('../db/schema');
 
       await db.insert(interviewSignals).values([
         {

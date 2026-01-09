@@ -22,7 +22,7 @@ import {
 import { UserService } from '../services/user.service';
 import { Public } from '../decorators/public.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
-import { User } from '../../db/schema/users.schema';
+import { User } from '../../../db/schema/users.schema';
 import { UserResponseDto } from '../../interview/dto/responses.dto';
 
 @ApiTags('auth')

@@ -65,7 +65,7 @@ import {
 } from '../dto/diagram.dto';
 import { InterviewPhase, MessageRole } from '../types/session.types';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { User } from '../../db/schema/users.schema';
+import { User } from '../../../db/schema/users.schema';
 
 @ApiTags('sessions')
 @ApiBearerAuth()

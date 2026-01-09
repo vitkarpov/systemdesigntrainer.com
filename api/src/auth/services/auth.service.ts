@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { WorkOS } from '@workos-inc/node';
 import * as jwt from 'jsonwebtoken';
 import { UserService } from './user.service';
-import { User } from '../../db/schema/users.schema';
+import { User } from '../../../db/schema/users.schema';
 
 export interface JwtPayload {
   userId: number;
