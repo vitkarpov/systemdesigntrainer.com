@@ -7,6 +7,7 @@ import {
 import { Job } from 'bull';
 import { Logger } from '@nestjs/common';
 import { FeedbackService } from '../services/feedback.service';
+import { FeedbackGenerationService } from '../services/feedback-generation.service';
 
 export interface FeedbackJobData {
   sessionId: number;
@@ -29,30 +30,60 @@ export interface FeedbackJobData {
 @Processor('feedback')
 export class FeedbackProcessor {
   private readonly logger = new Logger(FeedbackProcessor.name);
+  private readonly useAiFeedback: boolean;
 
-  constructor(private readonly feedbackService: FeedbackService) {}
+  constructor(
+    private readonly feedbackService: FeedbackService,
+    private readonly feedbackGenerationService: FeedbackGenerationService,
+  ) {
+    // Feature flag: Enable AI feedback via environment variable
+    // Set to 'true' to use AI feedback, 'false' or undefined for rule-based
+    this.useAiFeedback = process.env.USE_AI_FEEDBACK === 'true';
+
+    this.logger.log(
+      `FeedbackProcessor initialized with ${this.useAiFeedback ? 'AI' : 'rule-based'} feedback generation`,
+    );
+  }
 
   @Process('generate')
   async handleFeedbackGeneration(job: Job<FeedbackJobData>) {
     const { sessionId, userId } = job.data;
 
+    const method = this.useAiFeedback ? 'AI' : 'rule-based';
     this.logger.log(
-      `[Job ${job.id}] Starting feedback generation for session ${sessionId} (user ${userId})`,
+      `[Job ${job.id}] Starting ${method} feedback generation for session ${sessionId} (user ${userId})`,
     );
 
     try {
       // Update progress: Starting
       await job.progress(10);
 
-      // Generate feedback (this calls the existing service method)
-      const result = await this.feedbackService.generateFeedback(sessionId);
+      // Generate feedback using AI or rule-based approach
+      let result;
+      if (this.useAiFeedback) {
+        // Use AI-powered feedback generation
+        const aiResult =
+          await this.feedbackGenerationService.generateAiFeedback(sessionId);
 
-      // Update progress: Complete
-      await job.progress(100);
+        // Update progress
+        await job.progress(100);
 
-      this.logger.log(
-        `[Job ${job.id}] Feedback generation completed for session ${sessionId}`,
-      );
+        this.logger.log(
+          `[Job ${job.id}] AI feedback generation completed for session ${sessionId} (method: ${aiResult.report.generationMethod})`,
+        );
+
+        result = aiResult;
+      } else {
+        // Use existing rule-based feedback generation
+        result = await this.feedbackService.generateFeedback(sessionId);
+
+        // Update progress: Complete
+        await job.progress(100);
+
+        this.logger.log(
+          `[Job ${job.id}] Rule-based feedback generation completed for session ${sessionId}`,
+        );
+      }
 
       return result;
     } catch (error) {
