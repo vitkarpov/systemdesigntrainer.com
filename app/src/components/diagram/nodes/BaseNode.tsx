@@ -14,10 +14,10 @@ export const BaseNode = memo(({ data, isConnectable, selected }: NodeProps<BaseN
 
   return (
     <div
-      className={`px-4 py-3 rounded-lg border-2 bg-card transition-all ${
+      className={`px-4 py-3 rounded-lg bg-card transition-all ${
         selected
-          ? 'border-primary shadow-lg scale-105'
-          : 'border-border hover:border-primary/50 hover:shadow-md'
+          ? 'border-2 border-border border-primary shadow-lg scale-105'
+          : 'border-2 border-border hover:border-primary/50 hover:shadow-md'
       }`}
       style={{ width: 140, height: 90 }}
     >

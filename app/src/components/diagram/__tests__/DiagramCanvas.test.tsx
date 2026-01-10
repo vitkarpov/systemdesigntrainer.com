@@ -11,6 +11,8 @@ vi.mock('@xyflow/react', () => ({
     // Extract only serializable props for testing
     const testableProps = {
       defaultEdgeOptions: props.defaultEdgeOptions,
+      edges: props.edges,
+      nodes: props.nodes,
       onDrop: props.onDrop ? 'function' : undefined,
       onDragOver: props.onDragOver ? 'function' : undefined,
     }
@@ -173,7 +175,7 @@ describe('DiagramCanvas', () => {
     expect(diagram?.edges).toHaveLength(1)
   })
 
-  it('should configure edge visibility and drag handlers correctly', () => {
+  it('should configure drag handlers correctly', () => {
     renderWithProviders(
       <DiagramCanvas
         sessionId={sessionId}
@@ -184,12 +186,148 @@ describe('DiagramCanvas', () => {
     const reactFlow = screen.getByTestId('react-flow')
     const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
 
-    // Verify edge styling
-    expect(props.defaultEdgeOptions.style.stroke).toBe('#333333')
-    expect(props.defaultEdgeOptions.style.strokeWidth).toBe(2)
-
     // Drag handlers on parent, not ReactFlow (prevents past bug)
     expect(props.onDrop).toBeUndefined()
     expect(props.onDragOver).toBeUndefined()
+  })
+
+  describe('Edge Selection Styling', () => {
+    it('should apply default styling to unselected edges', () => {
+      const mockEdges: Edge[] = [
+        {
+          id: 'edge-1',
+          source: 'node-1',
+          target: 'node-2',
+          selected: false,
+        },
+        {
+          id: 'edge-2',
+          source: 'node-2',
+          target: 'node-3',
+          selected: false,
+        },
+      ]
+
+      useDiagramStore.getState().setDiagram(sessionId, { nodes: [], edges: mockEdges })
+
+      renderWithProviders(
+        <DiagramCanvas
+          sessionId={sessionId}
+          isReadOnly={false}
+        />
+      )
+
+      const reactFlow = screen.getByTestId('react-flow')
+      const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
+      const edges = props.edges
+
+      // All unselected edges should have default styling
+      expect(edges).toHaveLength(2)
+      edges.forEach((edge: any) => {
+        expect(edge.style).toEqual({
+          stroke: '#333333',
+          strokeWidth: 2,
+        })
+        expect(edge.animated).toBe(false)
+      })
+    })
+
+    it('should apply selected styling to selected edges', () => {
+      const mockEdges: Edge[] = [
+        {
+          id: 'edge-1',
+          source: 'node-1',
+          target: 'node-2',
+          selected: true,
+        },
+        {
+          id: 'edge-2',
+          source: 'node-2',
+          target: 'node-3',
+          selected: false,
+        },
+      ]
+
+      useDiagramStore.getState().setDiagram(sessionId, { nodes: [], edges: mockEdges })
+
+      renderWithProviders(
+        <DiagramCanvas
+          sessionId={sessionId}
+          isReadOnly={false}
+        />
+      )
+
+      const reactFlow = screen.getByTestId('react-flow')
+      const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
+      const edges = props.edges
+
+      expect(edges).toHaveLength(2)
+
+      // First edge (selected) should have blue stroke, thicker width, and animation
+      expect(edges[0].style).toEqual({
+        stroke: '#3b82f6',
+        strokeWidth: 3,
+      })
+      expect(edges[0].animated).toBe(true)
+
+      // Second edge (unselected) should have default styling
+      expect(edges[1].style).toEqual({
+        stroke: '#333333',
+        strokeWidth: 2,
+      })
+      expect(edges[1].animated).toBe(false)
+    })
+
+    it('should handle mixed selected and unselected edges', () => {
+      const mockEdges: Edge[] = [
+        {
+          id: 'edge-1',
+          source: 'node-1',
+          target: 'node-2',
+          selected: true,
+        },
+        {
+          id: 'edge-2',
+          source: 'node-2',
+          target: 'node-3',
+          selected: true,
+        },
+        {
+          id: 'edge-3',
+          source: 'node-3',
+          target: 'node-4',
+          selected: false,
+        },
+      ]
+
+      useDiagramStore.getState().setDiagram(sessionId, { nodes: [], edges: mockEdges })
+
+      renderWithProviders(
+        <DiagramCanvas
+          sessionId={sessionId}
+          isReadOnly={false}
+        />
+      )
+
+      const reactFlow = screen.getByTestId('react-flow')
+      const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
+      const edges = props.edges
+
+      expect(edges).toHaveLength(3)
+
+      // First two edges (selected) should have selected styling
+      expect(edges[0].animated).toBe(true)
+      expect(edges[0].style.stroke).toBe('#3b82f6')
+      expect(edges[0].style.strokeWidth).toBe(3)
+
+      expect(edges[1].animated).toBe(true)
+      expect(edges[1].style.stroke).toBe('#3b82f6')
+      expect(edges[1].style.strokeWidth).toBe(3)
+
+      // Third edge (unselected) should have default styling
+      expect(edges[2].animated).toBe(false)
+      expect(edges[2].style.stroke).toBe('#333333')
+      expect(edges[2].style.strokeWidth).toBe(2)
+    })
   })
 })

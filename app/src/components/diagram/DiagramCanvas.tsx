@@ -46,7 +46,17 @@ export function DiagramCanvas({
   isReadOnly = false
 }: DiagramCanvasProps) {
   const nodes = useDiagramStore((state) => state.getDiagram(sessionId)?.nodes ?? EMPTY_NODES);
-  const edges = useDiagramStore((state) => state.getDiagram(sessionId)?.edges ?? EMPTY_EDGES);
+  const rawEdges = useDiagramStore((state) => state.getDiagram(sessionId)?.edges ?? EMPTY_EDGES);
+
+  // Apply visual styling to edges based on selection state
+  const edges = rawEdges.map(edge => ({
+    ...edge,
+    style: {
+      stroke: edge.selected ? '#3b82f6' : '#333333',
+      strokeWidth: edge.selected ? 3 : 2,
+    },
+    animated: edge.selected,
+  }));
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
@@ -151,7 +161,6 @@ export function DiagramCanvas({
           onInit={(instance) => useDiagramStore.getState().setReactFlowInstance(sessionId, instance)}
           nodeTypes={nodeTypes}
           defaultEdgeOptions={{
-            style: { stroke: '#333333', strokeWidth: 2 },
             type: 'default',
           }}
           fitView

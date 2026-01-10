@@ -103,6 +103,8 @@ describe('BaseNode', () => {
       const { container } = render(<BaseNode {...props} />)
 
       const nodeContainer = container.firstChild as HTMLElement
+      expect(nodeContainer.className).toContain('border-2')
+      expect(nodeContainer.className).toContain('border-border')
       expect(nodeContainer.className).toContain('border-primary')
       expect(nodeContainer.className).toContain('shadow-lg')
       expect(nodeContainer.className).toContain('scale-105')
@@ -113,8 +115,10 @@ describe('BaseNode', () => {
       const { container } = render(<BaseNode {...props} />)
 
       const nodeContainer = container.firstChild as HTMLElement
+      expect(nodeContainer.className).toContain('border-2')
       expect(nodeContainer.className).toContain('border-border')
       expect(nodeContainer.className).toContain('hover:border-primary/50')
+      expect(nodeContainer.className).toContain('hover:shadow-md')
     })
   })
 
