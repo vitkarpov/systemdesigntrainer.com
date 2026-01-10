@@ -90,29 +90,11 @@ Manually trigger feedback generation for a completed interview session. This enq
 ```typescript
 {
   sessionId: number;     // Required: Session ID to generate feedback for
-  userId?: number;       // Optional: User ID (defaults to session owner)
-  regenerate?: boolean;  // Optional: Delete existing feedback and regenerate (default: false)
+  regenerate: boolean;  // Delete existing feedback and regenerate
 }
 ```
 
-**Example (generate if not exists):**
-```bash
-aws lambda invoke \
-  --function-name sd-sim-production-admin \
-  --cli-binary-format raw-in-base64-out \
-  --payload '{
-    "operation": "generate-feedback",
-    "payload": {
-      "sessionId": 123
-    }
-  }' \
-  --region eu-west-1 \
-  response.json
-
-cat response.json
-```
-
-**Example (force regeneration):**
+**Example:**
 ```bash
 aws lambda invoke \
   --function-name sd-sim-production-admin \
@@ -121,13 +103,14 @@ aws lambda invoke \
     "operation": "generate-feedback",
     "payload": {
       "sessionId": 123,
-      "regenerate": true
+      "regenerate": false
     }
   }' \
   --region eu-west-1 \
   response.json
 
 cat response.json
+```
 ```
 
 **Response (success - job enqueued):**
