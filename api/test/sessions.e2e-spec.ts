@@ -237,7 +237,6 @@ describe('Session Lifecycle (e2e)', () => {
     });
   });
 
-
   describe('GET /sessions/:id/phases', () => {
     let sessionId: number;
 

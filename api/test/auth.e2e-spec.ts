@@ -92,5 +92,4 @@ describe('Authentication (e2e)', () => {
         .expect(401);
     });
   });
-
 });
