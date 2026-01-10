@@ -20,7 +20,7 @@ export async function generateFeedback(
 
   console.log('Executing generate-feedback operation', {
     sessionId: payload.sessionId,
-    userId: payload.userId,
+    regenerate: payload.regenerate,
     timestamp: new Date().toISOString(),
   });
 
@@ -54,30 +54,6 @@ export async function generateFeedback(
       };
     }
 
-    // Check if feedback already exists
-    const [existingFeedback] = await db
-      .select()
-      .from(feedbackReports)
-      .where(eq(feedbackReports.sessionId, payload.sessionId))
-      .limit(1);
-
-    if (existingFeedback) {
-      console.log('Feedback already exists', {
-        sessionId: payload.sessionId,
-        reportId: existingFeedback.id,
-      });
-      return {
-        success: true,
-        operation: 'generate-feedback',
-        data: {
-          sessionId: payload.sessionId,
-          jobId: 'N/A',
-          status: 'already_exists',
-          alreadyExists: true,
-        },
-      };
-    }
-
     // Create Bull queue connection
     const feedbackQueue: Queue = new Bull('feedback', {
       redis: {
@@ -91,7 +67,8 @@ export async function generateFeedback(
       'generate',
       {
         sessionId: payload.sessionId,
-        userId: payload.userId || session.userId,
+        userId: session.userId,
+        regenerate: payload.regenerate,
       },
       {
         attempts: 3,
