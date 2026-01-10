@@ -42,10 +42,6 @@ export class PhaseTransitionProcessor {
 
   @Process('check')
   async handlePhaseTransitionCheck(job: Job<PhaseTransitionJobData>) {
-    this.logger.debug(
-      `[Job ${job.id}] Checking active sessions for phase transitions`,
-    );
-
     try {
       // Get all in-progress sessions
       const activeSessions = await this.db
@@ -54,13 +50,8 @@ export class PhaseTransitionProcessor {
         .where(eq(interviewSessions.status, 'in_progress'));
 
       if (activeSessions.length === 0) {
-        this.logger.debug(`[Job ${job.id}] No active sessions to check`);
         return { checkedSessions: 0, transitionedSessions: 0 };
       }
-
-      this.logger.debug(
-        `[Job ${job.id}] Checking ${activeSessions.length} active sessions`,
-      );
 
       let transitionedCount = 0;
 
