@@ -455,7 +455,6 @@ export class FeedbackService {
     // Check if session exists (will throw SessionNotFoundException if not found)
     await this.sessionService.getSession(sessionId);
 
-    // Check if feedback already exists
     const existing = await this.db
       .select()
       .from(feedbackReports)
@@ -463,8 +462,13 @@ export class FeedbackService {
       .limit(1);
 
     if (existing.length > 0 && !regenerate) {
-      // Return existing feedback
       return this.getFeedback(sessionId);
+    }
+
+    if (existing.length > 0 && regenerate) {
+      await this.db
+        .delete(feedbackReports)
+        .where(eq(feedbackReports.sessionId, sessionId));
     }
 
     // Calculate scores (always rule-based)
