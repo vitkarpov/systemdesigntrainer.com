@@ -1,4 +1,5 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
 import { FeedbackNotFoundException } from '../exceptions/feedback-not-found.exception';
 import { eq } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../../db/db.module';
@@ -751,6 +752,21 @@ You write feedback that hiring committees use to make decisions.`;
         stack: error.stack,
       });
 
+      // Capture error in Sentry before falling back to rule-based feedback
+      Sentry.captureException(error, {
+        tags: {
+          sessionId: sessionId.toString(),
+          service: 'FeedbackService',
+          method: 'generateAIFeedback',
+          aiFeature: 'feedback_generation',
+        },
+        extra: {
+          scores,
+          errorMessage: error.message,
+        },
+        level: 'error',
+      });
+
       // Re-throw to trigger fallback in parent method
       throw error;
     }
@@ -954,38 +970,57 @@ IMPORTANT:
    * Parse AI response JSON
    */
   private parseAIResponse(text: string): any {
-    // Try to extract JSON from the response
-    // AI might wrap it in code blocks or add explanatory text
-    let jsonText = text.trim();
+    try {
+      // Try to extract JSON from the response
+      // AI might wrap it in code blocks or add explanatory text
+      let jsonText = text.trim();
 
-    // Remove code block markers if present
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.slice(7);
-    } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.slice(3);
+      // Remove code block markers if present
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.slice(7);
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.slice(3);
+      }
+
+      if (jsonText.endsWith('```')) {
+        jsonText = jsonText.slice(0, -3);
+      }
+
+      jsonText = jsonText.trim();
+
+      // Parse JSON
+      const parsed = JSON.parse(jsonText);
+
+      // Basic structure validation
+      if (
+        !parsed.overallSummary ||
+        !Array.isArray(parsed.strengths) ||
+        !Array.isArray(parsed.weaknesses) ||
+        !Array.isArray(parsed.suggestions) ||
+        !Array.isArray(parsed.nextSteps)
+      ) {
+        throw new Error('AI response missing required fields');
+      }
+
+      return parsed;
+    } catch (error) {
+      // Capture parsing error with the raw response text for debugging
+      Sentry.captureException(error, {
+        tags: {
+          service: 'FeedbackService',
+          method: 'parseAIResponse',
+          errorType: 'json_parse_error',
+        },
+        extra: {
+          rawResponseText: text,
+          rawResponseLength: text.length,
+          errorMessage: error.message,
+        },
+        level: 'error',
+      });
+
+      throw error;
     }
-
-    if (jsonText.endsWith('```')) {
-      jsonText = jsonText.slice(0, -3);
-    }
-
-    jsonText = jsonText.trim();
-
-    // Parse JSON
-    const parsed = JSON.parse(jsonText);
-
-    // Basic structure validation
-    if (
-      !parsed.overallSummary ||
-      !Array.isArray(parsed.strengths) ||
-      !Array.isArray(parsed.weaknesses) ||
-      !Array.isArray(parsed.suggestions) ||
-      !Array.isArray(parsed.nextSteps)
-    ) {
-      throw new Error('AI response missing required fields');
-    }
-
-    return parsed;
   }
 
   /**

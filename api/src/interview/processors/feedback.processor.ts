@@ -6,6 +6,7 @@ import {
 } from '@nestjs/bull';
 import { Job } from 'bull';
 import { Logger } from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
 import { FeedbackService } from '../services/feedback.service';
 
 export interface FeedbackJobData {
@@ -61,6 +62,20 @@ export class FeedbackProcessor {
         `[Job ${job.id}] Feedback generation failed for session ${sessionId}:`,
         error,
       );
+
+      // Capture error in Sentry with context
+      Sentry.captureException(error, {
+        tags: {
+          jobId: job.id?.toString(),
+          sessionId: sessionId.toString(),
+          jobName: 'feedback.generate',
+        },
+        extra: {
+          jobData: job.data,
+          attemptsMade: job.attemptsMade,
+        },
+      });
+
       throw error; // Will trigger retry based on job options
     }
   }
@@ -78,6 +93,23 @@ export class FeedbackProcessor {
       `[Job ${job.id}] Feedback generation failed permanently for session ${job.data.sessionId}:`,
       error.message,
     );
+
+    // Capture permanent failure in Sentry
+    Sentry.captureException(error, {
+      tags: {
+        jobId: job.id?.toString(),
+        sessionId: job.data.sessionId.toString(),
+        jobName: 'feedback.generate',
+        jobStatus: 'permanently_failed',
+      },
+      extra: {
+        jobData: job.data,
+        attemptsMade: job.attemptsMade,
+        failedReason: job.failedReason,
+      },
+      level: 'error',
+    });
+
     // Could send notification to user or alert admin
   }
 }
