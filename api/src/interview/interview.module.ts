@@ -7,7 +7,6 @@ import { TranscriptService } from './services/transcript.service';
 import { SignalService } from './services/signal.service';
 import { RedFlagService } from './services/red-flag.service';
 import { FeedbackService } from './services/feedback.service';
-import { FeedbackGenerationService } from './services/feedback-generation.service';
 import { DiagramService } from './services/diagram.service';
 import { ConversationSagaService } from './services/conversation-saga.service';
 import { StreamingLimiterService } from './services/streaming-limiter.service';
@@ -53,7 +52,6 @@ import { AuthModule } from '../auth/auth.module';
     SignalService,
     RedFlagService,
     FeedbackService,
-    FeedbackGenerationService,
     DiagramService,
     ConversationSagaService,
     StreamingLimiterService,
