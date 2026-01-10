@@ -446,9 +446,9 @@ export class FeedbackService {
   /**
    * Generate complete feedback report for a session
    */
-  async generateFeedback(sessionId: number): Promise<GenerateFeedbackResult> {
+  async generateFeedback(sessionId: number, regenerate: boolean): Promise<GenerateFeedbackResult> {
     // Check if session exists (will throw SessionNotFoundException if not found)
-    const session = await this.sessionService.getSession(sessionId);
+    await this.sessionService.getSession(sessionId);
 
     // Check if feedback already exists
     const existing = await this.db
@@ -457,7 +457,7 @@ export class FeedbackService {
       .where(eq(feedbackReports.sessionId, sessionId))
       .limit(1);
 
-    if (existing.length > 0) {
+    if (existing.length > 0 && !regenerate) {
       // Return existing feedback
       return this.getFeedback(sessionId);
     }
