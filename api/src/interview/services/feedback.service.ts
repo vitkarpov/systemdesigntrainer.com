@@ -731,6 +731,7 @@ You write feedback that hiring committees use to make decisions.`;
         temperature: 0.7,
         maxTokens: 4000,
         timeout: 120000, // 120 seconds for comprehensive feedback generation
+        model: 'claude-sonnet-4-5', // Use Sonnet for better structured output
       });
 
       logger.log('AI response received', {
@@ -828,7 +829,7 @@ ${this.getHiringStandardsText(session.companyStyle, session.level, threshold)}
 
 OUTPUT FORMAT:
 
-Return a JSON object with this exact structure:
+Return ONLY a valid JSON object. Do not include any text before or after the JSON. Do not wrap it in markdown code blocks.
 
 {
   "overallSummary": "**VERDICT: HIRE** (or **VERDICT: NO HIRE**) followed by 2-3 paragraphs summarizing performance, referencing specific moments from the transcript, and explaining your hire/no-hire decision clearly.",
@@ -853,7 +854,10 @@ Return a JSON object with this exact structure:
   ]
 }
 
-IMPORTANT:
+CRITICAL FORMATTING RULES:
+- Return ONLY the JSON object above, nothing else
+- Do NOT add any explanatory text before or after the JSON
+- Do NOT wrap the JSON in markdown code blocks (no \`\`\`json)
 - Start overallSummary with **VERDICT: HIRE** or **VERDICT: NO HIRE** on the first line
 - Be SPECIFIC: Reference actual quotes or moments from the transcript
 - Be BALANCED: Acknowledge both strengths and weaknesses

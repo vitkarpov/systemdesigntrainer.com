@@ -8,6 +8,7 @@ export interface GenerateResponseOptions {
   temperature?: number;
   maxTokens?: number;
   timeout?: number;
+  model?: string;
 }
 
 export interface AiResponse {
@@ -126,12 +127,13 @@ export class AiService {
       temperature = 0.7,
       maxTokens = 1024,
       timeout = this.timeoutMs,
+      model = this.model,
     } = options;
 
     return this.withRetry(async () => {
       const response = await this.withTimeout(
         this.client.messages.create({
-          model: this.model,
+          model,
           max_tokens: maxTokens,
           temperature,
           system: systemPrompt,
