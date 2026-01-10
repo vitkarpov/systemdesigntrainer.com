@@ -5,7 +5,8 @@ import { Observable } from 'rxjs';
  * Provides predictable responses without calling real Anthropic API
  */
 export class MockAiService {
-  async generateResponse(options: {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async generateResponse(_options: {
     systemPrompt: string;
     userMessage: string;
     temperature?: number;
@@ -29,11 +30,12 @@ export class MockAiService {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async generateResponseWithHistory(
-    systemPrompt: string,
-    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
-    temperature = 0.7,
-    maxTokens = 1024,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _systemPrompt: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   ): Promise<{
     text: string;
     model: string;
@@ -53,7 +55,8 @@ export class MockAiService {
     };
   }
 
-  generateStreamingResponse(options: {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  generateStreamingResponse(_options: {
     systemPrompt: string;
     userMessage: string;
     temperature?: number;

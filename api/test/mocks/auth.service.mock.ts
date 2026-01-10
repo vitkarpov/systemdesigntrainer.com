@@ -7,7 +7,8 @@ export class MockAuthService {
     return `https://mock-workos.com/authorize?state=${state}`;
   }
 
-  async authenticateWithCode(code: string): Promise<{
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async authenticateWithCode(_code: string): Promise<{
     user: {
       id: string;
       email: string;

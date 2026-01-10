@@ -66,7 +66,7 @@ export class FeedbackProcessor {
   }
 
   @OnQueueCompleted()
-  onCompleted(job: Job<FeedbackJobData>, result: any) {
+  onCompleted(job: Job<FeedbackJobData>) {
     this.logger.log(
       `[Job ${job.id}] Feedback generated successfully for session ${job.data.sessionId}`,
     );

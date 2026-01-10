@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import * as schema from '../../../db/schema';
 import { DATABASE_CONNECTION } from '../../../db/db.module';
 import { TranscriptService } from './transcript.service';
@@ -51,10 +51,12 @@ export class ConversationSagaService {
    */
   async startConversationTurn(
     session: SessionState,
-    interviewCase: InterviewCaseData,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _interviewCase: InterviewCaseData,
     text: string,
     elapsedSeconds: number,
-    diagram?: { nodes: any[]; edges: any[] } | null,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _diagram?: { nodes: any[]; edges: any[] } | null,
   ): Promise<{ candidateMessageId: number }> {
     // Step 1: Save candidate message with 'pending' status
     const candidateMessage = await this.transcriptService.addMessage({
@@ -84,7 +86,8 @@ export class ConversationSagaService {
     candidateText: string,
     currentPhase: InterviewPhase,
     elapsedSeconds: number,
-    usage: { inputTokens: number; outputTokens: number },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _usage: { inputTokens: number; outputTokens: number },
   ): Promise<{
     interviewerMessage: any;
     detectedSignals: any[];

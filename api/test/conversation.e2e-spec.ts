@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import * as cookieParser from 'cookie-parser';
+import { eq } from 'drizzle-orm';
 import { AppModule } from '../src/app.module';
 import {
   cleanDatabase,
@@ -64,7 +65,7 @@ describe('Conversation & AI Integration (e2e)', () => {
     await db
       .update(interviewSessions)
       .set({ startedAt: new Date() })
-      .where(require('drizzle-orm').eq(interviewSessions.id, sessionId));
+      .where(eq(interviewSessions.id, sessionId));
   });
 
   describe('GET /sessions/:id/conversation', () => {
@@ -246,7 +247,7 @@ describe('Conversation & AI Integration (e2e)', () => {
       await db
         .update(interviewSessions)
         .set({ currentPhase: 'problem' })
-        .where(require('drizzle-orm').eq(interviewSessions.id, sessionId));
+        .where(eq(interviewSessions.id, sessionId));
 
       // Send message with implementation details
       await request(app.getHttpServer())
@@ -283,7 +284,7 @@ describe('Conversation & AI Integration (e2e)', () => {
           startedAt: elevenMinutesAgo,
           currentPhase: 'problem',
         })
-        .where(require('drizzle-orm').eq(interviewSessions.id, sessionId));
+        .where(eq(interviewSessions.id, sessionId));
 
       // Trigger red flag check by sending a message
       await request(app.getHttpServer())

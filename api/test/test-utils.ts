@@ -1,3 +1,4 @@
+import * as jwt from 'jsonwebtoken';
 import { getTestDb } from '../db/test-db';
 import {
   users,
@@ -198,7 +199,6 @@ export async function createTestSession(
  * Generate a test JWT token for authentication
  */
 export function generateTestToken(userId: number): string {
-  const jwt = require('jsonwebtoken');
   const payload = {
     userId: userId,
     workosUserId: `test_user_123`,
