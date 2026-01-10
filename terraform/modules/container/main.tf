@@ -203,7 +203,8 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "REDIS_PORT", value = tostring(var.redis_port) },
       { name = "FRONTEND_URL", value = "https://app.${var.domain_name}" },
       { name = "WORKOS_REDIRECT_URI", value = "https://api.${var.domain_name}/auth/callback" },
-      { name = "ANTHROPIC_MODEL", value = "claude-haiku-4-5" }
+      { name = "ANTHROPIC_MODEL", value = "claude-haiku-4-5" },
+      { name = "USE_AI_FEEDBACK", value = "true" }
     ]
 
     secrets = [

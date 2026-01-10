@@ -10,7 +10,7 @@ import { FeedbackService } from '../services/feedback.service';
 
 export interface FeedbackJobData {
   sessionId: number;
-  userId: number;
+  regenerate: boolean;
 }
 
 /**
@@ -34,18 +34,19 @@ export class FeedbackProcessor {
 
   @Process('generate')
   async handleFeedbackGeneration(job: Job<FeedbackJobData>) {
-    const { sessionId, userId } = job.data;
+    const { sessionId, regenerate } = job.data;
 
-    this.logger.log(
-      `[Job ${job.id}] Starting feedback generation for session ${sessionId} (user ${userId})`,
-    );
+    this.logger.log(`[Job ${job.id}] Starting feedback generation`, job.data);
 
     try {
       // Update progress: Starting
       await job.progress(10);
 
       // Generate feedback (this calls the existing service method)
-      const result = await this.feedbackService.generateFeedback(sessionId);
+      const result = await this.feedbackService.generateFeedback(
+        sessionId,
+        regenerate,
+      );
 
       // Update progress: Complete
       await job.progress(100);
@@ -65,7 +66,7 @@ export class FeedbackProcessor {
   }
 
   @OnQueueCompleted()
-  onCompleted(job: Job<FeedbackJobData>, result: any) {
+  onCompleted(job: Job<FeedbackJobData>) {
     this.logger.log(
       `[Job ${job.id}] Feedback generated successfully for session ${job.data.sessionId}`,
     );

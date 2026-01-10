@@ -68,8 +68,8 @@ export type AddCreditsResponse = AdminOperationResponse<AddCreditsData> & {
 export interface GenerateFeedbackPayload {
   /** Session ID to generate feedback for */
   sessionId: number;
-  /** User ID (optional, for admin context) */
-  userId?: number;
+  /** Whether to regenerate feedback even if it already exists */
+  regenerate: boolean;
 }
 
 export interface GenerateFeedbackData {

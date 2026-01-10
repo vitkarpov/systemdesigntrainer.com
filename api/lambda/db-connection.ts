@@ -17,13 +17,26 @@ let db: ReturnType<typeof drizzle> | null = null;
 export type Database = NonNullable<typeof db>;
 
 /**
- * Fetch database password from AWS Secrets Manager
+ * Fetch database password from AWS Secrets Manager or environment variable
  */
 async function getDbPassword(): Promise<string> {
   if (cachedPassword) {
     return cachedPassword;
   }
 
+  // For local development, allow direct password via environment variable
+  if (process.env.USE_DIRECT_PASSWORD === 'true') {
+    const password = process.env.DB_PASSWORD;
+    if (!password) {
+      throw new Error(
+        'DB_PASSWORD environment variable not set (USE_DIRECT_PASSWORD=true)',
+      );
+    }
+    cachedPassword = password;
+    return password;
+  }
+
+  // Production: Use AWS Secrets Manager
   if (!secretsClient) {
     secretsClient = new SecretsManagerClient({
       region: process.env.AWS_REGION || 'eu-west-1',
@@ -81,7 +94,11 @@ export async function initializeDb(): Promise<Database> {
     user: process.env.DB_USER,
     password: dbPassword,
     database: process.env.DB_NAME,
-    ssl: { rejectUnauthorized: false },
+    // Only use SSL in production (not for local docker development)
+    ssl:
+      process.env.USE_DIRECT_PASSWORD === 'true'
+        ? false
+        : { rejectUnauthorized: false },
     max: 2, // Limit connections for Lambda
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,

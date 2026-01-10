@@ -5,24 +5,14 @@ import {
 } from "@/api/hooks.gen";
 
 export function useFeedback(sessionIdNum: number, isValidId: boolean) {
-  // Try to get existing feedback first
-  const { data: feedbackData, isLoading: isFeedbackLoading } =
-    useSessionsControllerGetFeedback(sessionIdNum, {
-      query: {
-        enabled: isValidId,
-        retry: false,
-        throwOnError: true,
-      },
-    });
-
-  // Get feedback status (for polling)
+  // Get feedback status first to determine if we need to poll
   const {
     data: statusData,
     isLoading: isStatusLoading,
     refetch: refetchStatus,
   } = useSessionsControllerGetFeedbackStatus(sessionIdNum, {
     query: {
-      enabled: isValidId && !feedbackData,
+      enabled: isValidId,
       throwOnError: true,
       refetchInterval: (query) => {
         const status = query.state.data?.data?.status;
@@ -40,11 +30,21 @@ export function useFeedback(sessionIdNum: number, isValidId: boolean) {
     },
   });
 
+  const statusInfo = statusData?.data;
+
+  const { data: feedbackData, isLoading: isFeedbackLoading } =
+    useSessionsControllerGetFeedback(sessionIdNum, {
+      query: {
+        enabled: statusInfo?.status === "completed",
+        retry: false,
+        throwOnError: true,
+      },
+    });
+
   // Mutation to start feedback generation (used for manual retry)
   const generateMutation = useSessionsControllerGenerateFeedback();
 
   const feedback = feedbackData?.data;
-  const statusInfo = statusData?.data;
 
   const handleRetry = () => {
     generateMutation.mutate({ id: sessionIdNum });

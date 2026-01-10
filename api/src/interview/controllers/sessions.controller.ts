@@ -47,7 +47,6 @@ import {
   GetSessionResponseDto,
   StartSessionResponseDto,
   GetTranscriptResponseDto,
-  AiResponseDto,
   GetSignalsResponseDto,
   GetRedFlagsResponseDto,
   GetPhasesResponseDto,
@@ -282,14 +281,13 @@ export class SessionsController {
   ) {
     await this.verifySessionOwnership(id, user.id);
     const session = await this.sessionService.getSession(id);
-    const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
 
     const result = await this.diagramService.saveDiagramSnapshot({
       sessionId: id,
       nodes: dto.nodes,
       edges: dto.edges,
       phase: session.currentPhase as InterviewPhase,
-      secondsElapsed: elapsedSeconds,
+      secondsElapsed: this.sessionService.getElapsedSeconds(session),
     });
 
     return {
@@ -532,13 +530,7 @@ export class SessionsController {
     // Stream AI response with saga compensation on error
     return preparation$.pipe(
       switchMap(
-        ({
-          session,
-          candidateMessageId,
-          candidateText,
-          promptContext,
-          elapsedSeconds,
-        }) => {
+        ({ session, candidateMessageId, candidateText, promptContext }) => {
           const startEvent: MessageEvent = {
             type: 'start',
             data: JSON.stringify({

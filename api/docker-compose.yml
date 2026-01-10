@@ -31,6 +31,7 @@ services:
       STRIPE_PRICE_3_INTERVIEWS: ${STRIPE_PRICE_3_INTERVIEWS}
       STRIPE_PRICE_5_INTERVIEWS: ${STRIPE_PRICE_5_INTERVIEWS}
       STRIPE_PRICE_UNLIMITED: ${STRIPE_PRICE_UNLIMITED}
+      USE_AI_FEEDBACK: ${USE_AI_FEEDBACK:-true}
     depends_on:
       postgres:
         condition: service_healthy
@@ -77,6 +78,32 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Admin Lambda function for local testing
+  lambda:
+    build:
+      context: .
+      dockerfile: Dockerfile.lambda
+    container_name: sd-sim-lambda
+    restart: unless-stopped
+    ports:
+      - "9000:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-sd_sim_dev}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      AWS_REGION: eu-west-1
+      USE_DIRECT_PASSWORD: "true"
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   # Optional: pgAdmin for database management UI
   pgadmin:

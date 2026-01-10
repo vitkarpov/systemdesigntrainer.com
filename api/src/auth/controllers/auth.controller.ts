@@ -4,7 +4,6 @@ import {
   Post,
   Query,
   Res,
-  HttpStatus,
   UnauthorizedException,
 } from '@nestjs/common';
 import {

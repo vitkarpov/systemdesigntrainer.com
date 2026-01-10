@@ -7,6 +7,7 @@ export interface GenerateResponseOptions {
   userMessage: string;
   temperature?: number;
   maxTokens?: number;
+  timeout?: number;
 }
 
 export interface AiResponse {
@@ -124,6 +125,7 @@ export class AiService {
       userMessage,
       temperature = 0.7,
       maxTokens = 1024,
+      timeout = this.timeoutMs,
     } = options;
 
     return this.withRetry(async () => {
@@ -140,7 +142,7 @@ export class AiService {
             },
           ],
         }),
-        this.timeoutMs,
+        timeout,
       );
 
       // Extract text from response

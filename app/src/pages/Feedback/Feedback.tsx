@@ -12,6 +12,7 @@ import { ScoreBreakdownCard } from './components/ScoreBreakdownCard';
 import { FeedbackItemsCard } from './components/FeedbackItemsCard';
 import { NextStepsCard } from './components/NextStepsCard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import ReactMarkdown from 'react-markdown';
 
 function FeedbackPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -38,12 +39,8 @@ function FeedbackPage() {
 
   // Show generation in progress
   if (statusInfo?.status === 'processing' || generateMutation.isPending) {
-    const progress = statusInfo?.progress || 0;
-    return <ProcessingState progress={progress} />;
+    return <ProcessingState />;
   }
-
-  // Show feedback from status if completed
-  const completedFeedback = statusInfo?.status === 'completed' ? statusInfo.feedback : feedback;
 
   // Show error state for failed feedback generation
   if (statusInfo?.status === 'failed') {
@@ -55,6 +52,10 @@ function FeedbackPage() {
       />
     );
   }
+
+  // Use feedback from main endpoint (which polls until ready)
+  // Fallback to status feedback if status shows completed
+  const completedFeedback = feedback || (statusInfo?.status === 'completed' ? statusInfo.feedback : null);
 
   // Show not found if no feedback exists
   if (!completedFeedback) {
@@ -75,7 +76,17 @@ function FeedbackPage() {
         onBack={handleBackToHome}
         rightContent={<Button onClick={handleBackToHome}>New Interview</Button>}
       />
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6 pb-8">
+        {completedFeedback.overallSummary && (
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <div className="prose dark:prose-invert max-w-none [&_p]:my-4">
+              <ReactMarkdown>
+                {completedFeedback.overallSummary}
+              </ReactMarkdown>
+            </div>
+          </div>
+        )}
+
         <OverallScoreCard score={completedFeedback.overallScore} />
 
         <ScoreBreakdownCard

@@ -6,6 +6,11 @@ This directory contains AWS Lambda functions for administrative operations, depl
 
 The Lambda function uses a **router pattern** where a single function handles multiple operations based on the `operation` field in the event payload.
 
+View logs:
+```bash
+aws logs tail /aws/lambda/sd-sim-production-admin --follow
+```
+
 ### Benefits
 - **Cost-effective**: Single function means lower fixed costs
 - **Easier maintenance**: Shared database connection, logging, and error handling
@@ -84,8 +89,8 @@ Manually trigger feedback generation for a completed interview session. This enq
 **Payload:**
 ```typescript
 {
-  sessionId: number;  // Required: Session ID to generate feedback for
-  userId?: number;    // Optional: User ID (defaults to session owner)
+  sessionId: number;     // Required: Session ID to generate feedback for
+  regenerate: boolean;  // Delete existing feedback and regenerate
 }
 ```
 
@@ -97,13 +102,15 @@ aws lambda invoke \
   --payload '{
     "operation": "generate-feedback",
     "payload": {
-      "sessionId": 123
+      "sessionId": 123,
+      "regenerate": false
     }
   }' \
   --region eu-west-1 \
   response.json
 
 cat response.json
+```
 ```
 
 **Response (success - job enqueued):**
@@ -263,71 +270,75 @@ To add a new operation:
 
 ## Local Development
 
-To test locally, create a test file:
+The lambda function can be run locally using Docker Compose, which provides a complete environment with PostgreSQL and Redis.
 
-```typescript
-// test-lambda-local.ts
-import { handler } from './src/lambda/handler';
-
-async function test() {
-  const result = await handler({
-    operation: 'add-credits',
-    payload: {
-      workosUserId: 'user_01HXXX',
-      credits: 5,
-      reason: 'Test',
-    },
-  });
-
-  console.log(JSON.stringify(result, null, 2));
-}
-
-test();
-```
-
-Run with:
+**Start services:**
 ```bash
-ts-node test-lambda-local.ts
+cd api
+docker-compose up -d
 ```
 
-## Logging
+The lambda function will be available at `http://localhost:9000/2015-03-31/functions/function/invocations`
 
-All operations log structured JSON to CloudWatch:
+**Environment Configuration:**
 
-```json
-{
-  "operation": "add-credits",
-  "userId": 42,
-  "workosUserId": "user_01HXXX",
-  "email": "user@example.com",
-  "creditsAdded": 5,
-  "previousBalance": 3,
-  "newBalance": 8,
-  "reason": "Customer support",
-  "duration": 125,
-  "timestamp": "2024-01-05T12:34:56.789Z"
-}
+The lambda service is configured in `docker-compose.yml` with these settings:
+```yaml
+environment:
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_USER: postgres
+  DB_PASSWORD: postgres
+  DB_NAME: sd_sim_dev
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  AWS_REGION: eu-west-1
+  USE_DIRECT_PASSWORD: "true"  # Skip AWS Secrets Manager for local dev
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+  USE_AI_FEEDBACK: ${USE_AI_FEEDBACK:-false}
 ```
 
-View logs:
+**Test Lambda Invocation:**
+
 ```bash
-aws logs tail /aws/lambda/sd-sim-production-admin --follow
+# Add credits
+curl -X POST http://localhost:9000/2015-03-31/functions/function/invocations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operation": "add-credits",
+    "payload": {
+      "workosUserId": "user_123",
+      "credits": 10,
+      "reason": "Testing local lambda"
+    }
+  }'
+
+# Generate feedback
+curl -X POST http://localhost:9000/2015-03-31/functions/function/invocations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operation": "generate-feedback",
+    "payload": {
+      "sessionId": 1,
+      "regenerate": true
+    }
+  }'
 ```
 
-## Security
+**View logs:**
+```bash
+# View lambda logs
+docker-compose logs -f lambda
 
-- Function runs in **private subnets** with no internet access (except Secrets Manager and ECR)
-- **Minimal IAM permissions**: CloudWatch Logs, VPC networking, specific Secrets Manager secret
-- Database password stored in **AWS Secrets Manager**
-- **Input validation** on all operations
-- All operations **logged for audit trail**
-- **ARM64 architecture** for cost optimization
-- **Image scanning enabled** on ECR push
+# View all service logs
+docker-compose logs -f
+```
 
-## Monitoring
+**Stop services:**
+```bash
+# Stop all services
+docker-compose down
 
-- CloudWatch Logs retention: 7 days (configurable)
-- ECR lifecycle policy: Keep last 5 tagged images, delete untagged after 3 days
-- Lambda timeout: 30 seconds
-- Lambda memory: 512 MB
-- VPC cold start time: ~3-5 seconds (connection reused on warm starts)
+# Stop and remove volumes (reset database)
+docker-compose down -v
+```
