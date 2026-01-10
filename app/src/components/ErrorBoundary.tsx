@@ -2,7 +2,7 @@ import { Component, type ReactNode } from 'react';
 import { ApiError } from '@/api/client';
 import { ForbiddenState } from '@/pages/shared/ForbiddenState';
 import { NotFoundState } from '@/pages/shared/NotFoundState';
-import { ErrorState } from '@/pages/Feedback/states/ErrorState';
+import { ErrorState } from '@/pages/shared/ErrorState';
 
 interface ErrorBoundaryProps {
   children: ReactNode;

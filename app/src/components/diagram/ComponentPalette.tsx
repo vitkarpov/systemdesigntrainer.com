@@ -45,6 +45,11 @@ export function ComponentPalette() {
           );
         })}
       </div>
+      <div className="p-4 border-t border-border bg-muted/30">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          <span className="font-medium text-foreground">Tip:</span> Select a node or edge and press <kbd className="px-1.5 py-0.5 text-[10px] font-semibold bg-background border border-border rounded">Delete</kbd> or <kbd className="px-1.5 py-0.5 text-[10px] font-semibold bg-background border border-border rounded">Backspace</kbd> to remove it
+        </p>
+      </div>
     </div>
   );
 }

@@ -297,15 +297,6 @@ resource "aws_security_group" "redis" {
   description = "Security group for ElastiCache Redis"
   vpc_id      = aws_vpc.main.id
 
-  # Allow Redis from ECS
-  ingress {
-    from_port       = 6379
-    to_port         = 6379
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs.id]
-    description     = "Allow Redis from ECS tasks"
-  }
-
   # Allow all outbound
   egress {
     from_port   = 0
@@ -318,6 +309,17 @@ resource "aws_security_group" "redis" {
   tags = {
     Name = "${var.project_name}-${var.environment}-redis-sg"
   }
+}
+
+# Allow Redis from ECS (separate rule to avoid conflicts with other modules)
+resource "aws_security_group_rule" "redis_from_ecs" {
+  type                     = "ingress"
+  from_port                = 6379
+  to_port                  = 6379
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.ecs.id
+  security_group_id        = aws_security_group.redis.id
+  description              = "Allow Redis from ECS tasks"
 }
 
 # NAT Instance Security Group

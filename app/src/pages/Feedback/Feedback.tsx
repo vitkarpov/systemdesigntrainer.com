@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { useFeedback } from './useFeedback';
 import { LoadingState } from './states/LoadingState';
 import { ProcessingState } from './states/ProcessingState';
-import { ErrorState } from './states/ErrorState';
+import { ErrorState } from '@/pages/shared/ErrorState';
 import { NotFoundState } from '@/pages/shared/NotFoundState';
 import { OverallScoreCard } from './components/OverallScoreCard';
 import { ScoreBreakdownCard } from './components/ScoreBreakdownCard';
