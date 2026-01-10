@@ -10,7 +10,7 @@ if (import.meta.env.MODE === 'production') {
         blockAllMedia: false,
       }),
     ],
-    replaysSessionSampleRate: 1.0,
+    replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
     ignoreErrors: [
       'Error invoking post',
