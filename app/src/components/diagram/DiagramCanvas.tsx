@@ -49,7 +49,7 @@ export function DiagramCanvas({
   const rawEdges = useDiagramStore((state) => state.getDiagram(sessionId)?.edges ?? EMPTY_EDGES);
 
   // Apply visual styling to edges based on selection state
-  const edges = rawEdges.map(edge => ({
+  const edges: Edge[] = rawEdges.map(edge => ({
     ...edge,
     style: {
       stroke: edge.selected ? '#3b82f6' : '#333333',
