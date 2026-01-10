@@ -1,12 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-declare global {
-  interface Window {
-    Beacon?: (method: string, ...args: any[]) => void;
-  }
-}
-
 export function BeaconController() {
   const location = useLocation();
 
