@@ -1,6 +1,5 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { FeedbackNotFoundException } from '../exceptions/feedback-not-found.exception';
-import { SessionNotFoundException } from '../exceptions/session-not-found.exception';
 import { eq } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../../db/db.module';
 import type { db as DbType } from '../../../db/db';
@@ -12,13 +11,13 @@ import {
 import { SignalService, SignalName } from './signal.service';
 import { RedFlagService, RedFlagName } from './red-flag.service';
 import { InterviewSessionService } from './interview-session.service';
+import { AiService } from '../../ai/services/ai.service';
 import {
   BASE_SCORES,
   SIGNAL_SCORING,
   RED_FLAG_SCORING,
   COMMUNICATION_BONUSES,
   TIME_MANAGEMENT_BONUSES,
-  TIME_MANAGEMENT_PENALTIES,
   OVERALL_SCORE_WEIGHTS,
   SUMMARY_THRESHOLDS,
   SUGGESTION_THRESHOLDS,
@@ -61,12 +60,15 @@ export interface GenerateFeedbackResult {
 
 @Injectable()
 export class FeedbackService {
+  private readonly logger = new Logger(FeedbackService.name);
+
   constructor(
     @Inject(DATABASE_CONNECTION)
     private db: typeof DbType,
     private signalService: SignalService,
     private redFlagService: RedFlagService,
     private sessionService: InterviewSessionService,
+    private aiService: AiService,
   ) {}
 
   /**
@@ -446,7 +448,10 @@ export class FeedbackService {
   /**
    * Generate complete feedback report for a session
    */
-  async generateFeedback(sessionId: number, regenerate: boolean): Promise<GenerateFeedbackResult> {
+  async generateFeedback(
+    sessionId: number,
+    regenerate: boolean,
+  ): Promise<GenerateFeedbackResult> {
     // Check if session exists (will throw SessionNotFoundException if not found)
     await this.sessionService.getSession(sessionId);
 
@@ -462,17 +467,48 @@ export class FeedbackService {
       return this.getFeedback(sessionId);
     }
 
-    // Calculate scores
+    // Calculate scores (always rule-based)
     const scores = await this.calculateScores(sessionId);
 
-    // Generate feedback items
-    const items = await this.generateFeedbackItems(sessionId, scores);
+    // Check feature flag for AI feedback
+    const useAiFeedback = process.env.USE_AI_FEEDBACK === 'true';
 
-    // Generate next steps
-    const nextSteps = await this.generateNextSteps(sessionId, scores);
+    let summary: string;
+    let items: FeedbackItemData[];
+    let nextSteps: FeedbackNextStepData[];
 
-    // Generate summary
-    const summary = this.generateSummary(scores);
+    if (useAiFeedback) {
+      try {
+        this.logger.log('Attempting AI feedback generation', { sessionId });
+
+        // Generate AI feedback
+        const aiFeedback = await this.generateAIFeedback(sessionId, scores);
+        summary = aiFeedback.overallSummary;
+        items = aiFeedback.items;
+        nextSteps = aiFeedback.nextSteps;
+
+        this.logger.log('AI feedback generation successful', { sessionId });
+      } catch (error) {
+        this.logger.warn(
+          'AI feedback generation failed, falling back to rule-based',
+          {
+            sessionId,
+            error: error.message,
+          },
+        );
+
+        // Fall back to rule-based
+        summary = this.generateSummary(scores);
+        items = await this.generateFeedbackItems(sessionId, scores);
+        nextSteps = await this.generateNextSteps(sessionId, scores);
+      }
+    } else {
+      // Rule-based feedback
+      this.logger.log('Using rule-based feedback generation', { sessionId });
+      summary = this.generateSummary(scores);
+      items = await this.generateFeedbackItems(sessionId, scores);
+      nextSteps = await this.generateNextSteps(sessionId, scores);
+    }
 
     // Insert feedback report
     const [report] = await this.db
@@ -628,5 +664,376 @@ export class FeedbackService {
       wrap_up: 'Wrap Up',
     };
     return names[phase] || phase;
+  }
+
+  /**
+   * AI system prompt for feedback generation
+   */
+  private readonly AI_FEEDBACK_SYSTEM_PROMPT = `You are a senior software engineer who conducts system design interviews at top tech companies. You have 10+ years of experience and have interviewed hundreds of candidates.
+
+Your task is to write detailed, constructive interview feedback that:
+- References specific moments from the conversation
+- Balances strengths and weaknesses honestly
+- Provides actionable improvement suggestions
+- Explains your reasoning clearly
+- Matches the expectations for the candidate's level and company type
+
+You write feedback that hiring committees use to make decisions.`;
+
+  /**
+   * Generate AI-powered feedback for a session
+   */
+  private async generateAIFeedback(
+    sessionId: number,
+    scores: FeedbackScores,
+  ): Promise<{
+    overallSummary: string;
+    items: FeedbackItemData[];
+    nextSteps: FeedbackNextStepData[];
+  }> {
+    const logger = this.logger;
+    const logContext = { sessionId };
+
+    try {
+      // Step 1: Gather data
+      logger.log('Gathering feedback data for AI generation', logContext);
+      const [session, signals, redFlags, messages] = await Promise.all([
+        this.sessionService.getSession(sessionId),
+        this.signalService.getSessionSignals(sessionId),
+        this.redFlagService.getSessionRedFlags(sessionId),
+        this.getSessionMessages(sessionId),
+      ]);
+
+      // Step 2: Build prompt
+      logger.log('Building AI prompt', logContext);
+      const prompt = this.buildAIFeedbackPrompt(
+        sessionId,
+        scores,
+        session,
+        messages,
+        signals,
+        redFlags,
+      );
+
+      // Step 3: Call AI service with 120-second timeout
+      logger.log('Calling AI service', {
+        ...logContext,
+        promptLength: prompt.length,
+      });
+      const aiResponse = await this.aiService.generateResponse({
+        systemPrompt: this.AI_FEEDBACK_SYSTEM_PROMPT,
+        userMessage: prompt,
+        temperature: 0.7,
+        maxTokens: 4000,
+        timeout: 120000, // 120 seconds for comprehensive feedback generation
+      });
+
+      logger.log('AI response received', {
+        ...logContext,
+        model: aiResponse.model,
+        inputTokens: aiResponse.usage?.inputTokens,
+        outputTokens: aiResponse.usage?.outputTokens,
+      });
+
+      // Step 4: Parse JSON response
+      const parsed = this.parseAIResponse(aiResponse.text);
+
+      // Step 5: Transform to service format
+      return this.transformAIResponse(parsed);
+    } catch (error) {
+      logger.error('AI feedback generation error', {
+        ...logContext,
+        error: error.message,
+        stack: error.stack,
+      });
+
+      // Re-throw to trigger fallback in parent method
+      throw error;
+    }
+  }
+
+  /**
+   * Build comprehensive prompt for AI feedback generation
+   */
+  private buildAIFeedbackPrompt(
+    sessionId: number,
+    scores: FeedbackScores,
+    session: any,
+    messages: any[],
+    signals: any[],
+    redFlags: any[],
+  ): string {
+    const transcript = this.formatTranscript(messages);
+    const signalsText = this.formatSignals(signals);
+    const redFlagsText = this.formatRedFlags(redFlags);
+    const threshold = this.determineHireThreshold(
+      session.companyStyle,
+      session.level,
+    );
+
+    return `INTERVIEW CONTEXT:
+- Candidate Level: ${session.level}
+- Company Style: ${session.companyStyle}
+- Problem: ${session.problem?.title || 'System Design Interview'}
+- Duration: ${Math.round((session.duration || 0) / 60)} minutes
+- Completion Status: ${session.status}
+
+PERFORMANCE SCORES (0-100 scale):
+Your scoring system calculated these scores based on detected behaviors:
+- Requirements: ${scores.requirements}/100
+- Design: ${scores.design}/100
+- Communication: ${scores.communication}/100
+- Time Management: ${scores.timeManagement}/100
+- Technical Depth: ${scores.depth}/100
+- Overall: ${scores.overall}/100
+
+DETECTED POSITIVE SIGNALS:
+${signalsText}
+
+DETECTED RED FLAGS:
+${redFlagsText}
+
+FULL INTERVIEW TRANSCRIPT:
+${transcript}
+
+---
+
+HIRING STANDARDS:
+
+For ${session.companyStyle} companies at ${session.level} level:
+
+${this.getHiringStandardsText(session.companyStyle, session.level, threshold)}
+
+---
+
+OUTPUT FORMAT:
+
+Return a JSON object with this exact structure:
+
+{
+  "overallSummary": "**VERDICT: HIRE** (or **VERDICT: NO HIRE**) followed by 2-3 paragraphs summarizing performance, referencing specific moments from the transcript, and explaining your hire/no-hire decision clearly.",
+  "strengths": [
+    "Specific strength with example from transcript",
+    "Another strength...",
+    ...3-5 items
+  ],
+  "weaknesses": [
+    "Specific weakness with example from transcript",
+    "Another weakness...",
+    ...2-4 items
+  ],
+  "suggestions": [
+    "Actionable suggestion for improvement",
+    "Another suggestion...",
+    ...3-5 items
+  ],
+  "nextSteps": [
+    "Concrete action to take (e.g., 'Practice calculating back-of-envelope estimates for 1M DAU systems')",
+    ...3-4 items
+  ]
+}
+
+IMPORTANT:
+- Start overallSummary with **VERDICT: HIRE** or **VERDICT: NO HIRE** on the first line
+- Be SPECIFIC: Reference actual quotes or moments from the transcript
+- Be BALANCED: Acknowledge both strengths and weaknesses
+- Be ACTIONABLE: Every suggestion should be concrete
+- Be HONEST: Don't sugarcoat significant gaps
+- Consider the LEVEL and COMPANY when setting expectations
+- The verdict should align with scores and company standards`;
+  }
+
+  /**
+   * Format signals for prompt
+   */
+  private formatSignals(signals: any[]): string {
+    if (signals.length === 0) {
+      return 'None detected';
+    }
+
+    return signals
+      .map((signal) => {
+        const time = this.formatTime(signal.secondsElapsed || 0);
+        return `- ${signal.signalName.replace(/_/g, ' ').toUpperCase()} (${time}, ${signal.phase || 'unknown'} phase)`;
+      })
+      .join('\n');
+  }
+
+  /**
+   * Format red flags for prompt
+   */
+  private formatRedFlags(redFlags: any[]): string {
+    if (redFlags.length === 0) {
+      return 'None detected';
+    }
+
+    return redFlags
+      .map((flag) => {
+        const time = this.formatTime(flag.secondsElapsed || 0);
+        return `- ${flag.flagName.replace(/_/g, ' ').toUpperCase()} (${time}, ${flag.phase || 'unknown'} phase)`;
+      })
+      .join('\n');
+  }
+
+  /**
+   * Format transcript for prompt
+   */
+  private formatTranscript(messages: any[]): string {
+    return messages
+      .map((msg) => {
+        const timestamp = this.formatTime(msg.secondsElapsed || 0);
+        const role = msg.role === 'user' ? 'Candidate' : 'Interviewer';
+        const phase = msg.phase || 'unknown';
+        return `[${timestamp}] [${phase}] ${role}:\n${msg.text}`;
+      })
+      .join('\n\n');
+  }
+
+  /**
+   * Format seconds to MM:SS
+   */
+  private formatTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * Get hiring standards text for prompt
+   */
+  private getHiringStandardsText(
+    companyStyle: string,
+    level: string,
+    threshold: number,
+  ): string {
+    if (companyStyle === 'faang') {
+      return `FAANG STANDARDS:
+- Hire threshold: Overall score >= ${threshold}
+- Must demonstrate: Strong requirements gathering, scalability thinking, clear communication
+- Red flags are serious concerns that often lead to no-hire decisions
+- Expectations are high; good performance in most areas is required`;
+    } else {
+      return `${companyStyle.toUpperCase()} STANDARDS:
+- Hire threshold: Overall score >= ${threshold}
+- More forgiving on: Time management, depth of scale discussion
+- Focus on: Practical design, clear thinking process, ability to build working systems
+- Red flags should be considered in context of overall performance`;
+    }
+  }
+
+  /**
+   * Determine hire threshold based on company and level
+   */
+  private determineHireThreshold(companyStyle: string, level: string): number {
+    const thresholds: Record<string, Record<string, number>> = {
+      faang: { junior: 70, mid: 75, senior: 80 },
+      startup: { junior: 65, mid: 70, senior: 75 },
+      generic: { junior: 65, mid: 70, senior: 75 },
+    };
+
+    return thresholds[companyStyle]?.[level] ?? 70;
+  }
+
+  /**
+   * Get session messages for transcript
+   */
+  private async getSessionMessages(sessionId: number): Promise<any[]> {
+    const messages = await this.db.query.transcriptMessages.findMany({
+      where: (messages, { eq }) => eq(messages.sessionId, sessionId),
+      orderBy: (messages, { asc }) => [asc(messages.createdAt)],
+    });
+
+    return messages;
+  }
+
+  /**
+   * Parse AI response JSON
+   */
+  private parseAIResponse(text: string): any {
+    // Try to extract JSON from the response
+    // AI might wrap it in code blocks or add explanatory text
+    let jsonText = text.trim();
+
+    // Remove code block markers if present
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.slice(7);
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.slice(3);
+    }
+
+    if (jsonText.endsWith('```')) {
+      jsonText = jsonText.slice(0, -3);
+    }
+
+    jsonText = jsonText.trim();
+
+    // Parse JSON
+    const parsed = JSON.parse(jsonText);
+
+    // Basic structure validation
+    if (
+      !parsed.overallSummary ||
+      !Array.isArray(parsed.strengths) ||
+      !Array.isArray(parsed.weaknesses) ||
+      !Array.isArray(parsed.suggestions) ||
+      !Array.isArray(parsed.nextSteps)
+    ) {
+      throw new Error('AI response missing required fields');
+    }
+
+    return parsed;
+  }
+
+  /**
+   * Transform AI response to service format
+   */
+  private transformAIResponse(parsed: any): {
+    overallSummary: string;
+    items: FeedbackItemData[];
+    nextSteps: FeedbackNextStepData[];
+  } {
+    const items: FeedbackItemData[] = [];
+    let order = 0;
+
+    // Add strengths
+    for (const strength of parsed.strengths) {
+      items.push({
+        type: 'strength',
+        description: strength,
+        displayOrder: order++,
+      });
+    }
+
+    // Add weaknesses
+    for (const weakness of parsed.weaknesses) {
+      items.push({
+        type: 'weakness',
+        description: weakness,
+        displayOrder: order++,
+      });
+    }
+
+    // Add suggestions
+    for (const suggestion of parsed.suggestions) {
+      items.push({
+        type: 'suggestion',
+        description: suggestion,
+        displayOrder: order++,
+      });
+    }
+
+    // Transform next steps
+    const nextSteps: FeedbackNextStepData[] = parsed.nextSteps.map(
+      (step: string, index: number) => ({
+        description: step,
+        displayOrder: index,
+      }),
+    );
+
+    return {
+      overallSummary: parsed.overallSummary,
+      items,
+      nextSteps,
+    };
   }
 }
