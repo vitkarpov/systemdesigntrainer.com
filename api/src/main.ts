@@ -10,6 +10,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as cookieParser from 'cookie-parser';
+import { CustomLoggerService } from './common/logger/custom-logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -18,7 +19,11 @@ async function bootstrap() {
       process.env.NODE_ENV === 'production'
         ? ['log', 'error', 'warn']
         : ['log', 'error', 'warn', 'debug', 'verbose'],
+    bufferLogs: true, // Buffer logs until custom logger is ready
   });
+
+  // Use custom logger that formats objects inline
+  app.useLogger(new CustomLoggerService());
 
   // Enable global validation
   app.useGlobalPipes(
