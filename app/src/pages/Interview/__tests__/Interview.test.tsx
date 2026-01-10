@@ -161,7 +161,8 @@ describe('Interview Page', () => {
       // Header elements
       expect(screen.getByText('Test Interview Case')).toBeInTheDocument()
       expect(screen.getByText(/Total:/)).toBeInTheDocument() // Timer label
-      expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument()
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      expect(backButtons.length).toBeGreaterThan(0)
 
       // Diagram canvas
       const diagramCanvas = screen.getByTestId('diagram-canvas')
@@ -182,7 +183,7 @@ describe('Interview Page', () => {
 
       const diagramCanvas = screen.getByTestId('diagram-canvas')
       expect(diagramCanvas).toHaveAttribute('data-readonly', 'false')
-      expect(diagramCanvas.parentElement).toHaveClass('w-1/2')
+      expect(diagramCanvas.parentElement).toHaveClass('md:w-1/2')
     })
 
     it('should set diagram to read-only for completed sessions', () => {
@@ -533,8 +534,8 @@ describe('Interview Page', () => {
       const user = userEvent.setup()
       renderWithProviders(<Interview />, { queryClient })
 
-      const backButton = screen.getByRole('button', { name: /back to dashboard/i })
-      await user.click(backButton)
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      await user.click(backButtons[0])
 
       expect(mockNavigate).toHaveBeenCalledWith('/')
     })

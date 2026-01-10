@@ -1,7 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { Zap } from 'lucide-react';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
 import { useAuthControllerGetUser } from '@/api/hooks.gen';
 
 export function InterviewCounter() {
@@ -15,21 +13,14 @@ export function InterviewCounter() {
   const needsMore = remaining === 0 && !isUnlimited;
 
   return (
-    <Button
-      variant={needsMore ? 'default' : 'outline'}
-      size="sm"
+    <button
       onClick={() => navigate('/pricing')}
-      className="gap-2"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-muted/80 transition-colors text-sm font-medium cursor-pointer"
     >
-      <Zap className="h-4 w-4" />
-      {isUnlimited ? (
-        <span>∞</span>
-      ) : (
-        <>
-          <span>{remaining}</span>
-          {needsMore && <Badge variant="destructive" className="ml-1">Get More</Badge>}
-        </>
-      )}
-    </Button>
+      <Zap className={`h-3.5 w-3.5 ${needsMore ? 'text-destructive' : 'text-muted-foreground'}`} />
+      <span className={needsMore ? 'text-destructive font-semibold' : 'text-muted-foreground'}>
+        {isUnlimited ? '∞' : remaining}
+      </span>
+    </button>
   );
 }

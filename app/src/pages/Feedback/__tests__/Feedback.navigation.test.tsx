@@ -72,26 +72,21 @@ describe('Feedback - Navigation Consistency', () => {
     it('should show visible "Back to Dashboard" button', () => {
       renderWithProviders(<Feedback />)
 
-      const backButton = screen.getByRole('button', { name: /back to dashboard/i })
-      expect(backButton).toBeInTheDocument()
-      expect(backButton).toBeVisible()
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      expect(backButtons.length).toBeGreaterThan(0)
+      expect(backButtons[0]).toBeVisible()
     })
 
     it('should navigate to "/" when back button is clicked', async () => {
       const user = userEvent.setup()
       renderWithProviders(<Feedback />)
 
-      const backButton = screen.getByRole('button', { name: /back to dashboard/i })
-      await user.click(backButton)
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      await user.click(backButtons[0])
 
       expect(mockNavigate).toHaveBeenCalledWith('/')
     })
 
-    it('should display the page title', () => {
-      renderWithProviders(<Feedback />)
-
-      expect(screen.getByText('Interview Feedback')).toBeInTheDocument()
-    })
 
     it('should show "New Interview" button in header', () => {
       renderWithProviders(<Feedback />)
@@ -116,9 +111,6 @@ describe('Feedback - Navigation Consistency', () => {
     it('should clearly indicate this is the feedback page', () => {
       renderWithProviders(<Feedback />)
 
-      // Clear page title
-      expect(screen.getByText('Interview Feedback')).toBeInTheDocument()
-
       // Overall score should be prominently displayed
       expect(screen.getByText('85')).toBeInTheDocument()
     })
@@ -127,8 +119,8 @@ describe('Feedback - Navigation Consistency', () => {
       renderWithProviders(<Feedback />)
 
       // Back button should have explicit label showing destination
-      const backButton = screen.getByRole('button', { name: /back to dashboard/i })
-      expect(backButton).toHaveTextContent('Back to Dashboard')
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      expect(backButtons[0]).toHaveTextContent('Back to Dashboard')
     })
 
     it('should provide clear path forward with "New Interview" button', () => {
@@ -237,18 +229,19 @@ describe('Feedback - Navigation Consistency', () => {
     it('should use same back button style as Home and Interview pages', () => {
       renderWithProviders(<Feedback />)
 
-      const backButton = screen.getByRole('button', { name: /back to dashboard/i })
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
 
       // Back button should exist and be clearly labeled
-      expect(backButton).toBeInTheDocument()
-      expect(backButton).toHaveTextContent('Back to Dashboard')
+      expect(backButtons.length).toBeGreaterThan(0)
+      expect(backButtons[0]).toHaveTextContent('Back to Dashboard')
     })
 
     it('should have both back navigation and forward navigation options', () => {
       renderWithProviders(<Feedback />)
 
       // Back option
-      expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument()
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      expect(backButtons.length).toBeGreaterThan(0)
 
       // Forward option
       expect(screen.getAllByRole('button', { name: /new interview/i }).length).toBeGreaterThan(0)

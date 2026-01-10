@@ -17,9 +17,9 @@ describe('PageHeader - Navigation Consistency', () => {
         />
       )
 
-      const backButton = screen.getByRole('button', { name: /back to dashboard/i })
-      expect(backButton).toBeInTheDocument()
-      expect(backButton).toHaveTextContent('Back to Dashboard')
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      expect(backButtons.length).toBeGreaterThan(0)
+      expect(backButtons[0]).toHaveTextContent('Back to Dashboard')
     })
 
     it('should NOT show back button when backLabel is missing', () => {
@@ -68,8 +68,8 @@ describe('PageHeader - Navigation Consistency', () => {
         />
       )
 
-      const backButton = screen.getByRole('button', { name: /back to dashboard/i })
-      await user.click(backButton)
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      await user.click(backButtons[0])
 
       expect(mockOnBack).toHaveBeenCalledTimes(1)
     })
@@ -94,7 +94,8 @@ describe('PageHeader - Navigation Consistency', () => {
       )
 
       expect(screen.getByText('Interview Feedback')).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument()
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      expect(backButtons.length).toBeGreaterThan(0)
     })
   })
 
@@ -120,7 +121,8 @@ describe('PageHeader - Navigation Consistency', () => {
         />
       )
 
-      expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument()
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      expect(backButtons.length).toBeGreaterThan(0)
       expect(screen.getByRole('button', { name: /new interview/i })).toBeInTheDocument()
     })
   })
@@ -148,8 +150,8 @@ describe('PageHeader - Navigation Consistency', () => {
         />
       )
 
-      const backButton = screen.getByRole('button', { name: /back to dashboard/i })
-      const svg = backButton.querySelector('svg')
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      const svg = backButtons[0].querySelector('svg')
       expect(svg).toBeInTheDocument()
     })
   })

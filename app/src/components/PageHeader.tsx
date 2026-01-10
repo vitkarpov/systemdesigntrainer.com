@@ -4,7 +4,7 @@ import { UserMenu } from './UserMenu';
 import type { ReactNode } from 'react';
 
 interface PageHeaderProps {
-  title: string;
+  title?: string;
   onBack?: () => void;
   backLabel?: string;
   rightContent?: ReactNode;
@@ -32,8 +32,8 @@ export function PageHeader({
               {backLabel}
             </Button>
           }
-          <h1 className="text-lg font-semibold">{title}</h1>
-          {centerContent}
+          {title && <h1 className="text-lg font-semibold hidden md:flex">{title}</h1>}
+          {centerContent && <div className="hidden md:flex">{centerContent}</div>}
         </div>
         <div className="flex items-center gap-3">
           {rightContent}
