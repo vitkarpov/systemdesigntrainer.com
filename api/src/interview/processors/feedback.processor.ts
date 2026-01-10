@@ -19,13 +19,6 @@ export interface FeedbackJobData {
  *
  * Background worker that processes feedback generation jobs.
  * Runs asynchronously to avoid blocking HTTP requests.
- *
- * Job progression:
- * - 10%: Scores calculated
- * - 40%: Feedback items generated
- * - 70%: Next steps generated
- * - 90%: Results saved to database
- * - 100%: Complete
  */
 @Processor('feedback')
 export class FeedbackProcessor {
@@ -37,47 +30,56 @@ export class FeedbackProcessor {
   async handleFeedbackGeneration(job: Job<FeedbackJobData>) {
     const { sessionId, regenerate } = job.data;
 
-    this.logger.log(`[Job ${job.id}] Starting feedback generation`, job.data);
-
-    try {
-      // Update progress: Starting
-      await job.progress(10);
-
-      // Generate feedback (this calls the existing service method)
-      const result = await this.feedbackService.generateFeedback(
-        sessionId,
-        regenerate,
-      );
-
-      // Update progress: Complete
-      await job.progress(100);
-
-      this.logger.log(
-        `[Job ${job.id}] Feedback generation completed for session ${sessionId}`,
-      );
-
-      return result;
-    } catch (error) {
-      this.logger.error(
-        `[Job ${job.id}] Feedback generation failed for session ${sessionId}:`,
-        error,
-      );
-
-      // Capture error in Sentry with context
-      Sentry.captureException(error, {
-        tags: {
-          jobId: job.id?.toString(),
-          sessionId: sessionId.toString(),
-          jobName: 'feedback.generate',
+    return await Sentry.startSpan(
+      {
+        name: 'feedback.generate',
+        op: 'queue.task',
+        attributes: {
+          'job.id': job.id?.toString(),
+          'session.id': sessionId.toString(),
+          'job.regenerate': regenerate,
+          'job.attemptsMade': job.attemptsMade,
         },
-        extra: {
-          jobData: job.data,
-          attemptsMade: job.attemptsMade,
-        },
-      });
+      },
+      async () => {
+        this.logger.log(
+          `[Job ${job.id}] Starting feedback generation`,
+          job.data,
+        );
 
-      throw error; // Will trigger retry based on job options
-    }
+        try {
+          const result = await this.feedbackService.generateFeedback(
+            sessionId,
+            regenerate,
+          );
+
+          this.logger.log(
+            `[Job ${job.id}] Feedback generation completed for session ${sessionId}`,
+          );
+
+          return result;
+        } catch (error) {
+          this.logger.error(
+            `[Job ${job.id}] Feedback generation failed for session ${sessionId}:`,
+            error,
+          );
+
+          Sentry.captureException(error, {
+            tags: {
+              jobId: job.id?.toString(),
+              sessionId: sessionId.toString(),
+              jobName: 'feedback.generate',
+            },
+            extra: {
+              jobData: job.data,
+              attemptsMade: job.attemptsMade,
+            },
+          });
+
+          throw error; // Will trigger retry based on job options
+        }
+      },
+    );
   }
 
   @OnQueueCompleted()
