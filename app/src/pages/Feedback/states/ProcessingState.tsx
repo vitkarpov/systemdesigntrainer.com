@@ -14,7 +14,7 @@ export function ProcessingState() {
         <CardContent className="flex flex-col items-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-center text-muted-foreground">
-            This usually takes 5-10 seconds. If the queue is long, it might take longer. You may close this page and come back later.
+            This usually takes 30 seconds. Stay tuned 👀
           </p>
         </CardContent>
       </Card>
