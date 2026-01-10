@@ -1,11 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { Loader2 } from 'lucide-react';
 
-interface ProcessingStateProps {
-  progress: number;
-}
-
-export function ProcessingState({ progress }: ProcessingStateProps) {
+export function ProcessingState() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <Card className="p-8 w-full max-w-md">
@@ -15,13 +11,10 @@ export function ProcessingState({ progress }: ProcessingStateProps) {
             Analyzing your interview performance...
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Progress value={progress} className="w-full" />
+        <CardContent className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-center text-muted-foreground">
-            {progress}% complete
-          </p>
-          <p className="text-xs text-center text-muted-foreground">
-            This usually takes 5-10 seconds
+            This usually takes 5-10 seconds. If the queue is long, it might take longer. You may close this page and come back later.
           </p>
         </CardContent>
       </Card>
