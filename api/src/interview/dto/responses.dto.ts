@@ -385,6 +385,9 @@ export class FeedbackReportDto {
   @ApiProperty()
   depthScore: number;
 
+  @ApiProperty({ required: false })
+  overallSummary?: string;
+
   @ApiProperty()
   generatedAt: Date;
 
