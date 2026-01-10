@@ -145,7 +145,24 @@ export class StripeService {
     const paymentIntentId = session.payment_intent as string;
     const subscriptionId = session.subscription as string;
 
-    // Create purchase record
+    // Check if this purchase was already processed
+    const existingPurchase = await this.db
+      .select()
+      .from(schema.purchases)
+      .where(
+        paymentIntentId
+          ? eq(schema.purchases.stripePaymentIntentId, paymentIntentId)
+          : eq(schema.purchases.stripeSubscriptionId, subscriptionId),
+      )
+      .limit(1);
+
+    if (existingPurchase.length > 0) {
+      this.logger.log(
+        `Purchase already processed for ${paymentIntentId || subscriptionId}, skipping to ensure idempotency`,
+      );
+      return;
+    }
+
     await this.db.insert(schema.purchases).values({
       userId,
       stripePaymentIntentId: paymentIntentId || null,
