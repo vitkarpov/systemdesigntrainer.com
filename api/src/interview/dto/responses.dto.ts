@@ -319,7 +319,7 @@ export class FeedbackItemDto {
   reportId: number;
 
   @ApiProperty({ enum: ['strength', 'weakness', 'suggestion'] })
-  itemType: string;
+  type: string;
 
   @ApiProperty()
   title: string;

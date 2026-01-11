@@ -103,7 +103,8 @@ describe('Home - Navigation Consistency', () => {
     it('should display the page title', () => {
       renderWithProviders(<Home />)
 
-      expect(screen.getAllByText('System Design Interview Simulator').length).toBeGreaterThan(0)
+      // After the redesign, the Home page shows "Back to Dashboard" button instead of app title
+      expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument()
     })
   })
 

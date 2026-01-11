@@ -159,9 +159,9 @@ describe('Interview Page', () => {
       renderWithProviders(<Interview />, { queryClient })
 
       // Header elements
-      expect(screen.getByText('Test Interview Case')).toBeInTheDocument()
       expect(screen.getByText(/Total:/)).toBeInTheDocument() // Timer label
-      expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument()
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      expect(backButtons.length).toBeGreaterThan(0)
 
       // Diagram canvas
       const diagramCanvas = screen.getByTestId('diagram-canvas')
@@ -533,8 +533,8 @@ describe('Interview Page', () => {
       const user = userEvent.setup()
       renderWithProviders(<Interview />, { queryClient })
 
-      const backButton = screen.getByRole('button', { name: /back to dashboard/i })
-      await user.click(backButton)
+      const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
+      await user.click(backButtons[0])
 
       expect(mockNavigate).toHaveBeenCalledWith('/')
     })

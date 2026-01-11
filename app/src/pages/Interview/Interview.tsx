@@ -147,7 +147,6 @@ function InterviewPage() {
   return (
     <div className="h-screen flex flex-col">
       <PageHeader
-        title={session?.data.session.interviewCase?.title || ''}
         backLabel="Back to Dashboard"
         onBack={() => navigate('/')}
         rightContent={

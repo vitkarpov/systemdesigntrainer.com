@@ -127,7 +127,6 @@ export default function Pricing() {
   return (
     <div className="min-h-screen bg-background">
       <PageHeader
-        title="Pricing"
         onBack={() => navigate('/')}
         backLabel="Dashboard"
       />
