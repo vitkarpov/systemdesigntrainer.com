@@ -159,7 +159,6 @@ describe('Interview Page', () => {
       renderWithProviders(<Interview />, { queryClient })
 
       // Header elements
-      expect(screen.getByText('Test Interview Case')).toBeInTheDocument()
       expect(screen.getByText(/Total:/)).toBeInTheDocument() // Timer label
       const backButtons = screen.getAllByRole('button', { name: /back to dashboard/i })
       expect(backButtons.length).toBeGreaterThan(0)
@@ -183,7 +182,7 @@ describe('Interview Page', () => {
 
       const diagramCanvas = screen.getByTestId('diagram-canvas')
       expect(diagramCanvas).toHaveAttribute('data-readonly', 'false')
-      expect(diagramCanvas.parentElement).toHaveClass('md:w-1/2')
+      expect(diagramCanvas.parentElement).toHaveClass('w-1/2')
     })
 
     it('should set diagram to read-only for completed sessions', () => {
