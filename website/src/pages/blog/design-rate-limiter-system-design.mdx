@@ -1,0 +1,781 @@
+---
+layout: ../../layouts/BlogLayout.astro
+title: "Design a Rate Limiter: Complete System Design Guide"
+description: "Master rate limiter design with this complete guide covering token bucket, sliding window algorithms, distributed systems, and real-world implementation strategies."
+publishDate: "2026-01-11"
+readTime: "20 min read"
+---
+
+Rate limiting is everywhere. Every time you hit "Send" on Twitter, make an API call, or refresh a page, there's a rate limiter protecting the system from overload.
+
+"Design a rate limiter" appears at Amazon, Google, Stripe, Meta, and virtually every tech company. Why?
+
+- **Critical for production systems** - prevents abuse and ensures stability
+- **Tests distributed systems knowledge** - involves coordination across servers
+- **Has multiple valid solutions** - lets you showcase trade-off analysis
+- **Appears in real work** - you'll actually implement this on the job
+
+This guide walks you through designing a production-grade rate limiter, using the exact framework that gets you hired.
+
+## Phase 1: Clarify Requirements (5 minutes)
+
+Start by understanding what you're building. Never jump straight to the solution.
+
+### Functional Requirements
+
+**You:** "Let me clarify the functional requirements:
+
+1. Are we building a rate limiter for an API, or a generic rate limiter service?
+2. What should happen when the limit is exceeded? Return an error, or queue requests?
+3. Do we need different rate limits for different endpoints or users?
+4. Should rate limits be per user, per IP, per API key, or configurable?
+5. Do we need to notify users when they're approaching their limit?"
+
+**Interviewer:** "Build a generic rate limiter that can be used across our microservices. When limits are exceeded, reject requests with a 429 status. Support different limits per user ID. We don't need notifications."
+
+**You:** "Got it. So the MVP is:
+- Rate limit HTTP requests
+- Configurable limits per user ID
+- Reject excess requests with 429 Too Many Requests
+- Should work across multiple services
+
+Let me clarify what rules we're enforcing."
+
+### Rate Limiting Rules
+
+**You:** "What type of rate limiting rules do we need?"
+
+**Interviewer:** "Let's support:
+- X requests per second
+- X requests per minute
+- X requests per hour
+
+For example: 10 requests/second, 100 requests/minute, 1000 requests/hour."
+
+**You:** "Perfect. Multiple time windows, got it."
+
+### Non-Functional Requirements
+
+**You:** "Now for scale and performance:
+
+1. How many requests per second will the rate limiter process?
+2. What's the latency requirement? How fast must the check be?
+3. Are we deploying across multiple data centers?
+4. What's acceptable accuracy? Is 99% accuracy okay, or do we need 100%?
+5. Should the rate limiter be highly available?"
+
+**Interviewer:** "The rate limiter will protect services handling 1 million requests/second. Latency must be under 10ms - this is in the hot path. Multi-region deployment. 99.99% accuracy is fine - we can tolerate occasional false negatives. High availability is critical - if it goes down, all services go down."
+
+**You:** "Excellent, let me summarize:"
+
+```
+Functional Requirements:
+✅ Rate limit by user ID
+✅ Support multiple time windows (second, minute, hour)
+✅ Return 429 when limit exceeded
+✅ Work across microservices
+
+Non-Functional Requirements:
+- 1M requests/second throughput
+- Under 10ms latency (low latency is critical)
+- Multi-region deployment
+- 99.99% accuracy acceptable
+- High availability required
+```
+
+## Phase 2: Rate Limiting Algorithms (10 minutes)
+
+**You:** "Before designing the system, let me discuss different rate limiting algorithms and their trade-offs."
+
+### Algorithm 1: Fixed Window Counter
+
+**How it works:**
+```
+Time windows: 00:00-00:59, 01:00-01:59, etc.
+Limit: 100 requests/minute
+
+00:00 - Request 1 → Counter = 1 ✅
+00:30 - Request 100 → Counter = 100 ✅
+00:45 - Request 101 → Counter = 101 ❌ Rejected
+
+01:00 - Counter resets to 0
+```
+
+**Pros:**
+- Simple to implement
+- Memory efficient (one counter per window)
+- Easy to understand
+
+**Cons:**
+- **Boundary problem:** User can make 100 requests at 00:59 and 100 at 01:00 (200 in 2 seconds!)
+- Allows burst traffic at window edges
+
+### Algorithm 2: Sliding Window Log
+
+**How it works:**
+```
+Store timestamp of each request in a list
+When new request arrives:
+  1. Remove timestamps older than 60 seconds
+  2. Count remaining timestamps
+  3. If count < limit, allow request
+```
+
+**Example:**
+```
+Limit: 3 requests/minute
+Current time: 12:01:30
+
+Request log:
+- 12:00:35 (removed, older than 60 sec)
+- 12:00:45 (removed)
+- 12:01:00 ✅ (within 60 sec)
+- 12:01:20 ✅
+- 12:01:25 ✅
+
+Count = 3, limit reached
+New request at 12:01:30 → Rejected ❌
+```
+
+**Pros:**
+- Very accurate - no boundary issues
+- True sliding window
+
+**Cons:**
+- Memory intensive - store every request timestamp
+- Expensive to clean up old timestamps
+
+### Algorithm 3: Sliding Window Counter
+
+**How it works:**
+```
+Hybrid approach - combines fixed window with sliding window
+
+Rate = (Requests in previous window × overlap percentage)
+       + (Requests in current window)
+
+Example:
+- Previous window (00:00-00:59): 80 requests
+- Current window (01:00-01:59): 30 requests
+- Current time: 01:15 (25% into current window)
+
+Estimated requests in last 60 seconds:
+= 80 × (1 - 0.25) + 30
+= 60 + 30 = 90 requests
+```
+
+**Pros:**
+- More accurate than fixed window
+- Less memory than sliding window log
+- Good approximation
+
+**Cons:**
+- Slightly less accurate than true sliding window
+- More complex calculation
+
+### Algorithm 4: Token Bucket
+
+**How it works:**
+```
+Bucket holds tokens (capacity = rate limit)
+Tokens added at constant rate (refill rate)
+Each request consumes one token
+
+Example:
+Capacity: 10 tokens
+Refill: 1 token/second
+
+00:00 - Bucket has 10 tokens
+00:00 - Request 1 → Consume 1 token → 9 left ✅
+00:05 - 5 tokens refilled → 14 tokens (capped at 10)
+00:05 - 10 rapid requests → 0 tokens left
+00:06 - Request 11 → 1 token refilled → Allow ✅
+```
+
+**Pros:**
+- Allows short bursts (uses bucket capacity)
+- Smooth traffic over time
+- Memory efficient (store 2 values: tokens, last refill time)
+
+**Cons:**
+- Tuning refill rate can be tricky
+- May allow bursts that overload system
+
+### Algorithm 5: Leaky Bucket
+
+**How it works:**
+```
+Requests go into a queue (bucket)
+Queue processes requests at constant rate
+If queue is full, reject request
+
+Like a bucket with a hole at the bottom -
+water leaks out at constant rate
+```
+
+**Pros:**
+- Processes requests at stable rate
+- Good for smoothing bursty traffic
+
+**Cons:**
+- Recent requests may be rejected while old requests process
+- Queue management overhead
+
+### Recommended Algorithm: Token Bucket
+
+**You:** "For this system, I recommend **Token Bucket** because:
+
+1. **Memory efficient** - only store tokens count and timestamp
+2. **Allows reasonable bursts** - matches real usage patterns
+3. **Simple to implement** - straightforward logic
+4. **Good for distributed systems** - easy to coordinate
+
+The burst allowance is actually beneficial - legitimate users often have bursty patterns."
+
+## Phase 3: High-Level Design (10 minutes)
+
+**You:** "Let me design the architecture."
+
+### Version 1: Single Server
+
+```
+[Client] → [Application Server] → [Rate Limiter (in-memory)]
+                                        ↓
+                                   [Redis Cache]
+                                        ↓
+                                    [Database]
+```
+
+**You:** "Basic flow:
+1. Request arrives with user ID
+2. Rate limiter checks if user has tokens
+3. If yes → allow request, decrement tokens
+4. If no → reject with 429"
+
+### Where to Place the Rate Limiter?
+
+**You:** "We have three options for placement:"
+
+**Option 1: Client-side rate limiting**
+```
+[Client] → Rate limiting logic → [Server]
+```
+- ❌ Not secure - users can bypass
+- Only use as optimization, not enforcement
+
+**Option 2: Server-side rate limiting**
+```
+[Client] → [API Server + Rate Limiter] → [Service]
+```
+- ✅ Full control
+- ❌ Adds latency to service code
+
+**Option 3: Middleware/API Gateway**
+```
+[Client] → [API Gateway + Rate Limiter] → [Services]
+```
+- ✅ Centralized - one place for all services
+- ✅ Services stay clean
+- ✅ Easy to update rules
+
+**I'd choose Option 3: API Gateway** because:
+- Separation of concerns
+- Reusable across services
+- Easier to manage and update
+
+### API Design
+
+**You:** "The rate limiter needs a simple API:"
+
+```
+CheckRateLimit(userID, limit, window)
+
+Request:
+{
+  "user_id": "user123",
+  "rate_limit": {
+    "requests": 100,
+    "window": "minute"
+  }
+}
+
+Response:
+{
+  "allowed": true,
+  "remaining": 45,
+  "retry_after": 0
+}
+
+Or if rate limited:
+{
+  "allowed": false,
+  "remaining": 0,
+  "retry_after": 42  // seconds until reset
+}
+```
+
+### Response Headers
+
+**You:** "Industry standard is to include rate limit info in response headers:"
+
+```
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 100        // Total limit
+X-RateLimit-Remaining: 45     // Requests left
+X-RateLimit-Reset: 1641234600 // Unix timestamp of reset
+
+// If rate limited:
+HTTP/1.1 429 Too Many Requests
+Retry-After: 42               // Seconds to wait
+```
+
+## Phase 4: Distributed Design (15 minutes)
+
+**Interviewer:** "Your single-server design won't handle 1 million requests/second. How do you scale this?"
+
+### The Distributed Problem
+
+**You:** "With multiple API servers, we face a challenge:"
+
+```
+Scenario: User has 10 requests/second limit
+
+[User] → [Server 1] → Redis (counter: 3)
+      → [Server 2] → Redis (counter: 4)
+      → [Server 3] → Redis (counter: 5)
+
+Total: 12 requests/second ❌ Exceeds limit!
+
+Problem: Race conditions in distributed environment
+```
+
+### Solution 1: Centralized Redis
+
+**Architecture:**
+```
+[API Server 1] ↘
+[API Server 2] → [Redis Cluster] → Check token bucket
+[API Server 3] ↗
+```
+
+**Token Bucket Implementation in Redis:**
+
+```lua
+-- Lua script runs atomically in Redis
+local key = KEYS[1]
+local capacity = tonumber(ARGV[1])
+local refill_rate = tonumber(ARGV[2])
+local requested = tonumber(ARGV[3])
+
+-- Get current tokens and last refill time
+local tokens = redis.call('HGET', key, 'tokens')
+local last_refill = redis.call('HGET', key, 'last_refill')
+local now = redis.call('TIME')
+
+if tokens == false then
+  tokens = capacity
+  last_refill = now
+else
+  -- Calculate tokens to add based on time passed
+  local time_passed = now - last_refill
+  local tokens_to_add = time_passed * refill_rate
+  tokens = math.min(capacity, tokens + tokens_to_add)
+  last_refill = now
+end
+
+-- Check if we have enough tokens
+if tokens >= requested then
+  tokens = tokens - requested
+  redis.call('HSET', key, 'tokens', tokens)
+  redis.call('HSET', key, 'last_refill', last_refill)
+  return {1, tokens}  -- Allowed, remaining tokens
+else
+  return {0, tokens}  -- Rejected, current tokens
+end
+```
+
+**You:** "Lua scripts in Redis execute atomically, solving the race condition problem."
+
+**Pros:**
+- Atomic operations - no race conditions
+- Fast - Redis is in-memory
+- Accurate rate limiting
+
+**Cons:**
+- Redis becomes bottleneck
+- Single point of failure
+- Network latency to Redis (~1-2ms)
+
+### Handling Redis as Bottleneck
+
+**Interviewer:** "What if Redis can't handle 1M requests/second?"
+
+**You:** "We need to scale Redis. Several approaches:"
+
+**Approach 1: Redis Cluster with Sharding**
+
+```
+API Servers
+    ↓
+Consistent Hashing by user_id
+    ↓
+┌─────────┬─────────┬─────────┐
+│Redis 1  │Redis 2  │Redis 3  │
+│users    │users    │users    │
+│a-h      │i-p      │q-z      │
+└─────────┴─────────┴─────────┘
+```
+
+**You:** "Shard by user ID to distribute load:
+- Shard 1: users starting with a-h
+- Shard 2: users starting with i-p
+- Shard 3: users starting with q-z
+
+This distributes both data and traffic."
+
+**Approach 2: Local Cache + Redis**
+
+```
+API Server 1:
+  [Local Cache] → [Redis Cluster]
+
+Flow:
+1. Check local cache first (fast, 0ms)
+2. If miss, check Redis (1-2ms)
+3. Update local cache
+```
+
+**You:** "Add local in-memory cache on each API server:
+
+**Benefits:**
+- Reduces Redis load by 90%
+- Sub-millisecond latency
+- Still mostly accurate
+
+**Trade-off:**
+- Slightly less accurate (may allow 101 requests instead of 100)
+- Acceptable since we only need 99.99% accuracy"
+
+### Multi-Region Deployment
+
+**Interviewer:** "We're deployed in US, EU, and Asia. How does this affect your design?"
+
+**You:** "Multi-region adds complexity. Two approaches:"
+
+**Approach 1: Regional Rate Limits**
+
+```
+US Region:                EU Region:
+[Clients] → [Redis US]    [Clients] → [Redis EU]
+
+Each region has independent counters
+```
+
+**Pros:**
+- Low latency (no cross-region calls)
+- High availability per region
+
+**Cons:**
+- Less accurate globally (user could hit limit in each region)
+- Complex to enforce global limits
+
+**Approach 2: Global Rate Limits with Eventual Consistency**
+
+```
+[US Redis] ↔ Sync ↔ [EU Redis] ↔ Sync ↔ [Asia Redis]
+
+Sync every 1-2 seconds
+```
+
+**Pros:**
+- True global limits
+
+**Cons:**
+- Higher latency
+- Complex synchronization
+- Potential conflicts
+
+**You:** "I'd recommend **Regional Rate Limits** because:
+- 10ms latency requirement eliminates cross-region calls (100+ ms)
+- Most users stay in one region
+- 99.99% accuracy allows regional approximation
+
+For premium users needing strict global limits, we could use asynchronous sync with eventual consistency."
+
+## Phase 5: Deep Dive Topics (10 minutes)
+
+### Handling Different Time Windows
+
+**Interviewer:** "How do you support 10/sec, 100/min, and 1000/hour simultaneously?"
+
+**You:** "Store separate token buckets for each window:"
+
+```
+Redis structure:
+rate_limit:user123:second → {tokens: 8, last_refill: 1641234567}
+rate_limit:user123:minute → {tokens: 75, last_refill: 1641234560}
+rate_limit:user123:hour → {tokens: 850, last_refill: 1641234000}
+
+Check algorithm:
+1. Check all buckets
+2. If ANY bucket has no tokens → Reject
+3. If ALL buckets have tokens → Allow + decrement all
+```
+
+**Memory per user:**
+- 3 buckets × 16 bytes = 48 bytes
+- 1M users = 48 MB (very manageable)
+
+### Rate Limiting by Multiple Dimensions
+
+**You:** "We might need rate limiting by:"
+
+```
+- User ID: user123 → 100/min
+- IP address: 192.168.1.1 → 1000/min (prevent DDoS)
+- API key: key_abc → 10000/day (tiered pricing)
+- Endpoint: /api/expensive → 10/min (protect costly operations)
+```
+
+**Implementation:**
+```
+Check hierarchy:
+1. Check global IP rate limit (1000/min)
+2. Check user rate limit (100/min)
+3. Check endpoint rate limit (10/min)
+
+Reject if ANY limit exceeded
+```
+
+**Redis keys:**
+```
+rate_limit:ip:192.168.1.1:minute
+rate_limit:user:user123:minute
+rate_limit:endpoint:/api/expensive:minute
+```
+
+### Handling Distributed Counters Race Conditions
+
+**Interviewer:** "Even with Redis Lua scripts, what if two API servers call Redis at exactly the same time?"
+
+**You:** "Redis is single-threaded, so it processes commands sequentially:
+
+```
+Time   Server 1              Redis                Server 2
+0ms    CheckLimit(user123)
+1ms                          tokens=10→9
+2ms    ← Allowed                                  CheckLimit(user123)
+3ms                          tokens=9→8
+4ms                                               ← Allowed
+
+No race condition - Redis handles serially
+```
+
+This is one reason Redis is perfect for rate limiting - single-threaded model prevents races."
+
+### Rules Configuration and Updates
+
+**Interviewer:** "How do you manage rate limit rules? What if we need to change limits without redeploying?"
+
+**You:** "We need a rules configuration system:"
+
+**Architecture:**
+```
+[Admin Dashboard]
+       ↓
+[Rules Service] → [PostgreSQL]
+       ↓
+[Config Cache] ← [API Servers fetch periodically]
+```
+
+**Database Schema:**
+```sql
+CREATE TABLE rate_limit_rules (
+  id SERIAL PRIMARY KEY,
+  user_tier VARCHAR(50),     -- free, premium, enterprise
+  endpoint VARCHAR(255),
+  requests_per_second INT,
+  requests_per_minute INT,
+  requests_per_hour INT,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+);
+
+Example rules:
+free tier: 10/sec, 100/min, 1000/hour
+premium tier: 100/sec, 1000/min, 10000/hour
+```
+
+**Update flow:**
+1. Admin updates rule in dashboard
+2. Rules service writes to PostgreSQL
+3. API servers poll for updates every 30 seconds
+4. Update local cache
+5. New limits take effect
+
+**Trade-off:** 30-second delay for updates vs real-time (acceptable for most use cases)
+
+## Complete Architecture
+
+**Final Design:**
+
+```
+                    [Clients]
+                       ↓
+              [API Gateway Cluster]
+                       ↓
+    ┌─────────────────┴─────────────────┐
+    ↓                                    ↓
+[Rate Limiter Middleware]    [Rules Config Service]
+    ↓                                    ↓
+[Local Cache]                    [PostgreSQL]
+    ↓
+[Redis Cluster - Sharded by user_id]
+    ↓
+[Shard 1] [Shard 2] [Shard 3] ... [Shard N]
+```
+
+**Request Flow:**
+
+**When request arrives:**
+1. API Gateway receives request
+2. Extract user ID from request
+3. Check local cache for rate limit status (fast path)
+4. If local cache miss, query Redis with Lua script
+5. Decrement tokens if available
+6. Update local cache
+7. Return 200 (allowed) or 429 (rate limited)
+8. Add rate limit headers to response
+
+**Performance Characteristics:**
+- Cache hit (90% of requests): under 1ms latency
+- Cache miss: 1-3ms latency (Redis query)
+- Throughput: 1M+ requests/second (distributed across API servers)
+- Accuracy: 99.99%
+- Availability: 99.99% (Redis cluster with replication)
+
+## Common Follow-up Questions
+
+### Q: "How do you handle clock skew in distributed systems?"
+
+**You:** "Clock skew can cause issues with token refill calculations.
+
+**Solution:**
+- Use Redis server time (`TIME` command) instead of application server time
+- Redis acts as single source of truth for time
+- Eliminates clock drift between API servers
+
+**In the Lua script:**
+```lua
+local now = redis.call('TIME')  -- Use Redis time, not server time
+```
+
+This ensures consistent time across all API servers."
+
+### Q: "What if Redis goes down?"
+
+**You:** "We need a failover strategy:
+
+**Option 1: Fail Open (Allow All)**
+- If Redis unavailable → Allow all requests
+- ✅ Service stays up
+- ❌ No rate limiting during outage
+
+**Option 2: Fail Closed (Reject All)**
+- If Redis unavailable → Reject all requests
+- ✅ Protect backend services
+- ❌ Poor user experience
+
+**Option 3: Degrade to Local Rate Limiting**
+- If Redis unavailable → Use local in-memory counters
+- ✅ Service stays up with some protection
+- ❌ Less accurate (per-server limits)
+
+**I'd recommend Option 3** with Redis high availability:
+- Redis Cluster with replication (master-replica)
+- Automatic failover with Redis Sentinel
+- Target: 99.99% Redis uptime
+
+During rare outages, degrade to local limiting."
+
+### Q: "How do you handle sudden traffic spikes?"
+
+**You:** "Token bucket naturally handles small bursts, but for large spikes:
+
+**Strategy 1: Circuit Breaker**
+```
+If error rate > 50% for 10 seconds:
+  → Open circuit
+  → Reject requests faster (fail fast)
+  → Try again after 30 seconds
+```
+
+**Strategy 2: Priority Queue**
+- High-priority requests (paying customers) → Always allow
+- Low-priority requests → Rate limit aggressively
+- Implementation: Multiple token buckets per user tier
+
+**Strategy 3: Adaptive Rate Limiting**
+```
+Monitor system health:
+  If CPU > 80% → Reduce all rate limits by 50%
+  If CPU < 50% → Restore normal limits
+```
+
+This prevents cascading failures."
+
+### Q: "How would you add analytics and monitoring?"
+
+**You:** "Track these metrics:
+
+**Real-time Metrics (to Redis/Prometheus):**
+- Total requests/second
+- Rejected requests/second
+- Rate limit hit rate by user, endpoint
+- p50, p95, p99 latency of rate limit checks
+
+**Long-term Analytics (to Data Warehouse):**
+- Async write rejected requests to Kafka → S3
+- Analyze patterns: which users hit limits, when, why
+- Inform capacity planning and limit adjustments
+
+**Alerting:**
+- Alert if rate limit rejection rate > 10%
+- Alert if Redis latency > 5ms
+- Alert if Redis unavailable
+
+**Dashboard:**
+- Show rate limit usage per user tier
+- Show top users hitting limits
+- Show system-wide capacity"
+
+## What Makes This Answer Strong
+
+This walkthrough demonstrates:
+
+1. **Algorithm knowledge** - explained 5 algorithms with trade-offs
+2. **Distributed systems expertise** - handled race conditions, sharding, multi-region
+3. **Production readiness** - covered monitoring, failover, configuration
+4. **Trade-off analysis** - accuracy vs latency, fail open vs closed
+5. **Scalability** - designed for 1M requests/second
+6. **Real-world experience** - included headers, status codes, best practices
+
+## Practice Exercise
+
+Set a timer for 45 minutes and design a rate limiter:
+
+1. Choose an algorithm (start with token bucket)
+2. Design single-server version
+3. Scale to distributed system
+4. Add monitoring and configuration
+5. Handle edge cases (clock skew, Redis failure)
+
+**Key questions to ask yourself:**
+- Where is the rate limiter placed?
+- How do I prevent race conditions?
+- What happens during Redis outage?
+- How do I update limits without downtime?
+
+The more you practice, the more these patterns become second nature.
+
+Now go protect some APIs.
