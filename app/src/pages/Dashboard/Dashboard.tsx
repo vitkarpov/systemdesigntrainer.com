@@ -5,12 +5,13 @@ import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/PageHeader';
 import { Page, Container, Stack, Flex } from '@/components/layout';
 import { InterviewCounter } from '@/components/InterviewCounter';
-import { useSessionsControllerGetDashboard } from '@/api/hooks.gen';
+import { useAuthControllerGetUser, useSessionsControllerGetDashboard } from '@/api/hooks.gen';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { data, isLoading, error } = useSessionsControllerGetDashboard();
+  const { data: user } = useAuthControllerGetUser();
 
   if (isLoading) {
     return (
@@ -33,20 +34,20 @@ export default function Dashboard() {
   const { sessions, stats } = data.data;
 
   return (
-    <Page background="default">
+    <Page background="default" className='px-2'>
       <Stack gap="6">
         <PageHeader
-          title="System Design Interview Simulator"
+          title={`👋, ${user?.name ?? "Anonymous"}`}
           rightContent={
             <ButtonBar gap="sm">
               <InterviewCounter />
-              <Button onClick={() => navigate('/home')} variant="primary">
+              <Button onClick={() => navigate('/home')} variant="gradient">
                 New Interview
               </Button>
             </ButtonBar>
           }
         />
-        <Container maxWidth="6xl" gap="6" paddingX="4">
+        <Container maxWidth="6xl" gap="6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="p-6">
@@ -80,7 +81,7 @@ export default function Dashboard() {
               <Stack gap="3">
                 {sessions.map((session) => (
                   <Card key={session.id} className="p-6 hover:shadow-md transition-shadow">
-                    <Flex align="start" justify="between">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                       <Stack gap="3" className="flex-1">
                         <div>
                           <h3 className="font-semibold text-lg">
@@ -90,7 +91,7 @@ export default function Dashboard() {
                             {session.interviewCase?.description}
                           </p>
                         </div>
-                        <Flex gap="4" className="text-sm">
+                        <div className="flex flex-wrap gap-4 text-sm">
                           <Flex align="center" gap="1">
                             <span className="text-muted-foreground">Status:</span>
                             <span className={`font-medium ${
@@ -109,10 +110,10 @@ export default function Dashboard() {
                               : formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })
                             }
                           </span>
-                        </Flex>
+                        </div>
 
                         {session.overallScore !== null && (
-                          <Flex gap="3" className="text-sm">
+                          <div className="flex flex-wrap gap-3 text-sm">
                             <span>
                               <span className="text-muted-foreground">Overall:</span>
                               <span className="font-semibold ml-1">{session.overallScore}/100</span>
@@ -129,15 +130,16 @@ export default function Dashboard() {
                               <span className="text-muted-foreground">Communication:</span>
                               <span className="font-semibold ml-1">{session.communicationScore}/100</span>
                             </span>
-                          </Flex>
+                          </div>
                         )}
                       </Stack>
 
-                      <ButtonBar gap="sm">
+                      <div className="flex gap-2 w-full md:w-auto md:flex-col md:min-w-[140px]">
                         <Button
                           onClick={() => navigate(`/interview/${session.id}`)}
                           variant="primary"
                           size="sm"
+                          className="flex-1 md:flex-initial"
                         >
                           {session.status === 'in_progress' ? 'Continue' : 'View Session'}
                         </Button>
@@ -146,12 +148,13 @@ export default function Dashboard() {
                             onClick={() => navigate(`/feedback/${session.id}`)}
                             variant="outline"
                             size="sm"
+                            className="flex-1 md:flex-initial"
                           >
                             View Feedback
                           </Button>
                         )}
-                      </ButtonBar>
-                    </Flex>
+                      </div>
+                    </div>
                   </Card>
                 ))}
               </Stack>

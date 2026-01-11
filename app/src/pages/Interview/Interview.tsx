@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import { DiagramCanvas } from '@/components/diagram/DiagramCanvas';
 import { PageHeader } from '@/components/PageHeader';
 import { PhaseDisplay } from '@/components/PhaseDisplay';
-import { Stack } from '@/components/layout';
 import { MessageList, InterviewInput } from './components';
 import { Button } from '@/components/ui/button';
 import { formatElapsedTime, parseErrorMessage } from '@/lib/utils';
@@ -148,7 +147,6 @@ function InterviewPage() {
   return (
     <div className="h-screen flex flex-col">
       <PageHeader
-        title={session?.data.session.interviewCase?.title || ''}
         backLabel="Back to Dashboard"
         onBack={() => navigate('/')}
         rightContent={
@@ -182,12 +180,9 @@ function InterviewPage() {
       />
 
       {/* Main Content */}
-      <Stack
-        direction="horizontal"
-        className="flex-1 overflow-hidden flex-col md:flex-row"
-      >
+      <div className="flex-1 flex overflow-hidden">
         {/* Diagram Canvas */}
-        <div className="w-full md:w-1/2 h-1/2 md:h-full border-b md:border-b-0 md:border-r border-border">
+        <div className="w-1/2 border-r border-border">
           <DiagramCanvas
             sessionId={sessionIdNum}
             isReadOnly={isReadOnly}
@@ -195,7 +190,7 @@ function InterviewPage() {
         </div>
 
         {/* Chat Area (Messages + Input) */}
-        <Stack className="w-full md:w-1/2 h-1/2 md:h-full">
+        <div className="flex flex-col w-1/2">
           <MessageList
             messages={messages}
             optimisticMessage={optimisticMessage}
@@ -212,8 +207,8 @@ function InterviewPage() {
             onChange={setInputValue}
             onSend={handleSendMessage}
           />
-        </Stack>
-      </Stack>
+        </div>
+      </div>
     </div>
   );
 }

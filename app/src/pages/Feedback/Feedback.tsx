@@ -14,6 +14,7 @@ import { FeedbackItemsCard } from './components/FeedbackItemsCard';
 import { NextStepsCard } from './components/NextStepsCard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import ReactMarkdown from 'react-markdown';
+import { Card } from '@/components/ui/card';
 
 function FeedbackPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -77,15 +78,13 @@ function FeedbackPage() {
           onBack={handleBackToHome}
           rightContent={<Button onClick={handleBackToHome}>New Interview</Button>}
         />
-        <Container maxWidth="6xl" gap="6">
+        <Container maxWidth="6xl" gap="6" paddingX="4">
           {completedFeedback.overallSummary && (
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-              <div className="prose dark:prose-invert max-w-none [&_p]:my-4">
-                <ReactMarkdown>
-                  {completedFeedback.overallSummary}
-                </ReactMarkdown>
-              </div>
-            </div>
+            <Card className="p-6">
+              <ReactMarkdown>
+                {completedFeedback.overallSummary}
+              </ReactMarkdown>
+            </Card>
           )}
 
           <OverallScoreCard score={completedFeedback.overallScore} />
@@ -107,6 +106,7 @@ function FeedbackPage() {
           )}
 
           <NextStepsCard steps={completedFeedback.nextSteps || []} />
+          <div className="h-4" />
         </Container>
       </Stack>
     </Page>

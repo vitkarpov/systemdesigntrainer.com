@@ -1,12 +1,8 @@
+import type { FeedbackItemDto } from '@/api/hooks.gen';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface FeedbackItem {
-  itemType: 'strength' | 'weakness' | 'suggestion';
-  description: string;
-}
-
 interface FeedbackItemsCardProps {
-  items: FeedbackItem[];
+  items: FeedbackItemDto[];
   type: 'strength' | 'weakness' | 'suggestion';
 }
 
@@ -32,7 +28,7 @@ const config = {
 };
 
 export function FeedbackItemsCard({ items, type }: FeedbackItemsCardProps) {
-  const filteredItems = items.filter(item => item.itemType === type);
+  const filteredItems = items.filter(item => item.type === type);
 
   if (filteredItems.length === 0) {
     return null;

@@ -14,6 +14,8 @@ const buttonVariants = cva(
           "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98]",
         primary:
           "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98]",
+        gradient:
+          "bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-indigo-500 hover:to-purple-500 active:scale-[0.98] transition-all duration-200",
         danger:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-[0.98]",
         destructive:
