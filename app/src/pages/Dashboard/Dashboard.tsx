@@ -34,7 +34,7 @@ export default function Dashboard() {
   const { sessions, stats } = data.data;
 
   return (
-    <Page background="default" className='px-2'>
+    <Page>
       <Stack gap="6">
         <PageHeader
           title={`👋, ${user?.name ?? "Anonymous"}`}

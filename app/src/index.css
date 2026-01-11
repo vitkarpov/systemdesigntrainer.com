@@ -169,6 +169,11 @@ body {
   border-color: hsl(var(--background));
 }
 
+#sentry-feedback {
+  --inset: auto auto 0 0;
+  --page-margin: 8px;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

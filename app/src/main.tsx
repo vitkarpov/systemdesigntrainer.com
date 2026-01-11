@@ -9,6 +9,9 @@ if (import.meta.env.MODE === 'production') {
         maskAllText: false,
         blockAllMedia: false,
       }),
+      Sentry.feedbackIntegration({
+        triggerLabel: "",
+      }),
     ],
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,

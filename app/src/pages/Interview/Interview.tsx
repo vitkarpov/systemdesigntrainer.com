@@ -16,6 +16,7 @@ import {
 } from '@/api/hooks.gen';
 import { useConversationStream } from '@/hooks/useConversationStream';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Page } from '@/components/layout/Page';
 
 function InterviewPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -145,7 +146,7 @@ function InterviewPage() {
   const isReadOnly = sessionStatus === 'completed';
 
   return (
-    <div className="h-screen flex flex-col">
+    <Page>
       <PageHeader
         backLabel="Back to Dashboard"
         onBack={() => navigate('/')}
@@ -209,7 +210,7 @@ function InterviewPage() {
           />
         </div>
       </div>
-    </div>
+    </Page>
   );
 }
 

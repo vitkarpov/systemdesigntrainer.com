@@ -71,14 +71,14 @@ function FeedbackPage() {
   }
 
   return (
-    <Page background="gradient">
+    <Page>
       <Stack gap="6">
         <PageHeader
           backLabel="Back to Dashboard"
           onBack={handleBackToHome}
           rightContent={<Button onClick={handleBackToHome}>New Interview</Button>}
         />
-        <Container maxWidth="6xl" gap="6" paddingX="4">
+        <Container maxWidth="6xl" gap="6">
           {completedFeedback.overallSummary && (
             <Card className="p-6">
               <ReactMarkdown>

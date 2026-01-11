@@ -22,7 +22,7 @@ const backgroundMap: Record<Background, string> = {
  * consistent styling and spacing.
  */
 export function Page({ children, className, background = 'default' }: PageProps) {
-  const classes = cn('min-h-screen', backgroundMap[background], className);
+  const classes = cn('min-h-screen px-2', backgroundMap[background], className);
 
   return <div className={classes}>{children}</div>;
 }
