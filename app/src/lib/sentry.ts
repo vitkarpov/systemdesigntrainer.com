@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/react";
 
 export const initSentry = () => {
-  if (import.meta.env.MODE !== 'production') {
+  if (import.meta.env.MODE !== "production") {
     return;
   }
   Sentry.init({
@@ -18,9 +18,6 @@ export const initSentry = () => {
     ],
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 1.0,
-    ignoreErrors: [
-      'Error invoking post',
-      'Method not found',
-    ],
+    ignoreErrors: ["Error invoking post", "Method not found"],
   });
 };
