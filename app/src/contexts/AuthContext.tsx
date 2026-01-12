@@ -1,7 +1,8 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode, useEffect } from 'react';
 import { useAuthControllerGetUser, type UserResponseDto } from '@/api/hooks.gen';
 import { useQueryClient } from '@tanstack/react-query';
 import { getApiBaseUrl } from '@/api/client';
+import { posthog } from '@/lib/posthog';
 
 const API_URL = getApiBaseUrl();
 
@@ -51,6 +52,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Navigate to logout endpoint - backend will clear cookies and redirect to WorkOS logout
     window.location.href = `${API_URL}/auth/logout`;
   };
+
+  // Identify user with PostHog when authenticated
+  useEffect(() => {
+    if (user) {
+      posthog.identify(String(user.id), {
+        email: user.email,
+        name: user.name,
+        subscriptionStatus: user.subscriptionStatus,
+        interviewsRemaining: user.interviewsRemaining,
+      });
+    } else {
+      posthog.reset();
+    }
+  }, [user]);
 
   const value = {
     user: user ?? null,

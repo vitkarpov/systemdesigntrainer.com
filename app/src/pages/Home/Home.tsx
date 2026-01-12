@@ -13,6 +13,7 @@ import {
   useAuthControllerGetUser,
   type InterviewCaseDto,
 } from '@/api/hooks.gen';
+import { posthog } from '@/lib/posthog';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -63,6 +64,16 @@ export default function Home() {
 
       await startSessionMutation.mutateAsync({
         id: sessionResponse.data.session.id,
+      });
+
+      // Track interview started
+      posthog.capture('interview_started', {
+        sessionId: sessionResponse.data.session.id,
+        caseId: selectedCase.id,
+        caseTitle: selectedCase.title,
+        caseDifficulty: selectedCase.difficulty,
+        companyStyle: 'generic',
+        level: 'mid',
       });
 
       // Invalidate queries so dashboard and counter update

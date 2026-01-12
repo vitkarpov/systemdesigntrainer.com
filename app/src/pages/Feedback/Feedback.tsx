@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
 import { Page, Container, Stack } from '@/components/layout';
@@ -15,6 +16,7 @@ import { NextStepsCard } from './components/NextStepsCard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import ReactMarkdown from 'react-markdown';
 import { Card } from '@/components/ui/card';
+import { posthog } from '@/lib/posthog';
 
 function FeedbackPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -33,6 +35,24 @@ function FeedbackPage() {
   } = useFeedback(sessionIdNum, isValidId);
 
   const handleBackToHome = () => navigate('/');
+
+  // Use feedback from main endpoint (which polls until ready)
+  // Fallback to status feedback if status shows completed
+  const completedFeedback = feedback || (statusInfo?.status === 'completed' ? statusInfo.feedback : null);
+
+  // Track feedback viewed when feedback is loaded
+  useEffect(() => {
+    if (completedFeedback) {
+      posthog.capture('feedback_viewed', {
+        sessionId: sessionIdNum,
+        overallScore: completedFeedback.overallScore,
+        requirementsScore: completedFeedback.requirementsScore,
+        designScore: completedFeedback.designScore,
+        communicationScore: completedFeedback.communicationScore,
+      });
+    }
+  }, [completedFeedback, sessionIdNum]);
+
 
   // Show loading state while checking for feedback or generating
   if (isFeedbackLoading || isStatusLoading) {
@@ -54,10 +74,6 @@ function FeedbackPage() {
       />
     );
   }
-
-  // Use feedback from main endpoint (which polls until ready)
-  // Fallback to status feedback if status shows completed
-  const completedFeedback = feedback || (statusInfo?.status === 'completed' ? statusInfo.feedback : null);
 
   // Show not found if no feedback exists
   if (!completedFeedback) {
