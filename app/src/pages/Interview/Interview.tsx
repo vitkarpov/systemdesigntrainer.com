@@ -17,6 +17,7 @@ import {
 import { useConversationStream } from '@/hooks/useConversationStream';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Page } from '@/components/layout/Page';
+import { posthog } from '@/lib/posthog';
 
 function InterviewPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -111,6 +112,14 @@ function InterviewPage() {
       timestamp: Date.now(),
     });
 
+    // Track message sent
+    posthog.capture('interview_message_sent', {
+      sessionId: sessionIdNum,
+      messageLength: messageContent.length,
+      phaseName: session?.data.phaseMetadata?.name,
+      elapsedTime,
+    });
+
     // Get diagram data from store
     const diagramData = useDiagramStore.getState().getDiagram(sessionIdNum);
 
@@ -124,6 +133,15 @@ function InterviewPage() {
       await generateFeedbackMutation.mutateAsync({
         id: sessionIdNum,
       });
+
+      // Track interview completed
+      posthog.capture('interview_completed', {
+        sessionId: sessionIdNum,
+        duration: elapsedTime,
+        messageCount: messages.length,
+        phaseName: session?.data.phaseMetadata?.name,
+      });
+
       navigate(`/feedback/${sessionId}`);
     } catch (err) {
       const errorMessage = parseErrorMessage(err, 'Failed to end interview. Please try again.');
