@@ -1,0 +1,316 @@
+---
+import Layout from '../layouts/Layout.astro';
+import FinalCTA from '../components/FinalCTA.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout
+  title="System Design Interview Simulator - AI-Powered Interview Practice"
+  description="The most realistic system design interview simulator. Practice with AI that replicates real interviewer behavior, complete with follow-ups and detailed feedback."
+>
+  <main>
+    <!-- Hero Section -->
+    <section class="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-b from-indigo-50 via-white to-slate-50">
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-0 right-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+      </div>
+
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="text-center max-w-4xl mx-auto">
+          <div class="inline-block px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-6">
+            Most Realistic Interview Simulator
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 mb-6">
+            System Design Interview Simulator
+            <span class="block text-indigo-600 mt-2">That Feels Like the Real Thing</span>
+          </h1>
+
+          <p class="text-lg sm:text-xl text-slate-600 leading-relaxed mb-8">
+            Our AI-powered simulator replicates real interviewer behavior - asking clarifying questions, challenging assumptions, and providing pressure that prepares you for actual FAANG interviews.
+          </p>
+
+          <!-- Trust indicators -->
+          <div class="flex flex-wrap gap-6 items-center justify-center text-sm text-slate-600 mb-12">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <span class="font-medium">Realistic AI interviewer</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <span class="font-medium">Practice anytime, anywhere</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <span class="font-medium">Unlimited practice sessions</span>
+            </div>
+          </div>
+
+          <!-- Interactive Demo -->
+          <div class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">Try the Simulator</h2>
+            <div style="position: relative; width: 100%; aspect-ratio: 1.93;">
+              <!-- Loading Skeleton -->
+              <div
+                id="demo-loader"
+                class="absolute inset-0 bg-white rounded-lg border border-gray-200 flex items-center justify-center"
+                style="z-index: 10;"
+              >
+                <div class="text-center">
+                  <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
+                  <p class="text-lg font-medium text-gray-700">Loading interactive demo...</p>
+                  <p class="text-sm text-gray-500 mt-2">This may take a moment</p>
+                </div>
+              </div>
+
+              <iframe
+                id="demo-iframe"
+                src="https://app.supademo.com/embed/cmkbjcrqp2ohqke4xp77razgz?embed_v=2&utm_source=website&utm_medium=simulator"
+                loading="lazy"
+                title="System Design Interview Simulator Demo"
+                allow="clipboard-write"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 10px; opacity: 0; transition: opacity 0.3s ease-in-out;"
+              />
+            </div>
+          </div>
+
+          <script>
+            document.getElementById('demo-iframe')?.addEventListener('load', function() {
+              const loader = document.getElementById('demo-loader');
+              const iframe = document.getElementById('demo-iframe');
+              if (loader) loader.style.display = 'none';
+              if (iframe) iframe.style.opacity = '1';
+            });
+          </script>
+
+          <!-- CTA -->
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href="https://app.systemdesigntrainer.com/signup?utm_source=website&utm_medium=simulator&utm_campaign=signup"
+              class="inline-flex items-center justify-center h-14 px-10 text-lg font-bold rounded-xl bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              Start Free Simulation
+            </a>
+          </div>
+          <p class="mt-4 text-sm text-slate-500">Get 1 free interview - no credit card required</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- How the Simulator Works -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+            How the Simulator Works
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            Our AI interviewer simulates every phase of a real system design interview
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-8">
+          <div class="text-center">
+            <div class="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">1</div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Problem Introduction</h3>
+            <p class="text-slate-600">
+              AI presents a real-world system design problem, just like in actual interviews
+            </p>
+          </div>
+
+          <div class="text-center">
+            <div class="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">2</div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Requirements Gathering</h3>
+            <p class="text-slate-600">
+              AI responds to your clarifying questions about scale, constraints, and requirements
+            </p>
+          </div>
+
+          <div class="text-center">
+            <div class="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">3</div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Design Discussion</h3>
+            <p class="text-slate-600">
+              Present your design while AI asks follow-ups and challenges your decisions
+            </p>
+          </div>
+
+          <div class="text-center">
+            <div class="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">4</div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Deep Dives</h3>
+            <p class="text-slate-600">
+              AI probes specific components, asking you to elaborate on critical parts
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Features Section -->
+    <section class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+            Why Our Simulator Is Different
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            Other platforms give you static problems. We simulate the entire interview experience.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Adaptive AI Interviewer</h3>
+            <p class="text-slate-600">
+              AI adapts questions based on your answers, just like a real interviewer would
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Realistic Time Constraints</h3>
+            <p class="text-slate-600">
+              Practice under the same 45-60 minute time pressure as real interviews
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Comprehensive Evaluation</h3>
+            <p class="text-slate-600">
+              Get scored on design quality, communication, and problem-solving approach
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Natural Conversation</h3>
+            <p class="text-slate-600">
+              Discuss your design naturally, like talking to a real interviewer
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Track Your Progress</h3>
+            <p class="text-slate-600">
+              See your improvement over time with detailed analytics and feedback history
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Difficulty Levels</h3>
+            <p class="text-slate-600">
+              Choose from junior, mid, or senior level problems matching your target role
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">
+              Practice Without Limits
+            </h2>
+            <div class="space-y-6">
+              {[
+                {
+                  title: 'No Scheduling Required',
+                  desc: 'Start a simulation whenever you want - early morning or late night'
+                },
+                {
+                  title: 'Safe Learning Environment',
+                  desc: 'Make mistakes and learn without the pressure of a real interview'
+                },
+                {
+                  title: 'Instant Feedback',
+                  desc: 'Get detailed analysis immediately after each session'
+                },
+                {
+                  title: 'Unlimited Retries',
+                  desc: 'Practice the same problem multiple times to perfect your approach'
+                }
+              ].map((item) => (
+                <div class="flex gap-4">
+                  <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                      <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-1">{item.title}</h3>
+                    <p class="text-slate-600">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-8 border border-indigo-100">
+            <h3 class="text-2xl font-bold text-slate-900 mb-6">What You'll Master</h3>
+            <ul class="space-y-3">
+              {[
+                'High-level system architecture',
+                'Component design and interactions',
+                'Database selection and schema design',
+                'Caching strategies and CDN usage',
+                'Load balancing and scalability',
+                'Data consistency and replication',
+                'Message queues and async processing',
+                'API design and rate limiting'
+              ].map((item) => (
+                <li class="flex items-start gap-3">
+                  <svg class="w-6 h-6 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-slate-700">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <FinalCTA />
+  </main>
+  <Footer />
+</Layout>

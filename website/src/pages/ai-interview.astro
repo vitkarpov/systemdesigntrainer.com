@@ -1,0 +1,348 @@
+---
+import Layout from '../layouts/Layout.astro';
+import FinalCTA from '../components/FinalCTA.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout
+  title="AI System Design Interview Practice - Train with Advanced AI Interviewer"
+  description="Practice system design interviews with cutting-edge AI technology. Get adaptive questioning, instant feedback, and realistic interview simulation powered by advanced AI."
+>
+  <main>
+    <!-- Hero Section -->
+    <section class="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-b from-cyan-50 via-white to-slate-50">
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-0 right-1/4 w-96 h-96 bg-cyan-600/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+      </div>
+
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="text-center max-w-4xl mx-auto">
+          <div class="inline-flex items-center gap-2 px-4 py-2 bg-cyan-100 text-cyan-700 rounded-full text-sm font-semibold mb-6">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Powered by Advanced AI
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 mb-6">
+            AI System Design Interview Practice
+            <span class="block text-cyan-600 mt-2">Next-Generation Interview Training</span>
+          </h1>
+
+          <p class="text-lg sm:text-xl text-slate-600 leading-relaxed mb-8">
+            Experience the future of interview preparation. Our advanced AI interviewer adapts to your responses, asks intelligent follow-ups, and provides feedback that actually helps you improve.
+          </p>
+
+          <!-- Trust indicators -->
+          <div class="flex flex-wrap gap-6 items-center justify-center text-sm text-slate-600 mb-12">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <span class="font-medium">Adaptive AI questioning</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <span class="font-medium">Instant detailed feedback</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <span class="font-medium">Available 24/7</span>
+            </div>
+          </div>
+
+          <!-- Interactive Demo -->
+          <div class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">See Our AI Interviewer in Action</h2>
+            <div style="position: relative; width: 100%; aspect-ratio: 1.93;">
+              <!-- Loading Skeleton -->
+              <div
+                id="demo-loader"
+                class="absolute inset-0 bg-white rounded-lg border border-gray-200 flex items-center justify-center"
+                style="z-index: 10;"
+              >
+                <div class="text-center">
+                  <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
+                  <p class="text-lg font-medium text-gray-700">Loading interactive demo...</p>
+                  <p class="text-sm text-gray-500 mt-2">This may take a moment</p>
+                </div>
+              </div>
+
+              <iframe
+                id="demo-iframe"
+                src="https://app.supademo.com/embed/cmkbjcrqp2ohqke4xp77razgz?embed_v=2&utm_source=website&utm_medium=ai-interview"
+                loading="lazy"
+                title="AI System Design Interview Demo"
+                allow="clipboard-write"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 10px; opacity: 0; transition: opacity 0.3s ease-in-out;"
+              />
+            </div>
+          </div>
+
+          <script>
+            document.getElementById('demo-iframe')?.addEventListener('load', function() {
+              const loader = document.getElementById('demo-loader');
+              const iframe = document.getElementById('demo-iframe');
+              if (loader) loader.style.display = 'none';
+              if (iframe) iframe.style.opacity = '1';
+            });
+          </script>
+
+          <!-- CTA -->
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href="https://app.systemdesigntrainer.com/signup?utm_source=website&utm_medium=ai-interview&utm_campaign=signup"
+              class="inline-flex items-center justify-center h-14 px-10 text-lg font-bold rounded-xl bg-cyan-600 text-white shadow-lg hover:bg-cyan-700 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              Try AI Interview Now
+            </a>
+          </div>
+          <p class="mt-4 text-sm text-slate-500">Start with 1 free AI-powered interview</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Advantages Section -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+            Why AI Is Better Than Traditional Practice
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            Human mock interviews are expensive, hard to schedule, and inconsistent. AI solves all these problems.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12">
+          <div>
+            <h3 class="text-2xl font-bold text-slate-900 mb-6">Traditional Practice</h3>
+            <div class="space-y-4">
+              {[
+                'Cost $100-300 per session with a human interviewer',
+                'Limited availability - need to schedule weeks ahead',
+                'Inconsistent quality depending on interviewer',
+                'Delayed feedback - may take days to receive',
+                'Limited practice - can\'t afford many sessions',
+                'Interviewer fatigue affects later sessions'
+              ].map((item) => (
+                <div class="flex items-start gap-3">
+                  <svg class="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <p class="text-slate-700">{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-2xl font-bold text-slate-900 mb-6">AI-Powered Practice</h3>
+            <div class="space-y-4">
+              {[
+                'Affordable unlimited practice for one low price',
+                'Available 24/7 - practice whenever you want',
+                'Consistently high quality every single time',
+                'Instant detailed feedback after every session',
+                'Practice as many times as you need',
+                'AI never gets tired or distracted'
+              ].map((item) => (
+                <div class="flex items-start gap-3">
+                  <svg class="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                  <p class="text-slate-700">{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Capabilities Section -->
+    <section class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+            Advanced AI Capabilities
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            Our AI interviewer uses cutting-edge technology to provide a truly realistic experience
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Context Understanding</h3>
+            <p class="text-slate-600">
+              AI understands your entire design context and asks relevant follow-up questions based on your specific choices and trade-offs.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Adaptive Difficulty</h3>
+            <p class="text-slate-600">
+              AI automatically adjusts question difficulty based on your performance, ensuring optimal challenge level for your skill.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Real-Time Analysis</h3>
+            <p class="text-slate-600">
+              AI analyzes your design in real-time, identifying strengths and weaknesses as you work through the problem.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Natural Dialogue</h3>
+            <p class="text-slate-600">
+              Engage in natural conversation with AI that understands nuance and responds thoughtfully to your explanations.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Detailed Analytics</h3>
+            <p class="text-slate-600">
+              Get comprehensive analytics showing your performance trends, improvement areas, and comparison to successful candidates.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Learning Optimization</h3>
+            <p class="text-slate-600">
+              AI identifies your knowledge gaps and recommends specific topics and resources to study for maximum improvement.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How AI Evaluates You -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+            How AI Evaluates Your Performance
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            Our AI evaluates you across multiple dimensions, just like real interviewers
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            {
+              category: 'Technical Design',
+              metrics: ['Architecture quality', 'Scalability approach', 'Component selection', 'Trade-off analysis']
+            },
+            {
+              category: 'Communication',
+              metrics: ['Clarity of explanation', 'Structured thinking', 'Asking clarifying questions', 'Justifying decisions']
+            },
+            {
+              category: 'Problem Solving',
+              metrics: ['Requirement gathering', 'Edge case handling', 'Performance optimization', 'Failure scenarios']
+            },
+            {
+              category: 'Depth of Knowledge',
+              metrics: ['Technology understanding', 'Best practices', 'Industry patterns', 'Practical experience']
+            }
+          ].map((item) => (
+            <div class="bg-slate-50 rounded-lg p-6 border border-slate-200">
+              <h3 class="text-lg font-bold text-slate-900 mb-4">{item.category}</h3>
+              <ul class="space-y-2">
+                {item.metrics.map((metric) => (
+                  <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-sm text-slate-600">{metric}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Success Stories -->
+    <section class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+            Real Results from AI Practice
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            Engineers who practiced with our AI interviewer significantly improved their performance
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          {[
+            {
+              metric: '87%',
+              label: 'Interview Pass Rate',
+              desc: 'Among users who completed 5+ practice sessions'
+            },
+            {
+              metric: '3.2x',
+              label: 'More Practice',
+              desc: 'Users practice 3x more with AI than traditional methods'
+            },
+            {
+              metric: '48 hrs',
+              label: 'Average Time Saved',
+              desc: 'Compared to scheduling human mock interviews'
+            }
+          ].map((item) => (
+            <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+              <div class="text-4xl font-bold text-cyan-600 mb-2">{item.metric}</div>
+              <div class="text-lg font-semibold text-slate-900 mb-2">{item.label}</div>
+              <p class="text-sm text-slate-600">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <FinalCTA />
+  </main>
+  <Footer />
+</Layout>

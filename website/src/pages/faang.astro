@@ -1,0 +1,348 @@
+---
+import Layout from '../layouts/Layout.astro';
+import FinalCTA from '../components/FinalCTA.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout
+  title="FAANG System Design Interview Prep - Master Meta, Google, Amazon Interviews"
+  description="Prepare for FAANG system design interviews with AI-powered simulations. Practice problems asked at Meta, Google, Amazon, Netflix, and Apple. Get hired at top tech companies."
+>
+  <main>
+    <!-- Hero Section -->
+    <section class="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-b from-emerald-50 via-white to-slate-50">
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-0 right-1/4 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl"></div>
+      </div>
+
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="text-center max-w-4xl mx-auto">
+          <div class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold mb-6">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            Designed for FAANG Interviews
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 mb-6">
+            Ace Your FAANG System Design Interview
+            <span class="block text-emerald-600 mt-2">Meta • Google • Amazon • Netflix • Apple</span>
+          </h1>
+
+          <p class="text-lg sm:text-xl text-slate-600 leading-relaxed mb-8">
+            Practice with problems actually asked at FAANG companies. Our AI interviewer replicates the rigor and expectations of Meta, Google, Amazon, Netflix, and Apple interviews.
+          </p>
+
+          <!-- Trust indicators -->
+          <div class="flex flex-wrap gap-6 items-center justify-center text-sm text-slate-600 mb-12">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <span class="font-medium">Real FAANG questions</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <span class="font-medium">Company-specific feedback</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <span class="font-medium">Bar raiser preparation</span>
+            </div>
+          </div>
+
+          <!-- Interactive Demo -->
+          <div class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">Experience a FAANG-Style Interview</h2>
+            <div style="position: relative; width: 100%; aspect-ratio: 1.93;">
+              <!-- Loading Skeleton -->
+              <div
+                id="demo-loader"
+                class="absolute inset-0 bg-white rounded-lg border border-gray-200 flex items-center justify-center"
+                style="z-index: 10;"
+              >
+                <div class="text-center">
+                  <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
+                  <p class="text-lg font-medium text-gray-700">Loading interactive demo...</p>
+                  <p class="text-sm text-gray-500 mt-2">This may take a moment</p>
+                </div>
+              </div>
+
+              <iframe
+                id="demo-iframe"
+                src="https://app.supademo.com/embed/cmkbjcrqp2ohqke4xp77razgz?embed_v=2&utm_source=website&utm_medium=faang"
+                loading="lazy"
+                title="FAANG System Design Interview Demo"
+                allow="clipboard-write"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 10px; opacity: 0; transition: opacity 0.3s ease-in-out;"
+              />
+            </div>
+          </div>
+
+          <script>
+            document.getElementById('demo-iframe')?.addEventListener('load', function() {
+              const loader = document.getElementById('demo-loader');
+              const iframe = document.getElementById('demo-iframe');
+              if (loader) loader.style.display = 'none';
+              if (iframe) iframe.style.opacity = '1';
+            });
+          </script>
+
+          <!-- CTA -->
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href="https://app.systemdesigntrainer.com/signup?utm_source=website&utm_medium=faang&utm_campaign=signup"
+              class="inline-flex items-center justify-center h-14 px-10 text-lg font-bold rounded-xl bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              Start FAANG Prep Now
+            </a>
+          </div>
+          <p class="mt-4 text-sm text-slate-500">First practice interview is free</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAANG Interview Standards -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+            What FAANG Companies Expect
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            System design interviews at top tech companies have unique expectations and bar levels
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-5 gap-8">
+          {[
+            {
+              company: 'Meta',
+              focus: 'Social scale problems, real-time systems, news feed algorithms',
+              color: 'blue'
+            },
+            {
+              company: 'Google',
+              focus: 'Massive scale, distributed systems, infrastructure design',
+              color: 'red'
+            },
+            {
+              company: 'Amazon',
+              focus: 'E-commerce, high availability, cost optimization',
+              color: 'orange'
+            },
+            {
+              company: 'Netflix',
+              focus: 'Video streaming, CDN, recommendation systems',
+              color: 'red'
+            },
+            {
+              company: 'Apple',
+              focus: 'Product ecosystem, privacy, seamless user experience',
+              color: 'slate'
+            }
+          ].map((item) => (
+            <div class="bg-slate-50 rounded-xl p-6 border border-slate-200">
+              <h3 class="text-xl font-bold text-slate-900 mb-3">{item.company}</h3>
+              <p class="text-sm text-slate-600">{item.focus}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Common FAANG Questions -->
+    <section class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+            Practice Real FAANG Interview Questions
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            Questions reported by candidates who interviewed at FAANG companies
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          {[
+            {
+              problem: 'Design Facebook News Feed',
+              company: 'Meta',
+              difficulty: 'Senior',
+              topics: 'Real-time updates, ranking algorithms, scalability'
+            },
+            {
+              problem: 'Design Google Search',
+              company: 'Google',
+              difficulty: 'Senior',
+              topics: 'Web crawling, indexing, distributed systems'
+            },
+            {
+              problem: 'Design Amazon Product Catalog',
+              company: 'Amazon',
+              difficulty: 'Mid-Senior',
+              topics: 'High availability, caching, inventory management'
+            },
+            {
+              problem: 'Design Netflix Video Streaming',
+              company: 'Netflix',
+              difficulty: 'Senior',
+              topics: 'CDN, adaptive streaming, global scale'
+            },
+            {
+              problem: 'Design WhatsApp',
+              company: 'Meta',
+              difficulty: 'Mid-Senior',
+              topics: 'Messaging, end-to-end encryption, real-time'
+            },
+            {
+              problem: 'Design YouTube',
+              company: 'Google',
+              difficulty: 'Senior',
+              topics: 'Video processing, recommendations, massive scale'
+            },
+            {
+              problem: 'Design AWS S3',
+              company: 'Amazon',
+              difficulty: 'Senior',
+              topics: 'Object storage, durability, distributed systems'
+            },
+            {
+              problem: 'Design iCloud',
+              company: 'Apple',
+              difficulty: 'Mid-Senior',
+              topics: 'Cross-device sync, privacy, file storage'
+            }
+          ].map((item) => (
+            <div class="bg-white rounded-lg p-6 border border-slate-200">
+              <div class="flex items-start justify-between mb-3">
+                <h3 class="text-lg font-bold text-slate-900">{item.problem}</h3>
+                <span class="px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-700 rounded-full">{item.company}</span>
+              </div>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-medium text-slate-500">Difficulty:</span>
+                <span class="text-xs font-semibold text-slate-900">{item.difficulty}</span>
+              </div>
+              <p class="text-sm text-slate-600">{item.topics}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Why FAANG Prep is Different -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+            Why FAANG Interviews Are Different
+          </h2>
+          <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+            Higher bar, deeper technical scrutiny, and greater impact on your career
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="bg-slate-50 rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Higher Scale Requirements</h3>
+            <p class="text-slate-600">
+              FAANG systems serve millions to billions of users. Your designs must demonstrate understanding of massive scale challenges.
+            </p>
+          </div>
+
+          <div class="bg-slate-50 rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Rigorous Bar Raising</h3>
+            <p class="text-slate-600">
+              FAANG interviewers are trained to maintain a consistently high bar. Every weakness in your design will be probed deeply.
+            </p>
+          </div>
+
+          <div class="bg-slate-50 rounded-xl p-8 border border-slate-200">
+            <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Determines Compensation</h3>
+            <p class="text-slate-600">
+              Your system design performance directly impacts your level and compensation - potentially hundreds of thousands in total comp.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Preparation Strategy -->
+    <section class="py-20 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+            Your FAANG Preparation Path
+          </h2>
+        </div>
+
+        <div class="max-w-3xl mx-auto">
+          <div class="space-y-8">
+            {[
+              {
+                step: '1',
+                title: 'Master Fundamentals',
+                desc: 'Learn core system design concepts: scalability, consistency, availability, caching, load balancing'
+              },
+              {
+                step: '2',
+                title: 'Study Company Products',
+                desc: 'Understand how each company\'s products work at scale. Read engineering blogs and case studies'
+              },
+              {
+                step: '3',
+                title: 'Practice Common Problems',
+                desc: 'Work through standard problems like designing social networks, messaging systems, and video streaming'
+              },
+              {
+                step: '4',
+                title: 'Simulate Real Interviews',
+                desc: 'Practice with our AI interviewer under time pressure to build confidence and communication skills'
+              },
+              {
+                step: '5',
+                title: 'Review and Iterate',
+                desc: 'Analyze feedback, identify weak areas, and practice until you can confidently tackle any problem'
+              }
+            ].map((item) => (
+              <div class="flex gap-6 bg-white rounded-xl p-6 border border-slate-200">
+                <div class="flex-shrink-0">
+                  <div class="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center text-xl font-bold">
+                    {item.step}
+                  </div>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-slate-900 mb-2">{item.title}</h3>
+                  <p class="text-slate-600">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <FinalCTA />
+  </main>
+  <Footer />
+</Layout>
