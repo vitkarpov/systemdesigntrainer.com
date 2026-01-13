@@ -1,7 +1,7 @@
 import posthog from "posthog-js";
 
 export const initPostHog = () => {
-  if (import.meta.env.MODE !== 'production') {
+  if (import.meta.env.MODE !== "production") {
     return;
   }
 

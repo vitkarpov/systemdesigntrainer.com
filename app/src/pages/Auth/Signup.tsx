@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 const Signup = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [isDemoLoaded, setIsDemoLoaded] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -32,12 +33,27 @@ const Signup = () => {
           {/* Interactive Demo */}
           <div className="mb-8">
             <div style={{ position: 'relative', boxSizing: 'content-box', maxHeight: '80vh', width: '100%', aspectRatio: '1.93', padding: '40px 0' }}>
+              {/* Loading Skeleton */}
+              {!isDemoLoaded && (
+                <div
+                  className="absolute inset-0 bg-white rounded-lg border border-gray-200 flex items-center justify-center"
+                  style={{ zIndex: 10 }}
+                >
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
+                    <p className="text-lg font-medium text-gray-700">Loading interactive demo...</p>
+                    <p className="text-sm text-gray-500 mt-2">This may take a moment</p>
+                  </div>
+                </div>
+              )}
+
               <iframe
                 src="https://app.supademo.com/embed/cmkbjcrqp2ohqke4xp77razgz?embed_v=2&utm_source=embed"
                 loading="lazy"
                 title="Conduct a System Design Interview on System Design Trainer"
                 allow="clipboard-write"
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                onLoad={() => setIsDemoLoaded(true)}
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: isDemoLoaded ? 1 : 0, transition: 'opacity 0.3s ease-in-out' }}
               />
             </div>
           </div>
