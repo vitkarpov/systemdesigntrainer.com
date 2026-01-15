@@ -62,9 +62,9 @@ const Login = () => {
         <div className="text-center pt-4 border-t border-gray-200">
           <p className="text-sm text-gray-600">
             First time here?{' '}
-            <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-              See what you'll get
-            </Link>
+            <a href="https://systemdesigntrainer.com" className="font-medium text-blue-600 hover:text-blue-500">
+              Learn more about System Design Trainer
+            </a>
           </p>
         </div>
       </div>
