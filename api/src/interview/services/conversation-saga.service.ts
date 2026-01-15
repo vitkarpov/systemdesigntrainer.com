@@ -83,11 +83,8 @@ export class ConversationSagaService {
     sessionId: number,
     candidateMessageId: number,
     aiResponseText: string,
-    candidateText: string,
     currentPhase: InterviewPhase,
     elapsedSeconds: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _usage: { inputTokens: number; outputTokens: number },
   ): Promise<{
     interviewerMessage: any;
     detectedSignals: any[];
@@ -107,31 +104,12 @@ export class ConversationSagaService {
       // Step 3: Mark candidate message as completed
       await this.markCandidateMessageCompleted(candidateMessageId);
 
-      // Step 4: Detect signals in candidate's message
-      const detectedSignals = await this.signalService.detectAndRecordSignals({
-        sessionId,
-        text: candidateText,
-        phase: currentPhase,
-        secondsElapsed: elapsedSeconds,
-        messageId: candidateMessageId,
-      });
-
-      // Step 5: Check for red flags
-      const detectedRedFlags = await this.redFlagService.checkRedFlags({
-        sessionId,
-        currentPhase,
-        secondsElapsed: elapsedSeconds,
-        messageText: candidateText,
-      });
-
-      this.logger.log(
-        `Conversation turn completed for session ${sessionId}, detected ${detectedSignals.length} signals and ${detectedRedFlags.length} red flags`,
-      );
-
       return {
         interviewerMessage,
-        detectedSignals,
-        detectedRedFlags,
+        // signals and red flags are not detected in the feedback generation job,
+        // these are for API backwards compatibility
+        detectedSignals: [],
+        detectedRedFlags: [],
       };
     } catch (error) {
       // Compensation: Mark candidate message as failed for retry

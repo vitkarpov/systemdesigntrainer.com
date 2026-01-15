@@ -529,104 +529,99 @@ export class SessionsController {
 
     // Stream AI response with saga compensation on error
     return preparation$.pipe(
-      switchMap(
-        ({ session, candidateMessageId, candidateText, promptContext }) => {
-          const startEvent: MessageEvent = {
-            type: 'start',
-            data: JSON.stringify({
-              candidateMessageId,
-            }),
-          };
+      switchMap(({ session, candidateMessageId, promptContext }) => {
+        const startEvent: MessageEvent = {
+          type: 'start',
+          data: JSON.stringify({
+            candidateMessageId,
+          }),
+        };
 
-          // Track partial response for compensation
-          let partialResponse = '';
+        // Track partial response for compensation
+        let partialResponse = '';
 
-          // Get streaming AI response
-          const streamEvents$ = this.aiService
-            .generateStreamingResponse({
-              systemPrompt: promptContext.systemPrompt,
-              userMessage: promptContext.userMessage,
-              temperature: 0.7,
-              maxTokens: 1024,
-            })
-            .pipe(
-              switchMap((event) => {
-                if (event.type === 'delta') {
-                  // Accumulate partial response
-                  partialResponse += event.text;
+        // Get streaming AI response
+        const streamEvents$ = this.aiService
+          .generateStreamingResponse({
+            systemPrompt: promptContext.systemPrompt,
+            userMessage: promptContext.userMessage,
+            temperature: 0.7,
+            maxTokens: 1024,
+          })
+          .pipe(
+            switchMap((event) => {
+              if (event.type === 'delta') {
+                // Accumulate partial response
+                partialResponse += event.text;
 
-                  // Emit delta event
-                  const deltaEvent: MessageEvent = {
-                    type: 'delta',
-                    data: JSON.stringify({ text: event.text }),
-                  };
-                  return of(deltaEvent);
-                } else {
-                  // SAGA STEP 2: Complete conversation turn (save AI response, detect signals)
-                  return from(
-                    (async () => {
-                      const { fullResponse } = event;
-
-                      const updatedElapsedSeconds =
-                        this.sessionService.getElapsedSeconds(session);
-
-                      const result =
-                        await this.conversationSaga.completeConversationTurn(
-                          session.id,
-                          candidateMessageId,
-                          fullResponse.fullText,
-                          candidateText,
-                          session.currentPhase as InterviewPhase,
-                          updatedElapsedSeconds,
-                          fullResponse.usage,
-                        );
-
-                      const completeEvent: MessageEvent = {
-                        type: 'complete',
-                        data: JSON.stringify({
-                          interviewerMessage: result.interviewerMessage,
-                          detectedSignals: result.detectedSignals,
-                          detectedRedFlags: result.detectedRedFlags,
-                          usage: {
-                            inputTokens: fullResponse.usage.inputTokens,
-                            outputTokens: fullResponse.usage.outputTokens,
-                          },
-                        }),
-                      };
-
-                      return completeEvent;
-                    })(),
-                  );
-                }
-              }),
-              catchError((error) => {
-                // SAGA COMPENSATION: Mark candidate message as failed with partial response
+                // Emit delta event
+                const deltaEvent: MessageEvent = {
+                  type: 'delta',
+                  data: JSON.stringify({ text: event.text }),
+                };
+                return of(deltaEvent);
+              } else {
+                // SAGA STEP 2: Complete conversation turn (save AI response, detect signals)
                 return from(
                   (async () => {
-                    await this.conversationSaga.handleStreamingFailure(
-                      candidateMessageId,
-                      partialResponse || undefined,
-                    );
+                    const { fullResponse } = event;
 
-                    const errorEvent: MessageEvent = {
-                      type: 'error',
+                    const updatedElapsedSeconds =
+                      this.sessionService.getElapsedSeconds(session);
+
+                    const result =
+                      await this.conversationSaga.completeConversationTurn(
+                        session.id,
+                        candidateMessageId,
+                        fullResponse.fullText,
+                        session.currentPhase as InterviewPhase,
+                        updatedElapsedSeconds,
+                      );
+
+                    const completeEvent: MessageEvent = {
+                      type: 'complete',
                       data: JSON.stringify({
-                        message:
-                          error.message || 'AI response generation failed',
-                        partialResponse: partialResponse || null,
-                        candidateMessageId, // Client can use this for retry
+                        interviewerMessage: result.interviewerMessage,
+                        detectedSignals: result.detectedSignals,
+                        detectedRedFlags: result.detectedRedFlags,
+                        usage: {
+                          inputTokens: fullResponse.usage.inputTokens,
+                          outputTokens: fullResponse.usage.outputTokens,
+                        },
                       }),
                     };
-                    return errorEvent;
+
+                    return completeEvent;
                   })(),
                 );
-              }),
-            );
+              }
+            }),
+            catchError((error) => {
+              // SAGA COMPENSATION: Mark candidate message as failed with partial response
+              return from(
+                (async () => {
+                  await this.conversationSaga.handleStreamingFailure(
+                    candidateMessageId,
+                    partialResponse || undefined,
+                  );
 
-          // Concatenate start event with stream events
-          return concat(of(startEvent), streamEvents$);
-        },
-      ),
+                  const errorEvent: MessageEvent = {
+                    type: 'error',
+                    data: JSON.stringify({
+                      message: error.message || 'AI response generation failed',
+                      partialResponse: partialResponse || null,
+                      candidateMessageId, // Client can use this for retry
+                    }),
+                  };
+                  return errorEvent;
+                })(),
+              );
+            }),
+          );
+
+        // Concatenate start event with stream events
+        return concat(of(startEvent), streamEvents$);
+      }),
       catchError((error) => {
         // Early failure before streaming started
         // Release stream slot on error
@@ -733,10 +728,8 @@ export class SessionsController {
         sessionId,
         candidateMessage.id,
         aiResponse.text,
-        candidateMessage.text,
         session.currentPhase as InterviewPhase,
         elapsedSeconds,
-        aiResponse.usage,
       );
 
       return {

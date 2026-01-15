@@ -8,11 +8,13 @@ import {
   feedbackReports,
   feedbackItems,
   feedbackNextSteps,
+  interviewSignals,
 } from '../../../db/schema';
 import { SignalService, SignalName } from './signal.service';
 import { RedFlagService, RedFlagName } from './red-flag.service';
 import { InterviewSessionService } from './interview-session.service';
 import { AiService } from '../../ai/services/ai.service';
+import { InterviewPhase } from '../types/session.types';
 import {
   BASE_SCORES,
   SIGNAL_SCORING,
@@ -71,6 +73,176 @@ export class FeedbackService {
     private sessionService: InterviewSessionService,
     private aiService: AiService,
   ) {}
+
+  /**
+   * Analyze entire transcript to detect signals using AI (batch analysis)
+   * This replaces real-time heuristic-based detection with end-of-interview AI analysis
+   */
+  async analyzeTranscriptSignals(sessionId: number): Promise<any[]> {
+    this.logger.log(`Starting batch signal analysis for session ${sessionId}`, {
+      sessionId,
+    });
+
+    try {
+      const messages = await this.getSessionMessages(sessionId);
+
+      if (messages.length === 0) {
+        this.logger.warn(`No messages found for session ${sessionId}`);
+        return [];
+      }
+
+      const transcript = this.formatTranscript(messages);
+
+      const prompt = `Analyze this system design interview transcript and identify ALL positive signals demonstrated by the candidate.
+
+For each signal you detect, provide:
+- The signal name (from the list below)
+- When it occurred (seconds elapsed)
+- Which phase it occurred in
+- A brief quote or evidence from the transcript
+
+SIGNAL TYPES:
+1. asked_functional_reqs: Candidate explicitly asks about features, functional requirements, or what the system should do
+2. asked_non_functional_reqs: Candidate asks about scale, performance, latency, availability, SLA, or non-functional requirements
+3. clarified_constraints: Candidate asks about constraints, limitations, assumptions, or restrictions
+4. mentioned_scale: Candidate discusses specific numbers (e.g., "100M users", "10K requests per second") or scaling strategies
+5. proposed_api: Candidate discusses API design, endpoints, REST/GraphQL, or HTTP methods
+6. drew_high_level_diagram: Candidate references drawing/creating architecture diagrams, components, or system design
+7. discussed_data_model: Candidate discusses database schema, tables, entities, relationships, or data structures
+8. addressed_bottlenecks: Candidate identifies bottlenecks, single points of failure, or optimization opportunities
+9. discussed_tradeoffs: Candidate compares different approaches, discusses pros/cons, or analyzes trade-offs
+10. structured_approach: Candidate uses a systematic approach with numbered steps, "first/second/third", or clear organization
+11. asked_clarifying_questions: Candidate asks clarifying questions to understand requirements better
+
+IMPORTANT:
+- Only detect signals that are CLEARLY present in the candidate's messages (not interviewer's)
+- Be conservative - don't over-detect
+- Each signal should only be detected once (the first occurrence)
+- Provide specific evidence from the transcript
+
+TRANSCRIPT:
+${transcript}
+
+Return ONLY valid JSON in this exact format (no markdown, no code blocks):
+{
+  "signals": [
+    {
+      "signalName": "asked_functional_reqs",
+      "detectedAt": 45,
+      "phase": "requirements",
+      "evidence": "Asked 'What features should we support?'"
+    }
+  ]
+}`;
+
+      this.logger.log(`Calling AI for signal detection`, {
+        sessionId,
+        messageCount: messages.length,
+        transcriptLength: transcript.length,
+      });
+
+      const aiResponse = await this.aiService.generateResponse({
+        systemPrompt:
+          'You are an expert system design interview evaluator. Your task is to analyze interview transcripts and identify positive behavioral signals demonstrated by candidates. Be precise and conservative in your detections.',
+        userMessage: prompt,
+        temperature: 0.3, // Low temperature for consistency
+        maxTokens: 3000,
+        timeout: 60000, // 60 seconds
+        model: 'claude-sonnet-4-5',
+      });
+
+      this.logger.log(`AI signal detection response received`, {
+        sessionId,
+        model: aiResponse.model,
+        inputTokens: aiResponse.usage?.inputTokens,
+        outputTokens: aiResponse.usage?.outputTokens,
+      });
+
+      const parsed = this.parseSignalDetectionResponse(aiResponse.text);
+
+      const detectedSignals: any[] = [];
+      for (const signal of parsed.signals) {
+        if (!Object.values(SignalName).includes(signal.signalName)) {
+          this.logger.warn('Invalid signal name detected by AI', {
+            sessionId,
+            signal,
+          });
+          continue;
+        }
+
+        const stored = await this.signalService.recordSignal(
+          sessionId,
+          signal.signalName as SignalName,
+          signal.phase as InterviewPhase,
+          signal.detectedAt,
+          undefined, // messageId not tracked in batch analysis
+        );
+
+        if (stored) {
+          detectedSignals.push(stored);
+          this.logger.log(
+            `Recorded signal: ${signal.signalName} at ${signal.detectedAt}s in ${signal.phase} phase`,
+            { sessionId },
+          );
+        }
+      }
+
+      this.logger.log(
+        `Batch signal analysis completed for session ${sessionId}: detected ${detectedSignals.length} signals`,
+        { sessionId, signalCount: detectedSignals.length },
+      );
+
+      return detectedSignals;
+    } catch (error) {
+      this.logger.error(
+        `Batch signal analysis failed for session ${sessionId}`,
+        {
+          sessionId,
+          error: error.message,
+          stack: error.stack,
+        },
+      );
+
+      // Don't throw - allow feedback generation to continue with no signals
+      return [];
+    }
+  }
+
+  /**
+   * Parse AI signal detection response
+   */
+  private parseSignalDetectionResponse(text: string): { signals: any[] } {
+    try {
+      // Remove markdown code blocks if present
+      let jsonText = text.trim();
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.slice(7);
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.slice(3);
+      }
+      if (jsonText.endsWith('```')) {
+        jsonText = jsonText.slice(0, -3);
+      }
+      jsonText = jsonText.trim();
+
+      const parsed = JSON.parse(jsonText);
+
+      // Validate structure
+      if (!parsed.signals || !Array.isArray(parsed.signals)) {
+        throw new Error(
+          'Invalid signal detection response: missing signals array',
+        );
+      }
+
+      return parsed;
+    } catch (error) {
+      this.logger.error('Failed to parse signal detection response', {
+        error: error.message,
+        rawText: text.substring(0, 500), // Log first 500 chars
+      });
+      throw error;
+    }
+  }
 
   /**
    * Calculate scores based on signals and red flags
@@ -467,49 +639,69 @@ export class FeedbackService {
     }
 
     if (existing.length > 0 && regenerate) {
+      this.logger.log(`Regenerating feedback for session ${sessionId}`, {
+        sessionId,
+      });
+
+      // Delete existing feedback report
       await this.db
         .delete(feedbackReports)
         .where(eq(feedbackReports.sessionId, sessionId));
+
+      // Delete existing signals so they can be re-analyzed
+      await this.db
+        .delete(interviewSignals)
+        .where(eq(interviewSignals.sessionId, sessionId));
+
+      this.logger.log(
+        `Cleared existing feedback and signals for session ${sessionId}`,
+        { sessionId },
+      );
+    }
+
+    // Batch signal detection: analyze transcript if signals don't exist yet or if regenerating
+    const existingSignals =
+      await this.signalService.getSessionSignals(sessionId);
+    if (existingSignals.length === 0 || regenerate) {
+      this.logger.log(
+        `Running batch signal analysis for session ${sessionId}`,
+        { sessionId, regenerate, existingSignalCount: existingSignals.length },
+      );
+      await this.analyzeTranscriptSignals(sessionId);
+    } else {
+      this.logger.log(
+        `Skipping batch signal analysis - ${existingSignals.length} signals already exist`,
+        { sessionId, existingSignalCount: existingSignals.length },
+      );
     }
 
     // Calculate scores (always rule-based)
     const scores = await this.calculateScores(sessionId);
 
-    // Check feature flag for AI feedback
-    const useAiFeedback = process.env.USE_AI_FEEDBACK === 'true';
-
     let summary: string;
     let items: FeedbackItemData[];
     let nextSteps: FeedbackNextStepData[];
 
-    if (useAiFeedback) {
-      try {
-        this.logger.log('Attempting AI feedback generation', { sessionId });
+    try {
+      this.logger.log('Attempting AI feedback generation', { sessionId });
 
-        // Generate AI feedback
-        const aiFeedback = await this.generateAIFeedback(sessionId, scores);
-        summary = aiFeedback.overallSummary;
-        items = aiFeedback.items;
-        nextSteps = aiFeedback.nextSteps;
+      // Generate AI feedback
+      const aiFeedback = await this.generateAIFeedback(sessionId, scores);
+      summary = aiFeedback.overallSummary;
+      items = aiFeedback.items;
+      nextSteps = aiFeedback.nextSteps;
 
-        this.logger.log('AI feedback generation successful', { sessionId });
-      } catch (error) {
-        this.logger.warn(
-          'AI feedback generation failed, falling back to rule-based',
-          {
-            sessionId,
-            error: error.message,
-          },
-        );
+      this.logger.log('AI feedback generation successful', { sessionId });
+    } catch (error) {
+      this.logger.warn(
+        'AI feedback generation failed, falling back to rule-based',
+        {
+          sessionId,
+          error: error.message,
+        },
+      );
 
-        // Fall back to rule-based
-        summary = this.generateSummary(scores);
-        items = await this.generateFeedbackItems(sessionId, scores);
-        nextSteps = await this.generateNextSteps(sessionId, scores);
-      }
-    } else {
-      // Rule-based feedback
-      this.logger.log('Using rule-based feedback generation', { sessionId });
+      // Fall back to rule-based
       summary = this.generateSummary(scores);
       items = await this.generateFeedbackItems(sessionId, scores);
       nextSteps = await this.generateNextSteps(sessionId, scores);

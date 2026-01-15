@@ -31,7 +31,6 @@ services:
       STRIPE_PRICE_3_INTERVIEWS: ${STRIPE_PRICE_3_INTERVIEWS}
       STRIPE_PRICE_5_INTERVIEWS: ${STRIPE_PRICE_5_INTERVIEWS}
       STRIPE_PRICE_UNLIMITED: ${STRIPE_PRICE_UNLIMITED}
-      USE_AI_FEEDBACK: ${USE_AI_FEEDBACK:-true}
     depends_on:
       postgres:
         condition: service_healthy
