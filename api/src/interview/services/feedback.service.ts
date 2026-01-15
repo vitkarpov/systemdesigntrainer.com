@@ -904,7 +904,6 @@ You write feedback that hiring committees use to make decisions.`;
       // Step 2: Build prompt
       logger.log('Building AI prompt', logContext);
       const prompt = this.buildAIFeedbackPrompt(
-        sessionId,
         scores,
         session,
         messages,
@@ -969,7 +968,6 @@ You write feedback that hiring committees use to make decisions.`;
    * Build comprehensive prompt for AI feedback generation
    */
   private buildAIFeedbackPrompt(
-    sessionId: number,
     scores: FeedbackScores,
     session: any,
     messages: any[],
