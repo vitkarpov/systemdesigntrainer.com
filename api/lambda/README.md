@@ -295,7 +295,6 @@ environment:
   AWS_REGION: eu-west-1
   USE_DIRECT_PASSWORD: "true"  # Skip AWS Secrets Manager for local dev
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-  USE_AI_FEEDBACK: ${USE_AI_FEEDBACK:-false}
 ```
 
 **Test Lambda Invocation:**

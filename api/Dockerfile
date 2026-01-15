@@ -37,7 +37,6 @@ RUN npm ci --only=production && \
 
 # Copy built application from builder
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nestjs:nodejs /app/public ./public
 COPY --from=builder --chown=nestjs:nodejs /app/db/migrations ./dist/db/migrations
 
 # Copy startup script

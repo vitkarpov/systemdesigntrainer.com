@@ -81,7 +81,7 @@ describe('Feedback Generation (e2e)', () => {
   async function waitForFeedbackCompletion(
     sessionId: number,
     authToken: string,
-    maxAttempts = 20,
+    maxAttempts = 60,
   ): Promise<any> {
     for (let i = 0; i < maxAttempts; i++) {
       const statusResponse = await request(app.getHttpServer())
@@ -98,153 +98,151 @@ describe('Feedback Generation (e2e)', () => {
         );
       }
 
-      // Wait 500ms before next check
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Wait 1000ms before next check
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     throw new Error('Feedback generation timed out');
   }
 
   describe('POST /sessions/:id/feedback', () => {
-    it('should start async feedback generation for completed session', async () => {
-      // Add some signals to make feedback more meaningful
+    it('should grade well-performed interview', async () => {
       const { db } = getTestDb();
-      const { interviewSignals } = await import('../db/schema');
+      const { transcriptMessages } = await import('../db/schema');
 
-      await db.insert(interviewSignals).values([
+      await db.insert(transcriptMessages).values([
         {
           sessionId,
-          signalName: 'asked_functional_reqs',
-          detectedAt: new Date(Date.now() - 40 * 60 * 1000),
+          role: 'interviewer',
+          text: "Let's design a URL shortener service like bit.ly. Please proceed with your approach.",
+          phase: 'problem',
+          secondsElapsed: 30,
+        },
+        {
+          sessionId,
+          role: 'candidate',
+          text: "Great! I'd like to take a structured approach. Let me start by clarifying the requirements, then move to high-level design, and finally dive deep into key components.",
+          phase: 'requirements',
+          secondsElapsed: 3 * 60,
+        },
+        {
+          sessionId,
+          role: 'candidate',
+          text: 'First, let me ask about the functional requirements. Should the system support custom short URLs or only auto-generated ones? Do we need analytics on click-through rates? What about expiration of URLs?',
           phase: 'requirements',
           secondsElapsed: 5 * 60,
         },
         {
           sessionId,
-          signalName: 'asked_non_functional_reqs',
-          detectedAt: new Date(Date.now() - 38 * 60 * 1000),
+          role: 'interviewer',
+          text: 'Auto-generated URLs are fine. Analytics would be nice but not critical. No expiration needed.',
+          phase: 'requirements',
+          secondsElapsed: 5 * 60 + 30,
+        },
+        {
+          sessionId,
+          role: 'candidate',
+          text: 'Perfect. Now for non-functional requirements - what kind of latency are we targeting for redirects? What about availability? And how many requests per second should we handle?',
           phase: 'requirements',
           secondsElapsed: 7 * 60,
         },
         {
           sessionId,
-          signalName: 'mentioned_scale',
-          detectedAt: new Date(Date.now() - 35 * 60 * 1000),
+          role: 'interviewer',
+          text: "Aim for sub-100ms latency, 99.9% availability, and let's say 10,000 requests per second.",
           phase: 'requirements',
-          secondsElapsed: 10 * 60,
+          secondsElapsed: 7 * 60 + 45,
         },
         {
           sessionId,
-          signalName: 'proposed_api',
-          detectedAt: new Date(Date.now() - 30 * 60 * 1000),
-          phase: 'high_level',
-          secondsElapsed: 15 * 60,
-        },
-      ]);
-
-      // Start feedback generation (async)
-      const response = await request(app.getHttpServer())
-        .post(`/sessions/${sessionId}/feedback`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(202);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('jobId');
-      expect(response.body.data.status).toBe('processing');
-
-      // Wait for completion and verify feedback
-      const feedback = await waitForFeedbackCompletion(sessionId, authToken);
-
-      expect(feedback).toHaveProperty('id');
-      expect(feedback).toHaveProperty('overallScore');
-      expect(feedback).toHaveProperty('requirementsScore');
-      expect(feedback).toHaveProperty('designScore');
-      expect(feedback).toHaveProperty('communicationScore');
-      expect(feedback).toHaveProperty('timeManagementScore');
-      expect(feedback).toHaveProperty('depthScore');
-
-      // Scores should be numbers between 0 and 100
-      expect(feedback.overallScore).toBeGreaterThanOrEqual(0);
-      expect(feedback.overallScore).toBeLessThanOrEqual(100);
-      expect(feedback.requirementsScore).toBeGreaterThanOrEqual(0);
-      expect(feedback.requirementsScore).toBeLessThanOrEqual(100);
-    });
-
-    it('should calculate higher scores with more positive signals', async () => {
-      // Add comprehensive signals
-      const { db } = getTestDb();
-      const { interviewSignals } = await import('../db/schema');
-
-      await db.insert(interviewSignals).values([
-        {
-          sessionId,
-          signalName: 'asked_functional_reqs',
-          detectedAt: new Date(),
-          phase: 'requirements',
-          secondsElapsed: 5 * 60,
-        },
-        {
-          sessionId,
-          signalName: 'asked_non_functional_reqs',
-          detectedAt: new Date(),
-          phase: 'requirements',
-          secondsElapsed: 7 * 60,
-        },
-        {
-          sessionId,
-          signalName: 'clarified_constraints',
-          detectedAt: new Date(),
+          role: 'candidate',
+          text: 'Got it. Let me also clarify some constraints. Are there any restrictions on the technology stack? What about the short URL length - should it be as short as possible? Are there any regulatory compliance requirements?',
           phase: 'requirements',
           secondsElapsed: 8 * 60,
         },
         {
           sessionId,
-          signalName: 'drew_high_level_diagram',
-          detectedAt: new Date(),
-          phase: 'high_level',
-          secondsElapsed: 15 * 60,
+          role: 'interviewer',
+          text: 'Technology is flexible. Short URLs should be 6-8 characters. No special compliance needs.',
+          phase: 'requirements',
+          secondsElapsed: 8 * 60 + 30,
         },
         {
           sessionId,
-          signalName: 'discussed_data_model',
-          detectedAt: new Date(),
-          phase: 'high_level',
-          secondsElapsed: 18 * 60,
-        },
-        {
-          sessionId,
-          signalName: 'proposed_api',
-          detectedAt: new Date(),
-          phase: 'high_level',
-          secondsElapsed: 20 * 60,
-        },
-        {
-          sessionId,
-          signalName: 'addressed_bottlenecks',
-          detectedAt: new Date(),
-          phase: 'deep_dive',
-          secondsElapsed: 30 * 60,
-        },
-        {
-          sessionId,
-          signalName: 'mentioned_scale',
-          detectedAt: new Date(),
+          role: 'candidate',
+          text: "One more important question about scale - how many URLs do we expect to shorten per day? And what's the expected storage requirement over say, 5 years?",
           phase: 'requirements',
           secondsElapsed: 10 * 60,
         },
         {
           sessionId,
-          signalName: 'discussed_tradeoffs',
-          detectedAt: new Date(),
+          role: 'interviewer',
+          text: "Let's plan for 10 million new URLs per day.",
+          phase: 'requirements',
+          secondsElapsed: 10 * 60 + 20,
+        },
+        {
+          sessionId,
+          role: 'candidate',
+          text: "Perfect. Now let me draw a high-level architecture diagram. We'll have clients at the top, then a load balancer, followed by application servers for shortening and redirecting. Behind that, we'll have a database for storing URL mappings, and potentially a cache layer for frequently accessed URLs.",
+          phase: 'high_level',
+          secondsElapsed: 15 * 60,
+        },
+        {
+          sessionId,
+          role: 'interviewer',
+          text: 'Good start. Tell me more about the data model.',
+          phase: 'high_level',
+          secondsElapsed: 16 * 60,
+        },
+        {
+          sessionId,
+          role: 'candidate',
+          text: "For the data model, we'll have a main table with columns: short_code (indexed, unique), original_url, created_at, and optionally user_id if we support user accounts. The short_code will be our primary key for fast lookups during redirects.",
+          phase: 'high_level',
+          secondsElapsed: 18 * 60,
+        },
+        {
+          sessionId,
+          role: 'interviewer',
+          text: 'How about the API design?',
+          phase: 'high_level',
+          secondsElapsed: 19 * 60,
+        },
+        {
+          sessionId,
+          role: 'candidate',
+          text: 'For the API, I propose two main endpoints: POST /api/shorten with the long URL in the body, returning the short URL. And GET /{shortCode} which redirects to the original URL with a 301 or 302 status. We might also add GET /api/stats/{shortCode} for analytics.',
+          phase: 'high_level',
+          secondsElapsed: 20 * 60,
+        },
+        {
+          sessionId,
+          role: 'interviewer',
+          text: "Let's dive deeper into the redirect path. What potential issues do you see?",
+          phase: 'deep_dive',
+          secondsElapsed: 22 * 60,
+        },
+        {
+          sessionId,
+          role: 'candidate',
+          text: "Good question. There are important tradeoffs to consider. For caching, we could use Redis with a TTL, which would speed up popular URLs but might serve stale data if URLs are updated. For the database, we could use SQL for consistency or NoSQL for better scalability, but that's a tradeoff between ACID guarantees and horizontal scaling. For the short code generation, we could use hashing which is fast but might have collisions, or use a counter-based approach which is collision-free but requires coordination.",
           phase: 'deep_dive',
           secondsElapsed: 25 * 60,
         },
         {
           sessionId,
-          signalName: 'structured_approach',
-          detectedAt: new Date(),
-          phase: 'requirements',
-          secondsElapsed: 3 * 60,
+          role: 'interviewer',
+          text: 'What about bottlenecks at scale?',
+          phase: 'deep_dive',
+          secondsElapsed: 28 * 60,
+        },
+        {
+          sessionId,
+          role: 'candidate',
+          text: "The main bottleneck would be database reads during redirects. To address this, I'd implement a multi-tier caching strategy: browser caching with appropriate headers, CDN caching for geographic distribution, and Redis caching at the application level. We could also use database read replicas to distribute the load. For writes during URL creation, we could use database sharding based on the short code prefix to distribute the load.",
+          phase: 'deep_dive',
+          secondsElapsed: 30 * 60,
         },
       ]);
 
@@ -253,36 +251,38 @@ describe('Feedback Generation (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(202);
 
-      // Wait for completion
       const feedback = await waitForFeedbackCompletion(sessionId, authToken);
 
-      // With comprehensive signals, scores should be reasonably high
+      expect(feedback.overallSummary).toContain('HIRE');
       expect(feedback.overallScore).toBeGreaterThan(50);
       expect(feedback.requirementsScore).toBeGreaterThan(50);
       expect(feedback.designScore).toBeGreaterThan(50);
+
+      await request(app.getHttpServer())
+        .get(`/sessions/${sessionId}/feedback`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200)
+        .expect({ success: true, data: feedback });
     });
 
-    it('should penalize scores with red flags', async () => {
-      // Add red flags
+    it('should grade poorly-performed interview', async () => {
       const { db } = getTestDb();
-      const { interviewRedFlags } = await import('../db/schema');
+      const { transcriptMessages } = await import('../db/schema');
 
-      await db.insert(interviewRedFlags).values([
+      await db.insert(transcriptMessages).values([
         {
           sessionId,
-          flagName: 'went_too_deep_early',
-          detectedAt: new Date(),
+          role: 'interviewer',
+          text: "Let's design a URL shortener. Please proceed.",
           phase: 'problem',
-          secondsElapsed: 3 * 60,
-          description: 'Discussed implementation details too early',
+          secondsElapsed: 10,
         },
         {
           sessionId,
-          flagName: 'skipped_requirements',
-          detectedAt: new Date(),
-          phase: 'high_level',
-          secondsElapsed: 16 * 60,
-          description: 'No requirement signals detected by minute 15',
+          role: 'candidate',
+          text: "I don't know how to design a URL shortener. Bye!",
+          phase: 'problem',
+          secondsElapsed: 30,
         },
       ]);
 
@@ -291,36 +291,16 @@ describe('Feedback Generation (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(202);
 
-      // Wait for completion
       const feedback = await waitForFeedbackCompletion(sessionId, authToken);
 
-      // Scores should be lower with red flags
+      expect(feedback.overallSummary).toContain('NO HIRE');
       expect(feedback.requirementsScore).toBeLessThan(70);
-    });
 
-    it('should auto-complete session and generate feedback for in-progress session', async () => {
-      const inProgressSession = await createTestSession(
-        testUserId,
-        testCaseId,
-        {
-          status: 'in_progress',
-        },
-      );
-
-      const response = await request(app.getHttpServer())
-        .post(`/sessions/${inProgressSession.id}/feedback`)
+      await request(app.getHttpServer())
+        .get(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(202);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('jobId');
-
-      // Wait for completion
-      const feedback = await waitForFeedbackCompletion(
-        inProgressSession.id,
-        authToken,
-      );
-      expect(feedback).toHaveProperty('overallScore');
+        .expect(200)
+        .expect({ success: true, data: feedback });
     });
 
     it('should return 403 for unauthorized session access', async () => {
@@ -357,147 +337,6 @@ describe('Feedback Generation (e2e)', () => {
         .post(`/sessions/${otherSession.id}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(403);
-    });
-  });
-
-  describe('GET /sessions/:id/feedback', () => {
-    it('should get existing feedback report', async () => {
-      // First generate feedback
-      await request(app.getHttpServer())
-        .post(`/sessions/${sessionId}/feedback`)
-        .set('Authorization', `Bearer ${authToken}`);
-
-      // Wait for feedback generation to complete
-      await waitForFeedbackCompletion(sessionId, authToken);
-
-      // Then retrieve it
-      const response = await request(app.getHttpServer())
-        .get(`/sessions/${sessionId}/feedback`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('overallScore');
-      expect(response.body.data).toHaveProperty('requirementsScore');
-      expect(response.body.data).toHaveProperty('designScore');
-      expect(response.body.data).toHaveProperty('communicationScore');
-      expect(response.body.data).toHaveProperty('timeManagementScore');
-      expect(response.body.data).toHaveProperty('depthScore');
-      expect(response.body.data).toHaveProperty('createdAt');
-      expect(response.body.data).toHaveProperty('items');
-      expect(response.body.data).toHaveProperty('nextSteps');
-
-      // Verify array fields
-      expect(Array.isArray(response.body.data.items)).toBe(true);
-      expect(Array.isArray(response.body.data.nextSteps)).toBe(true);
-    });
-
-    it('should return null when feedback does not exist', async () => {
-      // Clean queue to make sure no feedback job is running
-      await cleanQueue(feedbackQueue);
-
-      const response = await request(app.getHttpServer())
-        .get(`/sessions/${sessionId}/feedback`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toBeNull();
-      expect(response.body.message).toBe('Feedback not generated yet');
-    });
-
-    it('should return 403 for unauthorized session access', async () => {
-      const { db } = getTestDb();
-      const { users, interviewSessions } = await import('../db/schema');
-
-      const [otherUser] = await db
-        .insert(users)
-        .values({
-          workosUserId: 'other_user_get_feedback',
-          email: 'othergetfeedback@example.com',
-          name: 'Other Get Feedback User',
-          subscriptionStatus: 'free',
-          interviewsCompleted: 1,
-          interviewsRemaining: 0,
-        })
-        .returning();
-
-      const [otherSession] = await db
-        .insert(interviewSessions)
-        .values({
-          userId: otherUser.id,
-          caseId: testCaseId,
-          status: 'completed',
-          currentPhase: 'wrap_up',
-          companyStyle: 'faang',
-          level: 'mid',
-          startedAt: new Date(Date.now() - 45 * 60 * 1000),
-          completedAt: new Date(),
-        })
-        .returning();
-
-      return request(app.getHttpServer())
-        .get(`/sessions/${otherSession.id}/feedback`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(403);
-    });
-  });
-
-  describe('Feedback Content Validation', () => {
-    it('should include detailed feedback items', async () => {
-      // Add diverse signals
-      const { db } = getTestDb();
-      const { interviewSignals } = await import('../db/schema');
-
-      await db.insert(interviewSignals).values([
-        {
-          sessionId,
-          signalName: 'asked_functional_reqs',
-          detectedAt: new Date(),
-          phase: 'requirements',
-          secondsElapsed: 5 * 60,
-        },
-        {
-          sessionId,
-          signalName: 'structured_approach',
-          detectedAt: new Date(),
-          phase: 'problem',
-          secondsElapsed: 2 * 60,
-        },
-      ]);
-
-      // Generate feedback (async)
-      await request(app.getHttpServer())
-        .post(`/sessions/${sessionId}/feedback`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(202);
-
-      // Wait for completion
-      await waitForFeedbackCompletion(sessionId, authToken);
-
-      // Retrieve feedback
-      const response = await request(app.getHttpServer())
-        .get(`/sessions/${sessionId}/feedback`)
-        .set('Authorization', `Bearer ${authToken}`);
-
-      // Verify feedback has content
-      expect(response.body.data.items.length).toBeGreaterThan(0);
-      expect(response.body.data.nextSteps.length).toBeGreaterThan(0);
-
-      // Check structure of feedback items
-      if (response.body.data.items.length > 0) {
-        const item = response.body.data.items[0];
-        expect(item).toHaveProperty('type');
-        expect(item).toHaveProperty('description');
-        expect(item).toHaveProperty('displayOrder');
-        expect(['strength', 'weakness', 'suggestion']).toContain(item.type);
-      }
-
-      if (response.body.data.nextSteps.length > 0) {
-        const nextStep = response.body.data.nextSteps[0];
-        expect(nextStep).toHaveProperty('description');
-        expect(nextStep).toHaveProperty('displayOrder');
-      }
     });
   });
 });

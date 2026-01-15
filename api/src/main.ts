@@ -7,8 +7,6 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as fs from 'fs';
-import * as path from 'path';
 import * as cookieParser from 'cookie-parser';
 import { CustomLoggerService } from './common/logger/custom-logger.service';
 
@@ -62,18 +60,6 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);
-
-  // Generate OpenAPI JSON file
-  if (process.env.GENERATE_OPENAPI === 'true') {
-    const outputPath = path.resolve(
-      process.cwd(),
-      '../app/src/api/openapi.json',
-    );
-    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-    fs.writeFileSync(outputPath, JSON.stringify(document, null, 2));
-    console.log(`OpenAPI spec generated at: ${outputPath}`);
-    process.exit(0);
-  }
 
   await app.listen(3000);
 }
