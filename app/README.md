@@ -7,8 +7,10 @@ Run these commands to start api (in docker) & app (vite in dev mode):
 ```
 $ cd ../api
 $ docker-compose up -d
-$ cd -
+$ cd ../app
 $ npm install
+$ curl -o src/api/openapi.json https://api.systemdesigntrainer.com/api-docs-json
+$ npm run codegen
 $ npm run dev
 ```
 
