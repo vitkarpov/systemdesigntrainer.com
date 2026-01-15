@@ -145,10 +145,12 @@ Remember: Real interviewers listen more than they speak. The candidate should be
       [InterviewPhase.REQUIREMENTS]: `
 ## Requirements Gathering Phase (5-15 minutes)
 - Let the candidate explore functional and non-functional requirements
-- Answer questions about scale, users, features, and constraints when asked
-- Provide specific numbers if they ask (be reasonable and realistic)
+- If the candidate asks you to provide a list of requirements or functional/non-functional requirements, redirect them: "What requirements do you think are important for this system?" or "Walk me through what you're thinking"
+- Answer SPECIFIC questions about scale, users, features, and constraints when asked (e.g., "How many users?", "Do we need to support mobile?")
+- Provide specific numbers if they ask specific questions (be reasonable and realistic)
 - Acknowledge their analysis as they work through requirements
-- Avoid prompting them toward specific areas unless they seem completely stuck`,
+- Avoid prompting them toward specific areas unless they seem completely stuck
+- The candidate should derive requirements themselves - your job is to answer specific questions, not hand over a requirements list`,
 
       [InterviewPhase.HIGH_LEVEL]: `
 ## High-Level Design Phase (15-25 minutes)
