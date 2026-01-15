@@ -53,13 +53,6 @@ import { Check } from 'lucide-react';
             </li>
           </ul>
         </CardContent>
-        <CardFooter client:load>
-          <Button client:load variant="outline" size="lg" className="w-full" asChild>
-            <a href="https://app.systemdesigntrainer.com/login?utm_source=website&utm_medium=pricing&utm_campaign=signup&tier=starter">
-              Get Started
-            </a>
-          </Button>
-        </CardFooter>
       </Card>
 
       <!-- Power Pack (Most Popular) -->
@@ -103,13 +96,6 @@ import { Check } from 'lucide-react';
             </li>
           </ul>
         </CardContent>
-        <CardFooter client:load>
-          <Button client:load variant="default" size="lg" className="w-full" asChild>
-            <a href="https://app.systemdesigntrainer.com/login?utm_source=website&utm_medium=pricing&utm_campaign=signup&tier=power">
-              Get Started
-            </a>
-          </Button>
-        </CardFooter>
       </Card>
 
       <!-- Pro Unlimited -->
@@ -150,14 +136,17 @@ import { Check } from 'lucide-react';
             </li>
           </ul>
         </CardContent>
-        <CardFooter client:load>
-          <Button client:load variant="outline" size="lg" className="w-full" asChild>
-            <a href="https://app.systemdesigntrainer.com/login?utm_source=website&utm_medium=pricing&utm_campaign=signup&tier=unlimited">
-              Subscribe
-            </a>
-          </Button>
-        </CardFooter>
       </Card>
+    </div>
+
+    <!-- CTA Button -->
+    <div class="mt-12 text-center">
+      <a
+        href="https://app.systemdesigntrainer.com/login?utm_source=website&utm_medium=pricing&utm_campaign=signup"
+        class="inline-flex items-center justify-center h-14 px-10 text-lg font-bold rounded-xl bg-blue-600 text-white shadow-lg hover:bg-blue-700 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+      >
+        Start Free Interview
+      </a>
     </div>
   </div>
 </section>
