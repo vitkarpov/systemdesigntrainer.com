@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { UserService } from '../../auth/services/user.service';
 import { getFeedbackReadyEmailBody } from '../utils/email-templates.util';
+import { User } from 'db/schema';
 
 @Injectable()
 export class EmailService {
@@ -44,17 +45,24 @@ export class EmailService {
       return;
     }
 
-    const feedbackUrl = `${this.appUrl}/feedback/${sessionId}`;
-
-    const emailBody = getFeedbackReadyEmailBody(user.name, feedbackUrl);
-
     if (!this.isProduction) {
       this.logger.log(
-        `[Non-Production] Would send feedback ready email to user ${userId} (${user.email}) for session ${sessionId}. URL: ${feedbackUrl}`,
+        `Would send feedback ready email to user ${userId} (${user.email}) for session ${sessionId}`,
       );
       return;
     }
 
+    const feedbackUrl = `${this.appUrl}/feedback/${sessionId}`;
+    const emailBody = getFeedbackReadyEmailBody(user.name, feedbackUrl);
+
+    await this.sendEmail(user, emailBody);
+
+    this.logger.log(
+      `Feedback ready email sent to user ${userId} (${user.email}) for session ${sessionId}`,
+    );
+  }
+
+  private async sendEmail(user: User, emailBody: string): Promise<void> {
     const command = new SendEmailCommand({
       Source: this.fromEmail,
       Destination: {
@@ -75,9 +83,5 @@ export class EmailService {
     });
 
     await this.sesClient.send(command);
-
-    this.logger.log(
-      `Feedback ready email sent to user ${userId} (${user.email}) for session ${sessionId}`,
-    );
   }
 }
