@@ -113,7 +113,8 @@ jobs:
           SOPS_AGE_KEY: ${{ secrets.SOPS }}
         run: |
           # Decrypt .env.enc to .env using SOPS_AGE_KEY environment variable
-          sops -d .env.enc > .env
+          # Use --config /dev/null to bypass .sops.yaml requirement for decryption
+          sops --config /dev/null -d .env.enc > .env
 
           # Verify decryption succeeded
           if [ ! -s .env ]; then
