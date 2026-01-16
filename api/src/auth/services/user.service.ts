@@ -74,16 +74,6 @@ export class UserService {
     return result[0];
   }
 
-  async updateLastLogin(id: number): Promise<void> {
-    await this.db
-      .update(users)
-      .set({
-        lastLoginAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, id));
-  }
-
   async upsertFromWorkos(
     workosUser: AuthenticationResponse['user'],
   ): Promise<User> {

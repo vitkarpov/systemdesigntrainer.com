@@ -117,8 +117,6 @@ export class AuthService {
 
       const user = await this.userService.upsertFromWorkos(workosUser);
 
-      await this.userService.updateLastLogin(user.id);
-
       const accessToken = this.generateAccessToken(user);
 
       return { user, accessToken, workosSessionId };
@@ -197,8 +195,6 @@ export class AuthService {
         this.extractSessionIdFromAccessToken(workosAccessToken);
 
       const user = await this.userService.upsertFromWorkos(workosUser);
-
-      await this.userService.updateLastLogin(user.id);
 
       const accessToken = this.generateAccessToken(user);
 
