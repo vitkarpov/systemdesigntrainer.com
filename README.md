@@ -1,6 +1,7 @@
 # System Design Interview Simulator
 
 [![App CI](https://github.com/vitkarpov/systemdesigntrainer.com/actions/workflows/app-ci.yml/badge.svg)](https://github.com/vitkarpov/systemdesigntrainer.com/actions/workflows/app-ci.yml)
+[![API CI](https://github.com/vitkarpov/systemdesigntrainer.com/actions/workflows/api-ci.yml/badge.svg)](https://github.com/vitkarpov/systemdesigntrainer.com/actions/workflows/api-ci.yml)
 
 **Practice real system design interviews under pressure — before the real one.**
 

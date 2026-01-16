@@ -1,10 +1,6 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { cleanDatabase, seedTestData, generateTestToken } from './test-utils';
-import { getTestDb } from '../db/test-db';
-import { DATABASE_CONNECTION, DATABASE_POOL } from '../db/db.module';
+import { createE2ETestApp, closeE2ETestApp, setupE2ETest } from './e2e-helpers';
 
 describe('Authentication (e2e)', () => {
   let app: INestApplication;
@@ -12,31 +8,18 @@ describe('Authentication (e2e)', () => {
   let authToken: string;
 
   beforeAll(async () => {
-    // Override database providers with test database
-    const { db, pool } = getTestDb();
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    })
-      .overrideProvider(DATABASE_CONNECTION)
-      .useValue(db)
-      .overrideProvider(DATABASE_POOL)
-      .useValue(pool)
-      .compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    const testApp = await createE2ETestApp();
+    app = testApp.app;
   });
 
   afterAll(async () => {
-    await app.close();
+    await closeE2ETestApp({ app });
   });
 
   beforeEach(async () => {
-    await cleanDatabase();
-    const { testUser } = await seedTestData();
-    testUserId = testUser.id;
-    authToken = generateTestToken(testUserId);
+    const context = await setupE2ETest();
+    testUserId = context.testUserId;
+    authToken = context.authToken;
   });
 
   describe('GET /auth/status', () => {
