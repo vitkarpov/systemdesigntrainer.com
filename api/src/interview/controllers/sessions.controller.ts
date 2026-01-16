@@ -99,6 +99,9 @@ export class SessionsController {
   ): Promise<void> {
     const session = await this.sessionService.getSession(sessionId);
     if (session.userId !== userId) {
+      this.logger.warn(
+        `Unauthorized session access attempt: User ${userId} tried to access session ${sessionId} owned by user ${session.userId}`,
+      );
       throw new ForbiddenException('You do not have access to this session');
     }
   }

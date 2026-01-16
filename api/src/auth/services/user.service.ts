@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
 import { AuthenticationResponse } from '@workos-inc/node';
@@ -8,6 +8,8 @@ import { buildUserNameFromWorkos } from '../utils/user-name.util';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     @Inject(DATABASE_CONNECTION)
     private db: NodePgDatabase,
@@ -80,6 +82,10 @@ export class UserService {
     try {
       const existingUser = await this.findByWorkosUserId(workosUser.id);
 
+      this.logger.log(
+        `User logged in: ${existingUser.email} (ID: ${existingUser.id})`,
+      );
+
       return this.updateUser(existingUser.id, {
         email: workosUser.email,
         name: buildUserNameFromWorkos(workosUser, existingUser.name),
@@ -87,7 +93,7 @@ export class UserService {
       });
     } catch (error) {
       if (error instanceof NotFoundException) {
-        return this.createUser({
+        const newUser = await this.createUser({
           workosUserId: workosUser.id,
           email: workosUser.email,
           name: buildUserNameFromWorkos(workosUser),
@@ -96,6 +102,12 @@ export class UserService {
           interviewsCompleted: 0,
           interviewsRemaining: 1,
         });
+
+        this.logger.log(
+          `New user registered: ${newUser.email} (ID: ${newUser.id})`,
+        );
+
+        return newUser;
       }
       throw error;
     }

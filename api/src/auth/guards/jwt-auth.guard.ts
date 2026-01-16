@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '../services/auth.service';
@@ -10,6 +11,8 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
+  private readonly logger = new Logger(JwtAuthGuard.name);
+
   constructor(
     private authService: AuthService,
     private reflector: Reflector,
@@ -29,6 +32,7 @@ export class JwtAuthGuard implements CanActivate {
     const token = this.extractToken(request);
 
     if (!token) {
+      this.logger.warn('Authentication failed: No token provided');
       throw new UnauthorizedException('No token provided');
     }
 
@@ -37,6 +41,9 @@ export class JwtAuthGuard implements CanActivate {
       request.user = user;
       return true;
     } catch (error) {
+      this.logger.warn(
+        `Authentication failed: Invalid token - ${error.message}`,
+      );
       throw new UnauthorizedException('Invalid token');
     }
   }
