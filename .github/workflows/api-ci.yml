@@ -43,3 +43,136 @@ jobs:
 
       - name: Build Docker image
         run: npm run build
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    defaults:
+      run:
+        working-directory: ./api
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sd_sim_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install SOPS and age
+        run: |
+          # Install SOPS
+          SOPS_VERSION="3.8.1"
+          wget -q https://github.com/mozilla/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.amd64
+          sudo mv sops-v${SOPS_VERSION}.linux.amd64 /usr/local/bin/sops
+          sudo chmod +x /usr/local/bin/sops
+
+          # Install age
+          AGE_VERSION="1.1.1"
+          wget -q https://github.com/FiloSottile/age/releases/download/v${AGE_VERSION}/age-v${AGE_VERSION}-linux-amd64.tar.gz
+          tar xzf age-v${AGE_VERSION}-linux-amd64.tar.gz
+          sudo mv age/age /usr/local/bin/
+          sudo mv age/age-keygen /usr/local/bin/
+          sudo chmod +x /usr/local/bin/age /usr/local/bin/age-keygen
+
+      - name: Decrypt secrets
+        env:
+          SOPS_AGE_KEY: ${{ secrets.SOPS }}
+        run: |
+          # Create temporary directory for age key
+          mkdir -p /tmp/keys
+
+          # Write age key to temporary file
+          echo "$SOPS_AGE_KEY" > /tmp/keys/age-key.txt
+
+          # Set SOPS_AGE_KEY_FILE environment variable
+          export SOPS_AGE_KEY_FILE=/tmp/keys/age-key.txt
+
+          # Decrypt .env.enc to .env
+          sops -d .env.enc > .env
+
+          # Verify decryption succeeded
+          if [ ! -s .env ]; then
+            echo "Error: Failed to decrypt .env.enc"
+            exit 1
+          fi
+
+          # Clean up age key immediately
+          rm -f /tmp/keys/age-key.txt
+          rmdir /tmp/keys
+
+      - name: Configure environment for CI
+        run: |
+          # Append CI-specific database and redis overrides
+          cat >> .env << 'EOF'
+
+          # CI Environment Overrides
+          DB_HOST=localhost
+          DB_PORT=5432
+          DB_USER=postgres
+          DB_PASSWORD=postgres
+          DB_NAME=sd_sim_test
+
+          TEST_DB_HOST=localhost
+          TEST_DB_PORT=5432
+          TEST_DB_USER=postgres
+          TEST_DB_PASSWORD=postgres
+          TEST_DB_NAME=sd_sim_test
+
+          REDIS_HOST=localhost
+          REDIS_PORT=6379
+          EOF
+
+      - name: Push database schema
+        run: |
+          # Export database variables for drizzle-kit
+          export DB_HOST=localhost
+          export DB_PORT=5432
+          export DB_USER=postgres
+          export DB_PASSWORD=postgres
+          export DB_NAME=sd_sim_test
+
+          # Push schema to database
+          npm run db:push
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Cleanup secrets
+        if: always()
+        run: |
+          rm -f .env
+          rm -f /tmp/keys/age-key.txt 2>/dev/null || true
