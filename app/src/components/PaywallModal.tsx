@@ -45,14 +45,14 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
               <p className="font-medium">Starter Pack</p>
               <p className="text-sm text-muted-foreground">3 interviews</p>
             </div>
-            <p className="text-lg font-bold">$39</p>
+            <p className="text-lg font-bold">$9</p>
           </div>
           <div className="mt-2 flex items-center justify-between">
             <div>
               <p className="font-medium">Power Pack</p>
               <p className="text-sm text-muted-foreground">5 interviews</p>
             </div>
-            <p className="text-lg font-bold">$59</p>
+            <p className="text-lg font-bold">$12</p>
           </div>
         </div>
 
