@@ -3,9 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { EmailService } from './email.service';
 import { UserService } from '../../auth/services/user.service';
 import { SESClient } from '@aws-sdk/client-ses';
-import * as Sentry from '@sentry/nestjs';
-
-jest.mock('@sentry/nestjs');
 
 describe('EmailService', () => {
   let service: EmailService;
@@ -134,7 +131,7 @@ describe('EmailService', () => {
       expect(nonProdSesClient.send).not.toHaveBeenCalled();
     });
 
-    it('should capture exception in Sentry and rethrow on error', async () => {
+    it('should rethrow error on SES failure', async () => {
       const mockUser = {
         id: 1,
         email: 'user@example.com',
@@ -148,14 +145,6 @@ describe('EmailService', () => {
       await expect(service.sendFeedbackReadyEmail(1, 100)).rejects.toThrow(
         'SES send failed',
       );
-
-      expect(Sentry.captureException).toHaveBeenCalledWith(mockError, {
-        extra: {
-          userId: 1,
-          sessionId: 100,
-          context: 'sendFeedbackReadyEmail',
-        },
-      });
     });
   });
 });

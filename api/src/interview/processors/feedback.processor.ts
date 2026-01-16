@@ -7,7 +7,6 @@ import {
 } from '@nestjs/bull';
 import { Job, Queue } from 'bull';
 import { Logger } from '@nestjs/common';
-import * as Sentry from '@sentry/nestjs';
 import { FeedbackService } from '../services/feedback.service';
 
 export interface FeedbackJobData {
@@ -68,16 +67,14 @@ export class FeedbackProcessor {
       } catch (error) {
         this.logger.error(
           `[Job ${job.id}] Failed to enqueue feedback-ready email`,
-          error,
-        );
-        Sentry.captureException(error, {
-          extra: {
+          {
+            error,
             jobId: job.id,
             userId: job.data.userId,
             sessionId: job.data.sessionId,
             context: 'FeedbackProcessor.onCompleted',
           },
-        });
+        );
       }
     }
   }
@@ -86,22 +83,16 @@ export class FeedbackProcessor {
   onFailed(job: Job<FeedbackJobData>, error: Error) {
     this.logger.error(
       `[Job ${job.id}] Feedback generation failed permanently for session ${job.data.sessionId}:`,
-      error.message,
-    );
-
-    Sentry.captureException(error, {
-      tags: {
-        jobId: job.id?.toString(),
-        sessionId: job.data.sessionId.toString(),
+      {
+        error,
+        jobId: job.id,
+        sessionId: job.data.sessionId,
         jobName: 'feedback.generate',
         jobStatus: 'permanently_failed',
-      },
-      extra: {
         jobData: job.data,
         attemptsMade: job.attemptsMade,
         failedReason: job.failedReason,
       },
-      level: 'error',
-    });
+    );
   }
 }

@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
-import * as Sentry from '@sentry/nestjs';
 import { UserService } from '../../auth/services/user.service';
 import { getFeedbackReadyEmailBody } from '../utils/email-templates.util';
 
@@ -36,64 +35,49 @@ export class EmailService {
     userId: number,
     sessionId: number,
   ): Promise<void> {
-    try {
-      const user = await this.userService.findById(userId);
+    const user = await this.userService.findById(userId);
 
-      if (!user.email) {
-        this.logger.warn(
-          `User ${user.workosUserId} has no email address, skipping email`,
-        );
-        return;
-      }
+    if (!user.email) {
+      this.logger.warn(
+        `User ${user.workosUserId} has no email address, skipping email`,
+      );
+      return;
+    }
 
-      const feedbackUrl = `${this.appUrl}/feedback/${sessionId}`;
+    const feedbackUrl = `${this.appUrl}/feedback/${sessionId}`;
 
-      const emailBody = getFeedbackReadyEmailBody(user.name, feedbackUrl);
+    const emailBody = getFeedbackReadyEmailBody(user.name, feedbackUrl);
 
-      if (!this.isProduction) {
-        this.logger.log(
-          `[Non-Production] Would send feedback ready email to user ${userId} (${user.email}) for session ${sessionId}. URL: ${feedbackUrl}`,
-        );
-        return;
-      }
+    if (!this.isProduction) {
+      this.logger.log(
+        `[Non-Production] Would send feedback ready email to user ${userId} (${user.email}) for session ${sessionId}. URL: ${feedbackUrl}`,
+      );
+      return;
+    }
 
-      const command = new SendEmailCommand({
-        Source: this.fromEmail,
-        Destination: {
-          ToAddresses: [user.email],
+    const command = new SendEmailCommand({
+      Source: this.fromEmail,
+      Destination: {
+        ToAddresses: [user.email],
+      },
+      Message: {
+        Subject: {
+          Data: 'Your Interview Feedback is Ready',
+          Charset: 'UTF-8',
         },
-        Message: {
-          Subject: {
-            Data: 'Your Interview Feedback is Ready',
+        Body: {
+          Text: {
+            Data: emailBody,
             Charset: 'UTF-8',
           },
-          Body: {
-            Text: {
-              Data: emailBody,
-              Charset: 'UTF-8',
-            },
-          },
         },
-      });
+      },
+    });
 
-      await this.sesClient.send(command);
+    await this.sesClient.send(command);
 
-      this.logger.log(
-        `Feedback ready email sent to user ${userId} (${user.email}) for session ${sessionId}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to send feedback ready email to user ${userId} for session ${sessionId}`,
-        error,
-      );
-      Sentry.captureException(error, {
-        extra: {
-          userId,
-          sessionId,
-          context: 'sendFeedbackReadyEmail',
-        },
-      });
-      throw error;
-    }
+    this.logger.log(
+      `Feedback ready email sent to user ${userId} (${user.email}) for session ${sessionId}`,
+    );
   }
 }

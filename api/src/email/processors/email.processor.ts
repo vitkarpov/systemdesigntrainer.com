@@ -1,7 +1,6 @@
 import { Processor, Process, OnQueueFailed } from '@nestjs/bull';
 import { Job } from 'bull';
 import { Logger } from '@nestjs/common';
-import * as Sentry from '@sentry/nestjs';
 import { EmailService } from '../services/email.service';
 
 export interface EmailJobData {
@@ -44,19 +43,12 @@ export class EmailProcessor {
     this.logger.error(
       `[Job ${job.id}] Email job failed after ${job.attemptsMade} attempts`,
       {
-        error: error.message,
-        stack: error.stack,
-        data: job.data,
-      },
-    );
-
-    Sentry.captureException(error, {
-      extra: {
+        error,
         jobId: job.id,
         jobData: job.data,
         attemptsMade: job.attemptsMade,
         context: 'EmailProcessor.handleQueueFailed',
       },
-    });
+    );
   }
 }

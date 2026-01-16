@@ -1,5 +1,4 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import * as Sentry from '@sentry/nestjs';
 import { DATABASE_CONNECTION } from '../../../db/db.module';
 import type { db as DbType } from '../../../db/db';
 import { SignalService, SignalName } from './signal.service';
@@ -159,12 +158,11 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks):
 
       return detectedSignals;
     } catch (error) {
-      this.logger.error(
+      this.logger.warn(
         `Batch signal analysis failed for session ${sessionId}`,
         {
+          error,
           sessionId,
-          error: error.message,
-          stack: error.stack,
         },
       );
 
@@ -177,36 +175,28 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks):
    * Parse AI signal detection response
    */
   private parseSignalDetectionResponse(text: string): { signals: any[] } {
-    try {
-      // Remove markdown code blocks if present
-      let jsonText = text.trim();
-      if (jsonText.startsWith('```json')) {
-        jsonText = jsonText.slice(7);
-      } else if (jsonText.startsWith('```')) {
-        jsonText = jsonText.slice(3);
-      }
-      if (jsonText.endsWith('```')) {
-        jsonText = jsonText.slice(0, -3);
-      }
-      jsonText = jsonText.trim();
-
-      const parsed = JSON.parse(jsonText);
-
-      // Validate structure
-      if (!parsed.signals || !Array.isArray(parsed.signals)) {
-        throw new Error(
-          'Invalid signal detection response: missing signals array',
-        );
-      }
-
-      return parsed;
-    } catch (error) {
-      this.logger.error('Failed to parse signal detection response', {
-        error: error.message,
-        rawText: text.substring(0, 500), // Log first 500 chars
-      });
-      throw error;
+    // Remove markdown code blocks if present
+    let jsonText = text.trim();
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.slice(7);
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.slice(3);
     }
+    if (jsonText.endsWith('```')) {
+      jsonText = jsonText.slice(0, -3);
+    }
+    jsonText = jsonText.trim();
+
+    const parsed = JSON.parse(jsonText);
+
+    // Validate structure
+    if (!parsed.signals || !Array.isArray(parsed.signals)) {
+      throw new Error(
+        'Invalid signal detection response: missing signals array',
+      );
+    }
+
+    return parsed;
   }
 
   /**
@@ -222,72 +212,46 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks):
     const logger = this.logger;
     const logContext = { sessionId };
 
-    try {
-      // Step 1: Get messages
-      logger.log('Gathering feedback data for AI generation', logContext);
-      const messages = await this.getSessionMessages(sessionId);
+    // Step 1: Get messages
+    logger.log('Gathering feedback data for AI generation', logContext);
+    const messages = await this.getSessionMessages(sessionId);
 
-      // Step 2: Build prompt
-      logger.log('Building AI prompt', logContext);
-      const prompt = this.buildAIFeedbackPrompt(
-        scores,
-        session,
-        messages,
-        signals,
-        redFlags,
-      );
+    // Step 2: Build prompt
+    logger.log('Building AI prompt', logContext);
+    const prompt = this.buildAIFeedbackPrompt(
+      scores,
+      session,
+      messages,
+      signals,
+      redFlags,
+    );
 
-      // Step 3: Call AI service with 120-second timeout
-      logger.log('Calling AI service', {
-        ...logContext,
-        promptLength: prompt.length,
-      });
-      const aiResponse = await this.aiService.generateResponse({
-        systemPrompt: this.AI_FEEDBACK_SYSTEM_PROMPT,
-        userMessage: prompt,
-        temperature: 0.7,
-        maxTokens: 4000,
-        timeout: 120000, // 120 seconds for comprehensive feedback generation
-        model: 'claude-sonnet-4-5', // Use Sonnet for better structured output
-      });
+    // Step 3: Call AI service with 120-second timeout
+    logger.log('Calling AI service', {
+      ...logContext,
+      promptLength: prompt.length,
+    });
+    const aiResponse = await this.aiService.generateResponse({
+      systemPrompt: this.AI_FEEDBACK_SYSTEM_PROMPT,
+      userMessage: prompt,
+      temperature: 0.7,
+      maxTokens: 4000,
+      timeout: 120000, // 120 seconds for comprehensive feedback generation
+      model: 'claude-sonnet-4-5', // Use Sonnet for better structured output
+    });
 
-      logger.log('AI response received', {
-        ...logContext,
-        model: aiResponse.model,
-        inputTokens: aiResponse.usage?.inputTokens,
-        outputTokens: aiResponse.usage?.outputTokens,
-      });
+    logger.log('AI response received', {
+      ...logContext,
+      model: aiResponse.model,
+      inputTokens: aiResponse.usage?.inputTokens,
+      outputTokens: aiResponse.usage?.outputTokens,
+    });
 
-      // Step 4: Parse JSON response
-      const parsed = this.parseAIResponse(aiResponse.text);
+    // Step 4: Parse JSON response
+    const parsed = this.parseAIResponse(aiResponse.text);
 
-      // Step 5: Transform to service format
-      return this.transformAIResponse(parsed);
-    } catch (error) {
-      logger.error('AI feedback generation error', {
-        ...logContext,
-        error: error.message,
-        stack: error.stack,
-      });
-
-      // Capture error in Sentry before falling back to rule-based feedback
-      Sentry.captureException(error, {
-        tags: {
-          sessionId: sessionId.toString(),
-          service: 'FeedbackAiService',
-          method: 'generateFeedback',
-          aiFeature: 'feedback_generation',
-        },
-        extra: {
-          scores,
-          errorMessage: error.message,
-        },
-        level: 'error',
-      });
-
-      // Re-throw to trigger fallback in parent method
-      throw error;
-    }
+    // Step 5: Transform to service format
+    return this.transformAIResponse(parsed);
   }
 
   /**
@@ -443,7 +407,7 @@ CRITICAL FORMATTING RULES:
    */
   private getHiringStandardsText(
     companyStyle: string,
-    level: string,
+    _level: string,
     threshold: number,
   ): string {
     if (companyStyle === 'faang') {
@@ -490,57 +454,38 @@ CRITICAL FORMATTING RULES:
    * Parse AI response JSON
    */
   private parseAIResponse(text: string): any {
-    try {
-      // Try to extract JSON from the response
-      // AI might wrap it in code blocks or add explanatory text
-      let jsonText = text.trim();
+    // Try to extract JSON from the response
+    // AI might wrap it in code blocks or add explanatory text
+    let jsonText = text.trim();
 
-      // Remove code block markers if present
-      if (jsonText.startsWith('```json')) {
-        jsonText = jsonText.slice(7);
-      } else if (jsonText.startsWith('```')) {
-        jsonText = jsonText.slice(3);
-      }
-
-      if (jsonText.endsWith('```')) {
-        jsonText = jsonText.slice(0, -3);
-      }
-
-      jsonText = jsonText.trim();
-
-      // Parse JSON
-      const parsed = JSON.parse(jsonText);
-
-      // Basic structure validation
-      if (
-        !parsed.overallSummary ||
-        !Array.isArray(parsed.strengths) ||
-        !Array.isArray(parsed.weaknesses) ||
-        !Array.isArray(parsed.suggestions) ||
-        !Array.isArray(parsed.nextSteps)
-      ) {
-        throw new Error('AI response missing required fields');
-      }
-
-      return parsed;
-    } catch (error) {
-      // Capture parsing error with the raw response text for debugging
-      Sentry.captureException(error, {
-        tags: {
-          service: 'FeedbackAiService',
-          method: 'parseAIResponse',
-          errorType: 'json_parse_error',
-        },
-        extra: {
-          rawResponseText: text,
-          rawResponseLength: text.length,
-          errorMessage: error.message,
-        },
-        level: 'error',
-      });
-
-      throw error;
+    // Remove code block markers if present
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.slice(7);
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.slice(3);
     }
+
+    if (jsonText.endsWith('```')) {
+      jsonText = jsonText.slice(0, -3);
+    }
+
+    jsonText = jsonText.trim();
+
+    // Parse JSON
+    const parsed = JSON.parse(jsonText);
+
+    // Basic structure validation
+    if (
+      !parsed.overallSummary ||
+      !Array.isArray(parsed.strengths) ||
+      !Array.isArray(parsed.weaknesses) ||
+      !Array.isArray(parsed.suggestions) ||
+      !Array.isArray(parsed.nextSteps)
+    ) {
+      throw new Error('AI response missing required fields');
+    }
+
+    return parsed;
   }
 
   /**
