@@ -13,6 +13,7 @@ import {
   Sse,
   MessageEvent,
   Req,
+  Logger,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { InjectQueue } from '@nestjs/bull';
@@ -70,6 +71,8 @@ import { User } from '../../../db/schema/users.schema';
 @ApiBearerAuth()
 @Controller('sessions')
 export class SessionsController {
+  private readonly logger = new Logger(SessionsController.name);
+
   constructor(
     private sessionService: InterviewSessionService,
     private casesService: InterviewCasesService,
@@ -483,7 +486,7 @@ export class SessionsController {
           try {
             diagram = JSON.parse(diagramData);
           } catch (err) {
-            console.error('Failed to parse diagram data:', err);
+            this.logger.error('Failed to parse diagram data:', err);
           }
         }
 

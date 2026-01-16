@@ -1,4 +1,4 @@
-import { Module, Global } from '@nestjs/common';
+import { Module, Global, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
 
 export const REDIS_CONNECTION = 'REDIS_CONNECTION';
@@ -6,6 +6,7 @@ export const REDIS_CONNECTION = 'REDIS_CONNECTION';
 const redisProvider = {
   provide: REDIS_CONNECTION,
   useFactory: () => {
+    const logger = new Logger('RedisModule');
     const redis = new Redis({
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379', 10),
@@ -17,15 +18,15 @@ const redisProvider = {
     });
 
     redis.on('connect', () => {
-      console.log('[Redis] Connected successfully');
+      logger.log('Connected successfully');
     });
 
     redis.on('error', (err) => {
-      console.error('[Redis] Connection error:', err);
+      logger.error('Connection error:', err);
     });
 
     redis.on('ready', () => {
-      console.log('[Redis] Ready to accept commands');
+      logger.log('Ready to accept commands');
     });
 
     return redis;
