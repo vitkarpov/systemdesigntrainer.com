@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../../db/db.module';
@@ -11,30 +11,47 @@ export class UserService {
     private db: NodePgDatabase,
   ) {}
 
-  async findByWorkosUserId(workosUserId: string): Promise<User | undefined> {
+  async findByWorkosUserId(workosUserId: string): Promise<User> {
     const result = await this.db
       .select()
       .from(users)
       .where(eq(users.workosUserId, workosUserId))
       .limit(1);
+
+    if (!result[0]) {
+      throw new NotFoundException(
+        `User with WorkOS ID ${workosUserId} not found`,
+      );
+    }
+
     return result[0];
   }
 
-  async findByEmail(email: string): Promise<User | undefined> {
+  async findByEmail(email: string): Promise<User> {
     const result = await this.db
       .select()
       .from(users)
       .where(eq(users.email, email))
       .limit(1);
+
+    if (!result[0]) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+
     return result[0];
   }
 
-  async findById(id: number): Promise<User | undefined> {
+  async findById(id: number): Promise<User> {
     const result = await this.db
       .select()
       .from(users)
       .where(eq(users.id, id))
       .limit(1);
+
+    if (!result[0]) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
     return result[0];
   }
 
@@ -72,9 +89,9 @@ export class UserService {
     lastName?: string;
     profilePictureUrl?: string;
   }): Promise<User> {
-    const existingUser = await this.findByWorkosUserId(workosUser.id);
+    try {
+      const existingUser = await this.findByWorkosUserId(workosUser.id);
 
-    if (existingUser) {
       return this.updateUser(existingUser.id, {
         email: workosUser.email,
         name:
@@ -83,19 +100,22 @@ export class UserService {
             : workosUser.firstName || existingUser.name,
         avatarUrl: workosUser.profilePictureUrl || existingUser.avatarUrl,
       });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return this.createUser({
+          workosUserId: workosUser.id,
+          email: workosUser.email,
+          name:
+            workosUser.firstName && workosUser.lastName
+              ? `${workosUser.firstName} ${workosUser.lastName}`
+              : workosUser.firstName || null,
+          avatarUrl: workosUser.profilePictureUrl || null,
+          subscriptionStatus: 'free',
+          interviewsCompleted: 0,
+          interviewsRemaining: 1,
+        });
+      }
+      throw error;
     }
-
-    return this.createUser({
-      workosUserId: workosUser.id,
-      email: workosUser.email,
-      name:
-        workosUser.firstName && workosUser.lastName
-          ? `${workosUser.firstName} ${workosUser.lastName}`
-          : workosUser.firstName || null,
-      avatarUrl: workosUser.profilePictureUrl || null,
-      subscriptionStatus: 'free',
-      interviewsCompleted: 0,
-      interviewsRemaining: 1,
-    });
   }
 }

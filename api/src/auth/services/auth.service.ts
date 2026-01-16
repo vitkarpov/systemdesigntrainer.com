@@ -177,13 +177,7 @@ export class AuthService {
 
   async getUserFromToken(token: string): Promise<User> {
     const payload = this.verifyAccessToken(token);
-    const user = await this.userService.findById(payload.userId);
-
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    return user;
+    return await this.userService.findById(payload.userId);
   }
 
   async completeEmailVerification(
