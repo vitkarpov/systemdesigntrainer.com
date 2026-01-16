@@ -112,16 +112,7 @@ jobs:
         env:
           SOPS_AGE_KEY: ${{ secrets.SOPS }}
         run: |
-          # Create temporary directory for age key
-          mkdir -p /tmp/keys
-
-          # Write age key to temporary file
-          echo "$SOPS_AGE_KEY" > /tmp/keys/age-key.txt
-
-          # Set SOPS_AGE_KEY_FILE environment variable
-          export SOPS_AGE_KEY_FILE=/tmp/keys/age-key.txt
-
-          # Decrypt .env.enc to .env
+          # Decrypt .env.enc to .env using SOPS_AGE_KEY environment variable
           sops -d .env.enc > .env
 
           # Verify decryption succeeded
@@ -129,10 +120,6 @@ jobs:
             echo "Error: Failed to decrypt .env.enc"
             exit 1
           fi
-
-          # Clean up age key immediately
-          rm -f /tmp/keys/age-key.txt
-          rmdir /tmp/keys
 
       - name: Configure environment for CI
         run: |
@@ -173,6 +160,4 @@ jobs:
 
       - name: Cleanup secrets
         if: always()
-        run: |
-          rm -f .env
-          rm -f /tmp/keys/age-key.txt 2>/dev/null || true
+        run: rm -f .env
