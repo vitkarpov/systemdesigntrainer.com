@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
+    "@aws-sdk/client-ses": "^3.970.0",
     "@nestjs/bull": "^11.0.4",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/common": "^11.0.0",

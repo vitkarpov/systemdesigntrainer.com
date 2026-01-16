@@ -902,6 +902,8 @@ export class SessionsController {
       {
         sessionId: id,
         userId: user.id,
+        regenerate: false,
+        wasForceTransitioned: false,
       },
       {
         attempts: 3, // Retry up to 3 times on failure
