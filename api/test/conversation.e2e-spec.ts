@@ -14,7 +14,6 @@ describe('Conversation & AI Integration (e2e)', () => {
 
   beforeAll(async () => {
     const testApp = await createE2ETestApp({
-      useMockAi: true,
       useCookieParser: true,
     });
     app = testApp.app;

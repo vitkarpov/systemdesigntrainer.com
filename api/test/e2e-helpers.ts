@@ -6,8 +6,6 @@ import { getQueueToken } from '@nestjs/bull';
 import { AppModule } from '../src/app.module';
 import { getTestDb } from '../db/test-db';
 import { DATABASE_CONNECTION, DATABASE_POOL } from '../db/db.module';
-import { AiService } from '../src/ai/services/ai.service';
-import { MockAiService } from './mocks/ai.service.mock';
 import {
   cleanDatabase,
   cleanQueue,
@@ -16,7 +14,6 @@ import {
 } from './test-utils';
 
 export interface E2ETestAppOptions {
-  useMockAi?: boolean;
   useCookieParser?: boolean;
   includeFeedbackQueue?: boolean;
 }
@@ -38,26 +35,16 @@ export interface E2ETestContext {
 export async function createE2ETestApp(
   options: E2ETestAppOptions = {},
 ): Promise<E2ETestApp> {
-  const {
-    useMockAi = false,
-    useCookieParser = false,
-    includeFeedbackQueue = false,
-  } = options;
+  const { useCookieParser = false, includeFeedbackQueue = false } = options;
   const { db, pool } = getTestDb();
 
-  let moduleBuilder = Test.createTestingModule({
+  const moduleBuilder = Test.createTestingModule({
     imports: [AppModule],
   })
     .overrideProvider(DATABASE_CONNECTION)
     .useValue(db)
     .overrideProvider(DATABASE_POOL)
     .useValue(pool);
-
-  if (useMockAi) {
-    moduleBuilder = moduleBuilder
-      .overrideProvider(AiService)
-      .useValue(new MockAiService());
-  }
 
   const moduleFixture: TestingModule = await moduleBuilder.compile();
 
