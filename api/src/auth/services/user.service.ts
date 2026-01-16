@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { AuthenticationResponse } from '@workos-inc/node';
 import { DATABASE_CONNECTION } from '../../../db/db.module';
 import { users, User, NewUser } from '../../../db/schema/users.schema';
+import { buildUserNameFromWorkos } from '../utils/user-name.util';
 
 @Injectable()
 export class UserService {
@@ -91,10 +92,7 @@ export class UserService {
 
       return this.updateUser(existingUser.id, {
         email: workosUser.email,
-        name:
-          workosUser.firstName && workosUser.lastName
-            ? `${workosUser.firstName} ${workosUser.lastName}`
-            : workosUser.firstName || existingUser.name,
+        name: buildUserNameFromWorkos(workosUser, existingUser.name),
         avatarUrl: workosUser.profilePictureUrl || existingUser.avatarUrl,
       });
     } catch (error) {
@@ -102,10 +100,7 @@ export class UserService {
         return this.createUser({
           workosUserId: workosUser.id,
           email: workosUser.email,
-          name:
-            workosUser.firstName && workosUser.lastName
-              ? `${workosUser.firstName} ${workosUser.lastName}`
-              : workosUser.firstName || null,
+          name: buildUserNameFromWorkos(workosUser),
           avatarUrl: workosUser.profilePictureUrl || null,
           subscriptionStatus: 'free',
           interviewsCompleted: 0,
