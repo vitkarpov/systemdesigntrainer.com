@@ -13,6 +13,7 @@ import {
   Sse,
   MessageEvent,
   Req,
+  Logger,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { InjectQueue } from '@nestjs/bull';
@@ -70,6 +71,8 @@ import { User } from '../../../db/schema/users.schema';
 @ApiBearerAuth()
 @Controller('sessions')
 export class SessionsController {
+  private readonly logger = new Logger(SessionsController.name);
+
   constructor(
     private sessionService: InterviewSessionService,
     private casesService: InterviewCasesService,
@@ -96,6 +99,9 @@ export class SessionsController {
   ): Promise<void> {
     const session = await this.sessionService.getSession(sessionId);
     if (session.userId !== userId) {
+      this.logger.warn(
+        `Unauthorized session access attempt: User ${userId} tried to access session ${sessionId} owned by user ${session.userId}`,
+      );
       throw new ForbiddenException('You do not have access to this session');
     }
   }
@@ -483,7 +489,7 @@ export class SessionsController {
           try {
             diagram = JSON.parse(diagramData);
           } catch (err) {
-            console.error('Failed to parse diagram data:', err);
+            this.logger.error('Failed to parse diagram data:', err);
           }
         }
 
@@ -902,6 +908,8 @@ export class SessionsController {
       {
         sessionId: id,
         userId: user.id,
+        regenerate: false,
+        wasForceTransitioned: false,
       },
       {
         attempts: 3, // Retry up to 3 times on failure

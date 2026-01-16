@@ -164,6 +164,24 @@ resource "aws_iam_role" "ecs_task" {
   }
 }
 
+# SES policy for sending emails
+resource "aws_iam_role_policy" "ses_send_email" {
+  name = "${var.project_name}-${var.environment}-ses-send-email"
+  role = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "ses:SendEmail",
+        "ses:SendRawEmail"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
 # ==================================
 # ECS Task Definition
 # ==================================
@@ -203,7 +221,10 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "REDIS_PORT", value = tostring(var.redis_port) },
       { name = "FRONTEND_URL", value = "https://app.${var.domain_name}" },
       { name = "WORKOS_REDIRECT_URI", value = "https://api.${var.domain_name}/auth/callback" },
-      { name = "ANTHROPIC_MODEL", value = "claude-haiku-4-5" }
+      { name = "ANTHROPIC_MODEL", value = "claude-haiku-4-5" },
+      { name = "AWS_SES_REGION", value = var.aws_region },
+      { name = "AWS_SES_FROM_EMAIL", value = "noreply@${var.domain_name}" },
+      { name = "APP_URL", value = "https://app.${var.domain_name}" }
     ]
 
     secrets = [

@@ -1,5 +1,6 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
 import * as util from 'util';
+import * as Sentry from '@sentry/nestjs';
 
 /**
  * Custom logger that formats objects inline for better production log readability.
@@ -7,9 +8,29 @@ import * as util from 'util';
  * Instead of multi-line pretty-printed objects, this logger serializes objects
  * to single-line JSON strings, making logs easier to parse and search in
  * production logging systems.
+ *
+ * Also integrates with Sentry:
+ * - All logs are sent as breadcrumbs for debugging context
+ * - Errors are captured as exceptions in Sentry
  */
 @Injectable()
 export class CustomLoggerService extends ConsoleLogger {
+  /**
+   * Send log to Sentry as a breadcrumb
+   */
+  private addSentryBreadcrumb(
+    level: 'log' | 'debug' | 'info' | 'warning' | 'error',
+    message: string,
+    data?: Record<string, any>,
+  ): void {
+    Sentry.addBreadcrumb({
+      category: 'console',
+      level,
+      message,
+      data,
+    });
+  }
+
   /**
    * Format log arguments to inline JSON strings
    */
@@ -56,25 +77,58 @@ export class CustomLoggerService extends ConsoleLogger {
    * Override log method to format inline
    */
   log(message: any, context?: string) {
+    const formattedMessage = this.stringifyIfNeeded(message);
+    const data: Record<string, any> = {};
+
     if (typeof context === 'object') {
       // Context is an object, format it inline
+      Object.assign(data, context);
       super.log(this.formatLogMessage(message, context));
     } else {
       // Context is a string or undefined
+      if (context) {
+        data.context = context;
+      }
       super.log(this.formatLogMessage(message), context);
     }
+
+    // Send to Sentry as breadcrumb
+    this.addSentryBreadcrumb('info', formattedMessage, data);
   }
 
   /**
    * Override error method to format inline
    */
   error(message: any, stackOrContext?: string, context?: string) {
+    const formattedMessage = this.stringifyIfNeeded(message);
+    const data: Record<string, any> = {};
+
     if (stackOrContext && typeof stackOrContext === 'object') {
       // stackOrContext is actually a context object
+      Object.assign(data, stackOrContext);
       super.error(this.formatLogMessage(message, stackOrContext));
     } else {
       // Standard error with stack trace
+      if (stackOrContext) {
+        data.stack = stackOrContext;
+      }
+      if (context) {
+        data.context = context;
+      }
       super.error(this.formatLogMessage(message), stackOrContext, context);
+    }
+
+    // Send to Sentry as breadcrumb
+    this.addSentryBreadcrumb('error', formattedMessage, data);
+
+    // Also capture errors as exceptions in Sentry
+    if (message instanceof Error) {
+      Sentry.captureException(message, { extra: data });
+    } else {
+      Sentry.captureMessage(formattedMessage, {
+        level: 'error',
+        extra: data,
+      });
     }
   }
 
@@ -82,38 +136,68 @@ export class CustomLoggerService extends ConsoleLogger {
    * Override warn method to format inline
    */
   warn(message: any, context?: string) {
+    const formattedMessage = this.stringifyIfNeeded(message);
+    const data: Record<string, any> = {};
+
     if (typeof context === 'object') {
       // Context is an object, format it inline
+      Object.assign(data, context);
       super.warn(this.formatLogMessage(message, context));
     } else {
       // Context is a string or undefined
+      if (context) {
+        data.context = context;
+      }
       super.warn(this.formatLogMessage(message), context);
     }
+
+    // Send to Sentry as breadcrumb
+    this.addSentryBreadcrumb('warning', formattedMessage, data);
   }
 
   /**
    * Override debug method to format inline
    */
   debug(message: any, context?: string) {
+    const formattedMessage = this.stringifyIfNeeded(message);
+    const data: Record<string, any> = {};
+
     if (typeof context === 'object') {
       // Context is an object, format it inline
+      Object.assign(data, context);
       super.debug(this.formatLogMessage(message, context));
     } else {
       // Context is a string or undefined
+      if (context) {
+        data.context = context;
+      }
       super.debug(this.formatLogMessage(message), context);
     }
+
+    // Send to Sentry as breadcrumb
+    this.addSentryBreadcrumb('debug', formattedMessage, data);
   }
 
   /**
    * Override verbose method to format inline
    */
   verbose(message: any, context?: string) {
+    const formattedMessage = this.stringifyIfNeeded(message);
+    const data: Record<string, any> = {};
+
     if (typeof context === 'object') {
       // Context is an object, format it inline
+      Object.assign(data, context);
       super.verbose(this.formatLogMessage(message, context));
     } else {
       // Context is a string or undefined
+      if (context) {
+        data.context = context;
+      }
       super.verbose(this.formatLogMessage(message), context);
     }
+
+    // Send to Sentry as breadcrumb
+    this.addSentryBreadcrumb('log', formattedMessage, data);
   }
 }

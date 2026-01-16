@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Inject,
   OnModuleDestroy,
+  Logger,
 } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { REDIS_CONNECTION } from '../../redis/redis.module';
@@ -30,6 +31,7 @@ import { REDIS_CONNECTION } from '../../redis/redis.module';
  */
 @Injectable()
 export class StreamingLimiterService implements OnModuleDestroy {
+  private readonly logger = new Logger(StreamingLimiterService.name);
   private readonly MAX_CONCURRENT_STREAMS_PER_USER = 2;
   private readonly MAX_GLOBAL_STREAMS = 50;
   private readonly STREAM_TTL = 300; // 5 minutes in seconds
@@ -84,8 +86,8 @@ export class StreamingLimiterService implements OnModuleDestroy {
       );
     }
 
-    console.log(
-      `[StreamLimiter] Slot acquired for user ${userId}. User streams: ${userCount}, Global: ${globalCount}`,
+    this.logger.log(
+      `Slot acquired for user ${userId}. User streams: ${userCount}, Global: ${globalCount}`,
     );
   }
 
@@ -100,8 +102,8 @@ export class StreamingLimiterService implements OnModuleDestroy {
     const userCount = await this.redis.decr(userKey);
     const globalCount = await this.redis.decr(globalKey);
 
-    console.log(
-      `[StreamLimiter] Slot released for user ${userId}. User streams: ${Math.max(0, userCount)}, Global: ${Math.max(0, globalCount)}`,
+    this.logger.log(
+      `Slot released for user ${userId}. User streams: ${Math.max(0, userCount)}, Global: ${Math.max(0, globalCount)}`,
     );
   }
 

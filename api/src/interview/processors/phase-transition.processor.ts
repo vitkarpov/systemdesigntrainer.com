@@ -82,6 +82,8 @@ export class PhaseTransitionProcessor {
                 {
                   sessionId: session.id,
                   userId: sessionData.userId,
+                  regenerate: false,
+                  wasForceTransitioned: true,
                 },
                 {
                   attempts: 3,

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { WorkOS } from '@workos-inc/node';
 import * as jwt from 'jsonwebtoken';
 import { UserService } from './user.service';
@@ -23,6 +23,7 @@ export class EmailVerificationRequiredException extends Error {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private workos: WorkOS;
   private jwtSecret: string;
   private clientId: string;
@@ -93,7 +94,7 @@ export class AuthService {
 
       return payload.sid || null;
     } catch (error) {
-      console.error('Error extracting session ID from token:', error);
+      this.logger.error('Error extracting session ID from token:', error);
       return null;
     }
   }
@@ -115,15 +116,7 @@ export class AuthService {
       const workosSessionId =
         this.extractSessionIdFromAccessToken(workosAccessToken);
 
-      const user = await this.userService.upsertFromWorkos({
-        id: workosUser.id,
-        email: workosUser.email,
-        firstName: workosUser.firstName,
-        lastName: workosUser.lastName,
-        profilePictureUrl: workosUser.profilePictureUrl,
-      });
-
-      await this.userService.updateLastLogin(user.id);
+      const user = await this.userService.upsertFromWorkos(workosUser);
 
       const accessToken = this.generateAccessToken(user);
 
@@ -134,7 +127,7 @@ export class AuthService {
         error?.status === 403 &&
         error?.rawData?.code === 'email_verification_required'
       ) {
-        console.log(
+        this.logger.log(
           `Email verification required for: ${error.rawData.email} (verification_id: ${error.rawData.email_verification_id})`,
         );
         throw new EmailVerificationRequiredException(
@@ -145,7 +138,7 @@ export class AuthService {
       }
 
       // Log unexpected authentication errors with details
-      console.error('WorkOS authentication failed:', {
+      this.logger.error('WorkOS authentication failed:', {
         status: error?.status,
         code: error?.rawData?.code,
         message: error?.message || error,
@@ -177,13 +170,7 @@ export class AuthService {
 
   async getUserFromToken(token: string): Promise<User> {
     const payload = this.verifyAccessToken(token);
-    const user = await this.userService.findById(payload.userId);
-
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    return user;
+    return await this.userService.findById(payload.userId);
   }
 
   async completeEmailVerification(
@@ -208,21 +195,13 @@ export class AuthService {
       const workosSessionId =
         this.extractSessionIdFromAccessToken(workosAccessToken);
 
-      const user = await this.userService.upsertFromWorkos({
-        id: workosUser.id,
-        email: workosUser.email,
-        firstName: workosUser.firstName,
-        lastName: workosUser.lastName,
-        profilePictureUrl: workosUser.profilePictureUrl,
-      });
-
-      await this.userService.updateLastLogin(user.id);
+      const user = await this.userService.upsertFromWorkos(workosUser);
 
       const accessToken = this.generateAccessToken(user);
 
       return { user, accessToken, workosSessionId };
     } catch (error) {
-      console.error('WorkOS email verification failed:', {
+      this.logger.error('WorkOS email verification failed:', {
         status: error?.status,
         code: error?.rawData?.code,
         message: error?.message || error,

@@ -20,6 +20,7 @@ import { CasesController } from './controllers/cases.controller';
 import { DatabaseModule } from '../../db/db.module';
 import { AiModule } from '../ai/ai.module';
 import { AuthModule } from '../auth/auth.module';
+import { EmailModule } from '../email/email.module';
 
 /**
  * InterviewModule depends on AiModule for the following reasons:
@@ -36,13 +37,15 @@ import { AuthModule } from '../auth/auth.module';
     DatabaseModule,
     AiModule,
     AuthModule,
-    // Register feedback queue
+    EmailModule,
     BullModule.registerQueue({
       name: 'feedback',
     }),
-    // Register phase-transition queue
     BullModule.registerQueue({
       name: 'phase-transition',
+    }),
+    BullModule.registerQueue({
+      name: 'email',
     }),
   ],
   controllers: [SessionsController, CasesController],

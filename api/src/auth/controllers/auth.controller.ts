@@ -5,6 +5,7 @@ import {
   Query,
   Res,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,6 +28,8 @@ import { UserResponseDto } from '../../interview/dto/responses.dto';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private authService: AuthService,
     private userService: UserService,
@@ -55,7 +58,7 @@ export class AuthController {
 
     // Handle OAuth errors from WorkOS (e.g., user denied access)
     if (error) {
-      console.warn('OAuth error:', {
+      this.logger.warn('OAuth error:', {
         error,
         errorDescription,
         errorUri,
@@ -71,7 +74,7 @@ export class AuthController {
 
     // Ensure code is present for successful flow
     if (!code) {
-      console.error('Callback called without code or error');
+      this.logger.error('Callback called without code or error');
       return res.redirect(
         `${frontendUrl}/auth/error?error=missing_code&error_description=No authorization code received`,
       );
@@ -115,7 +118,10 @@ export class AuthController {
         );
       }
 
-      console.error('Authentication callback failed:', error.message || error);
+      this.logger.error(
+        'Authentication callback failed:',
+        error.message || error,
+      );
       return res.redirect(
         `${frontendUrl}/auth/error?error=authentication_failed&error_description=Failed to complete authentication`,
       );
@@ -213,7 +219,7 @@ export class AuthController {
       // Redirect to success page
       return res.redirect(`${frontendUrl}/auth/callback`);
     } catch (error) {
-      console.error(
+      this.logger.error(
         'Email verification callback failed:',
         error.message || error,
       );
