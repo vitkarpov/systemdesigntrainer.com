@@ -115,13 +115,7 @@ export class AuthService {
       const workosSessionId =
         this.extractSessionIdFromAccessToken(workosAccessToken);
 
-      const user = await this.userService.upsertFromWorkos({
-        id: workosUser.id,
-        email: workosUser.email,
-        firstName: workosUser.firstName,
-        lastName: workosUser.lastName,
-        profilePictureUrl: workosUser.profilePictureUrl,
-      });
+      const user = await this.userService.upsertFromWorkos(workosUser);
 
       await this.userService.updateLastLogin(user.id);
 
@@ -202,13 +196,7 @@ export class AuthService {
       const workosSessionId =
         this.extractSessionIdFromAccessToken(workosAccessToken);
 
-      const user = await this.userService.upsertFromWorkos({
-        id: workosUser.id,
-        email: workosUser.email,
-        firstName: workosUser.firstName,
-        lastName: workosUser.lastName,
-        profilePictureUrl: workosUser.profilePictureUrl,
-      });
+      const user = await this.userService.upsertFromWorkos(workosUser);
 
       await this.userService.updateLastLogin(user.id);
 

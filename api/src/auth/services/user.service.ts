@@ -1,6 +1,7 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
+import { AuthenticationResponse } from '@workos-inc/node';
 import { DATABASE_CONNECTION } from '../../../db/db.module';
 import { users, User, NewUser } from '../../../db/schema/users.schema';
 
@@ -82,13 +83,9 @@ export class UserService {
       .where(eq(users.id, id));
   }
 
-  async upsertFromWorkos(workosUser: {
-    id: string;
-    email: string;
-    firstName?: string;
-    lastName?: string;
-    profilePictureUrl?: string;
-  }): Promise<User> {
+  async upsertFromWorkos(
+    workosUser: AuthenticationResponse['user'],
+  ): Promise<User> {
     try {
       const existingUser = await this.findByWorkosUserId(workosUser.id);
 
