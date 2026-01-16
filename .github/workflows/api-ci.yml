@@ -114,8 +114,8 @@ jobs:
         run: |
           # Decrypt .env.enc to .env using SOPS_AGE_KEY environment variable
           # Use --config /dev/null to bypass .sops.yaml requirement for decryption
-          # Use --input-type dotenv to specify the file format
-          sops --config /dev/null --input-type dotenv -d .env.enc > .env
+          # Specify both input and output types as dotenv
+          sops --config /dev/null --input-type dotenv --output-type dotenv -d .env.enc > .env
 
           # Verify decryption succeeded
           if [ ! -s .env ]; then
