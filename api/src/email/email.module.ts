@@ -21,7 +21,6 @@ import { AuthModule } from '../auth/auth.module';
   imports: [
     ConfigModule,
     AuthModule,
-    // Register email queue with retry configuration
     BullModule.registerQueue({
       name: 'email',
       defaultJobOptions: {

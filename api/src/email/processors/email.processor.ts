@@ -32,28 +32,11 @@ export class EmailProcessor {
       job.data,
     );
 
-    try {
-      await this.emailService.sendFeedbackReadyEmail(userId, sessionId);
+    await this.emailService.sendFeedbackReadyEmail(userId, sessionId);
 
-      this.logger.log(
-        `[Job ${job.id}] Successfully sent feedback-ready email to user ${userId} for session ${sessionId}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `[Job ${job.id}] Failed to send feedback-ready email`,
-        error,
-      );
-      Sentry.captureException(error, {
-        extra: {
-          jobId: job.id,
-          userId,
-          sessionId,
-          attemptsMade: job.attemptsMade,
-          context: 'EmailProcessor.handleFeedbackReadyEmail',
-        },
-      });
-      throw error;
-    }
+    this.logger.log(
+      `[Job ${job.id}] Successfully sent feedback-ready email to user ${userId} for session ${sessionId}`,
+    );
   }
 
   @OnQueueFailed()
