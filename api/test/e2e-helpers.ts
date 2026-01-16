@@ -35,10 +35,7 @@ export interface E2ETestContext {
 export async function createE2ETestApp(
   options: E2ETestAppOptions = {},
 ): Promise<E2ETestApp> {
-  const {
-    useCookieParser = false,
-    includeFeedbackQueue = false,
-  } = options;
+  const { useCookieParser = false, includeFeedbackQueue = false } = options;
   const { db, pool } = getTestDb();
 
   const moduleBuilder = Test.createTestingModule({
