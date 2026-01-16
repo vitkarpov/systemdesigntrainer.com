@@ -1,19 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../src/app.module';
-import {
-  cleanDatabase,
-  cleanQueue,
-  seedTestData,
-  generateTestToken,
-  createTestSession,
-} from './test-utils';
+import { createTestSession } from './test-utils';
 import { getTestDb } from '../db/test-db';
-import { DATABASE_CONNECTION, DATABASE_POOL } from '../db/db.module';
 import { eq } from 'drizzle-orm';
-import { getQueueToken } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { createE2ETestApp, closeE2ETestApp, setupE2ETest } from './e2e-helpers';
 
 describe('Feedback Generation (e2e)', () => {
   let app: INestApplication;
@@ -24,36 +15,24 @@ describe('Feedback Generation (e2e)', () => {
   let feedbackQueue: Queue;
 
   beforeAll(async () => {
-    const { db, pool } = getTestDb();
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    })
-      .overrideProvider(DATABASE_CONNECTION)
-      .useValue(db)
-      .overrideProvider(DATABASE_POOL)
-      .useValue(pool)
-      .compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
-
-    // Get the feedback queue
-    feedbackQueue = app.get<Queue>(getQueueToken('feedback'));
+    const testApp = await createE2ETestApp({
+      includeFeedbackQueue: true,
+    });
+    app = testApp.app;
+    feedbackQueue = testApp.feedbackQueue!;
   });
 
   afterAll(async () => {
-    await app.close();
+    await closeE2ETestApp({ app, feedbackQueue });
   });
 
   beforeEach(async () => {
-    // Clean queue BEFORE cleaning database to prevent race conditions
-    await cleanQueue(feedbackQueue);
-    await cleanDatabase();
-    const { testUser, testCase } = await seedTestData();
-    testUserId = testUser.id;
-    testCaseId = testCase.id;
-    authToken = generateTestToken(testUserId);
+    const context = await setupE2ETest({
+      cleanFeedbackQueue: feedbackQueue,
+    });
+    testUserId = context.testUserId;
+    testCaseId = context.testCaseId;
+    authToken = context.authToken;
 
     // Create a completed session for feedback tests
     const session = await createTestSession(testUserId, testCaseId, {

@@ -33,6 +33,15 @@ export function getTestDb() {
 
 export async function closeTestDb() {
   if (testDbInstance) {
+    // End the pool and wait for all connections to close
+    await testDbInstance.pool.end();
+    testDbInstance = null;
+  }
+}
+
+// Force close all connections (useful for cleanup between test files)
+export async function resetTestDb() {
+  if (testDbInstance) {
     await testDbInstance.pool.end();
     testDbInstance = null;
   }

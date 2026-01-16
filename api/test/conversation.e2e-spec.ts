@@ -1,19 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import * as cookieParser from 'cookie-parser';
 import { eq } from 'drizzle-orm';
-import { AppModule } from '../src/app.module';
-import {
-  cleanDatabase,
-  seedTestData,
-  generateTestToken,
-  createTestSession,
-} from './test-utils';
+import { createTestSession } from './test-utils';
 import { getTestDb } from '../db/test-db';
-import { DATABASE_CONNECTION, DATABASE_POOL } from '../db/db.module';
-import { AiService } from '../src/ai/services/ai.service';
-import { MockAiService } from './mocks/ai.service.mock';
+import { createE2ETestApp, closeE2ETestApp, setupE2ETest } from './e2e-helpers';
 
 describe('Conversation & AI Integration (e2e)', () => {
   let app: INestApplication;
@@ -23,34 +13,22 @@ describe('Conversation & AI Integration (e2e)', () => {
   let sessionId: number;
 
   beforeAll(async () => {
-    const { db, pool } = getTestDb();
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    })
-      .overrideProvider(DATABASE_CONNECTION)
-      .useValue(db)
-      .overrideProvider(DATABASE_POOL)
-      .useValue(pool)
-      .overrideProvider(AiService)
-      .useValue(new MockAiService())
-      .compile();
-
-    app = moduleFixture.createNestApplication();
-    app.use(cookieParser());
-    await app.init();
+    const testApp = await createE2ETestApp({
+      useMockAi: true,
+      useCookieParser: true,
+    });
+    app = testApp.app;
   });
 
   afterAll(async () => {
-    await app.close();
+    await closeE2ETestApp({ app });
   });
 
   beforeEach(async () => {
-    await cleanDatabase();
-    const { testUser, testCase } = await seedTestData();
-    testUserId = testUser.id;
-    testCaseId = testCase.id;
-    authToken = generateTestToken(testUserId);
+    const context = await setupE2ETest();
+    testUserId = context.testUserId;
+    testCaseId = context.testCaseId;
+    authToken = context.authToken;
 
     // Create and start a session for conversation tests
     const session = await createTestSession(testUserId, testCaseId, {
