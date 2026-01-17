@@ -925,19 +925,6 @@ export class SessionsController {
       };
     }
 
-    // Complete the session (mark as terminal status)
-    // If already completed, this will gracefully handle it
-    try {
-      await this.sessionService.completeSession(id);
-    } catch (err) {
-      // If session is already completed, that's fine - continue to generate/return feedback
-      const session = await this.sessionService.getSession(id);
-      if (session.status !== 'completed') {
-        // If it's not completed and we got an error, rethrow
-        throw err;
-      }
-    }
-
     // Enqueue feedback generation job
     await this.feedbackQueue.add(
       'generate',
