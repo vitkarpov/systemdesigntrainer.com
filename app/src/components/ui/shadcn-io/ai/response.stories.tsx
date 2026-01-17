@@ -1,41 +1,41 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Response } from './response';
-import { MOCK_MARKDOWN_SAMPLES } from './__stories__/mock-data';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Response } from "./response";
+import { MOCK_MARKDOWN_SAMPLES } from "./__stories__/mock-data";
 
 const meta: Meta<typeof Response> = {
-  title: 'AI Components/Content Display/Response',
+  title: "AI Components/Content Display/Response",
   component: Response,
   parameters: {
-    layout: 'padded',
+    layout: "padded",
     docs: {
       description: {
         component:
-          'Renders markdown content with support for GitHub Flavored Markdown (GFM), code syntax highlighting, KaTeX math formulas, tables, and streaming incomplete markdown. Automatically handles incomplete tokens during streaming.',
+          "Renders markdown content with support for GitHub Flavored Markdown (GFM), code syntax highlighting, KaTeX math formulas, tables, and streaming incomplete markdown. Automatically handles incomplete tokens during streaming.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     children: {
-      control: 'text',
-      description: 'Markdown content to render',
+      control: "text",
+      description: "Markdown content to render",
     },
     parseIncompleteMarkdown: {
-      control: 'boolean',
+      control: "boolean",
       description:
-        'Whether to parse and complete incomplete markdown tokens during streaming',
+        "Whether to parse and complete incomplete markdown tokens during streaming",
     },
     allowedImagePrefixes: {
-      control: 'object',
-      description: 'Array of allowed image URL prefixes for security',
+      control: "object",
+      description: "Array of allowed image URL prefixes for security",
     },
     allowedLinkPrefixes: {
-      control: 'object',
-      description: 'Array of allowed link URL prefixes for security',
+      control: "object",
+      description: "Array of allowed link URL prefixes for security",
     },
     className: {
-      control: 'text',
-      description: 'Additional CSS classes',
+      control: "text",
+      description: "Additional CSS classes",
     },
   },
 };
@@ -50,7 +50,7 @@ export const SimpleText: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Simple markdown with bold, italic, and inline code.',
+        story: "Simple markdown with bold, italic, and inline code.",
       },
     },
   },
@@ -64,7 +64,7 @@ export const ComplexMarkdown: Story = {
     docs: {
       description: {
         story:
-          'Complex markdown with headings, lists, code blocks, tables, blockquotes, and links.',
+          "Complex markdown with headings, lists, code blocks, tables, blockquotes, and links.",
       },
     },
   },
@@ -102,7 +102,7 @@ def fibonacci(n: int) -> list[int]:
   parameters: {
     docs: {
       description: {
-        story: 'Markdown with multiple syntax-highlighted code blocks.',
+        story: "Markdown with multiple syntax-highlighted code blocks.",
       },
     },
   },
@@ -116,7 +116,7 @@ export const WithMathFormulas: Story = {
     docs: {
       description: {
         story:
-          'Markdown with KaTeX math formulas (inline and block). Requires katex CSS to be loaded.',
+          "Markdown with KaTeX math formulas (inline and block). Requires katex CSS to be loaded.",
       },
     },
   },
@@ -140,7 +140,7 @@ Each database type has specific strengths and trade-offs.`,
   parameters: {
     docs: {
       description: {
-        story: 'Markdown with formatted tables.',
+        story: "Markdown with formatted tables.",
       },
     },
   },
@@ -155,7 +155,7 @@ export const StreamingIncomplete: Story = {
     docs: {
       description: {
         story:
-          'Demonstrates incomplete markdown during streaming. The parser automatically completes partial tokens to prevent rendering issues.',
+          "Demonstrates incomplete markdown during streaming. The parser automatically completes partial tokens to prevent rendering issues.",
       },
     },
   },
@@ -170,7 +170,7 @@ export const StreamingWithMarkdown: Story = {
     docs: {
       description: {
         story:
-          'Incomplete markdown with formatting tokens. Parser closes unclosed formatting to maintain clean rendering.',
+          "Incomplete markdown with formatting tokens. Parser closes unclosed formatting to maintain clean rendering.",
       },
     },
   },
@@ -183,7 +183,8 @@ export const WithLists: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Markdown with both ordered and unordered lists, including nested lists.',
+        story:
+          "Markdown with both ordered and unordered lists, including nested lists.",
       },
     },
   },
@@ -196,7 +197,7 @@ export const WithBlockquote: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Markdown with blockquotes for emphasis or citations.',
+        story: "Markdown with blockquotes for emphasis or citations.",
       },
     },
   },
@@ -209,7 +210,7 @@ export const LongContent: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Long markdown content to test scrolling and performance.',
+        story: "Long markdown content to test scrolling and performance.",
       },
     },
   },
@@ -252,7 +253,7 @@ const config = {
   parameters: {
     docs: {
       description: {
-        story: 'Response component in both light and dark themes.',
+        story: "Response component in both light and dark themes.",
       },
     },
   },
@@ -271,7 +272,7 @@ export const InMessageContext: Story = {
     docs: {
       description: {
         story:
-          'Response component shown within a message container, demonstrating typical usage in chat interfaces.',
+          "Response component shown within a message container, demonstrating typical usage in chat interfaces.",
       },
     },
   },

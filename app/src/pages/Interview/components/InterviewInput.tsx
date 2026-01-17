@@ -1,10 +1,10 @@
-import type { SessionResponseDtoStatus } from '@/api/hooks.gen';
+import type { SessionResponseDtoStatus } from "@/api/hooks.gen";
 import {
   PromptInput,
   PromptInputTextarea,
   PromptInputToolbar,
   PromptInputSubmit,
-} from '@/components/ui/shadcn-io/ai/prompt-input';
+} from "@/components/ui/shadcn-io/ai/prompt-input";
 
 interface InterviewInputProps {
   value: string;
@@ -37,9 +37,9 @@ export function InterviewInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={
-            sessionStatus !== 'in_progress'
-              ? 'Interview has ended'
-              : 'Type your response... (Shift+Enter for new line)'
+            sessionStatus !== "in_progress"
+              ? "Interview has ended"
+              : "Type your response... (Shift+Enter for new line)"
           }
           disabled={isStreaming || isDisabled}
           minHeight={60}
@@ -49,7 +49,7 @@ export function InterviewInput({
           <div className="flex-1" />
           <PromptInputSubmit
             disabled={isStreaming || !value.trim() || isDisabled}
-            aria-label={isStreaming ? 'Streaming' : 'Send'}
+            aria-label={isStreaming ? "Streaming" : "Send"}
           />
         </PromptInputToolbar>
       </PromptInput>

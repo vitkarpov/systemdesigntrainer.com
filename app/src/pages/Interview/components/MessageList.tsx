@@ -1,14 +1,11 @@
 import {
   Conversation,
   ConversationContent,
-} from '@/components/ui/shadcn-io/ai/conversation';
-import {
-  Message,
-  MessageContent,
-} from '@/components/ui/shadcn-io/ai/message';
-import { Response } from '@/components/ui/shadcn-io/ai/response';
-import { formatElapsedTime } from '@/lib/utils';
-import type { MessageResponseDto } from '@/api/hooks.gen';
+} from "@/components/ui/shadcn-io/ai/conversation";
+import { Message, MessageContent } from "@/components/ui/shadcn-io/ai/message";
+import { Response } from "@/components/ui/shadcn-io/ai/response";
+import { formatElapsedTime } from "@/lib/utils";
+import type { MessageResponseDto } from "@/api/hooks.gen";
 
 interface OptimisticMessage {
   text: string;
@@ -35,10 +32,13 @@ export function MessageList({
       <ConversationContent className="space-y-4">
         {/* Regular messages */}
         {messages.map((message) => (
-          <Message key={message.id} from={message.role === 'candidate' ? 'user' : 'assistant'}>
+          <Message
+            key={message.id}
+            from={message.role === "candidate" ? "user" : "assistant"}
+          >
             <MessageContent>
               <div className="text-xs opacity-70 mb-1">
-                {message.role === 'candidate' ? 'You' : 'Interviewer'} •{' '}
+                {message.role === "candidate" ? "You" : "Interviewer"} •{" "}
                 {formatElapsedTime(message.secondsElapsed)}
               </div>
               <Response>{message.text}</Response>

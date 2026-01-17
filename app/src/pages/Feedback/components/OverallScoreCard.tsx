@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getScoreColor, getScoreLabel } from '../utils';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getScoreColor, getScoreLabel } from "../utils";
 
 interface OverallScoreCardProps {
   score: number;
@@ -17,9 +17,7 @@ export function OverallScoreCard({ score }: OverallScoreCardProps) {
             {score}
           </div>
           <div>
-            <div className="text-2xl font-semibold">
-              {getScoreLabel(score)}
-            </div>
+            <div className="text-2xl font-semibold">{getScoreLabel(score)}</div>
             <div className="text-muted-foreground">out of 100</div>
           </div>
         </div>

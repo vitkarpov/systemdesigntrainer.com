@@ -1,23 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { DiagramCanvas } from '@/components/diagram/DiagramCanvas';
-import { PageHeader } from '@/components/PageHeader';
-import { PhaseDisplay } from '@/components/PhaseDisplay';
-import { MessageList, InterviewInput } from './components';
-import { Button } from '@/components/ui/button';
-import { formatElapsedTime, parseErrorMessage } from '@/lib/utils';
-import { useInterviewStore, useDiagramStore, useStreamingStore } from '@/stores';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { DiagramCanvas } from "@/components/diagram/DiagramCanvas";
+import { PageHeader } from "@/components/PageHeader";
+import { PhaseDisplay } from "@/components/PhaseDisplay";
+import { MessageList, InterviewInput } from "./components";
+import { Button } from "@/components/ui/button";
+import { formatElapsedTime, parseErrorMessage } from "@/lib/utils";
+import {
+  useInterviewStore,
+  useDiagramStore,
+  useStreamingStore,
+} from "@/stores";
 import {
   useSessionsControllerGetSession,
   useSessionsControllerGetTranscript,
   useSessionsControllerGenerateFeedback,
-} from '@/api/hooks.gen';
-import { useConversationStream } from '@/hooks/useConversationStream';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { Page } from '@/components/layout/Page';
-import { posthog } from '@/lib/posthog';
+} from "@/api/hooks.gen";
+import { useConversationStream } from "@/hooks/useConversationStream";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Page } from "@/components/layout/Page";
+import { posthog } from "@/lib/posthog";
 
 function InterviewPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -26,18 +30,22 @@ function InterviewPage() {
   const inputValue = useInterviewStore((state) => state.inputValue);
   const setInputValue = useInterviewStore((state) => state.setInputValue);
   const clearInput = useInterviewStore((state) => state.clearInput);
-  const optimisticMessage = useInterviewStore((state) => state.optimisticMessage);
-  const setOptimisticMessage = useInterviewStore((state) => state.setOptimisticMessage);
+  const optimisticMessage = useInterviewStore(
+    (state) => state.optimisticMessage,
+  );
+  const setOptimisticMessage = useInterviewStore(
+    (state) => state.setOptimisticMessage,
+  );
 
   const [elapsedTime, setElapsedTime] = useState(0);
 
   const sessionIdNum = Number(sessionId);
 
   const streamingText = useStreamingStore(
-    (state) => state.streams[sessionIdNum]?.streamingText || ''
+    (state) => state.streams[sessionIdNum]?.streamingText || "",
   );
   const isStreaming = useStreamingStore(
-    (state) => state.streams[sessionIdNum]?.isStreaming ?? false
+    (state) => state.streams[sessionIdNum]?.isStreaming ?? false,
   );
 
   const { sendMessage, cancel } = useConversationStream({
@@ -46,28 +54,35 @@ function InterviewPage() {
       setOptimisticMessage(null);
     },
     onError: (error) => {
-      const errorMessage = parseErrorMessage(error, 'Failed to send message. Please try again.');
+      const errorMessage = parseErrorMessage(
+        error,
+        "Failed to send message. Please try again.",
+      );
       toast.error(errorMessage);
       setOptimisticMessage(null);
     },
   });
 
-  const { data: session, isLoading: isLoadingSession } = useSessionsControllerGetSession(sessionIdNum, {
-    query: {
-      enabled: !!sessionId && !isNaN(sessionIdNum),
-      refetchInterval: (query) => {
-        return query.state.data?.data?.session?.status === 'in_progress' ? 1000 : false;
+  const { data: session, isLoading: isLoadingSession } =
+    useSessionsControllerGetSession(sessionIdNum, {
+      query: {
+        enabled: !!sessionId && !isNaN(sessionIdNum),
+        refetchInterval: (query) => {
+          return query.state.data?.data?.session?.status === "in_progress"
+            ? 1000
+            : false;
+        },
+        throwOnError: true,
       },
-      throwOnError: true,
-    },
-  });
+    });
 
-  const { data: transcriptData, isLoading: isLoadingMessages } = useSessionsControllerGetTranscript(sessionIdNum, {
-    query: {
-      enabled: !!sessionId && !isNaN(sessionIdNum),
-      throwOnError: true,
-    },
-  });
+  const { data: transcriptData, isLoading: isLoadingMessages } =
+    useSessionsControllerGetTranscript(sessionIdNum, {
+      query: {
+        enabled: !!sessionId && !isNaN(sessionIdNum),
+        throwOnError: true,
+      },
+    });
 
   const messages = transcriptData?.data.messages || [];
 
@@ -80,7 +95,7 @@ function InterviewPage() {
   }, [session]);
 
   useEffect(() => {
-    if (!session || session.data.session.status !== 'in_progress') return;
+    if (!session || session.data.session.status !== "in_progress") return;
 
     const timer = setInterval(() => {
       setElapsedTime((prev) => prev + 1);
@@ -88,7 +103,6 @@ function InterviewPage() {
 
     return () => clearInterval(timer);
   }, [session]);
-
 
   // Cleanup on unmount
   useEffect(() => {
@@ -101,7 +115,12 @@ function InterviewPage() {
   }, [cancel, sessionIdNum]);
 
   const handleSendMessage = () => {
-    if (!inputValue.trim() || isStreaming || session?.data.session.status !== 'in_progress') return;
+    if (
+      !inputValue.trim() ||
+      isStreaming ||
+      session?.data.session.status !== "in_progress"
+    )
+      return;
 
     const messageContent = inputValue.trim();
     clearInput();
@@ -113,7 +132,7 @@ function InterviewPage() {
     });
 
     // Track message sent
-    posthog.capture('interview_message_sent', {
+    posthog.capture("interview_message_sent", {
       sessionId: sessionIdNum,
       messageLength: messageContent.length,
       phaseName: session?.data.phaseMetadata?.name,
@@ -135,7 +154,7 @@ function InterviewPage() {
       });
 
       // Track interview completed
-      posthog.capture('interview_completed', {
+      posthog.capture("interview_completed", {
         sessionId: sessionIdNum,
         duration: elapsedTime,
         messageCount: messages.length,
@@ -144,11 +163,13 @@ function InterviewPage() {
 
       navigate(`/feedback/${sessionId}`);
     } catch (err) {
-      const errorMessage = parseErrorMessage(err, 'Failed to end interview. Please try again.');
+      const errorMessage = parseErrorMessage(
+        err,
+        "Failed to end interview. Please try again.",
+      );
       toast.error(errorMessage);
     }
   };
-
 
   const isLoading = isLoadingSession || isLoadingMessages;
 
@@ -160,29 +181,33 @@ function InterviewPage() {
     );
   }
 
-  const sessionStatus = (session?.data.session.status as 'in_progress' | 'completed') || 'in_progress';
-  const isReadOnly = sessionStatus === 'completed';
+  const sessionStatus =
+    (session?.data.session.status as "in_progress" | "completed") ||
+    "in_progress";
+  const isReadOnly = sessionStatus === "completed";
 
   return (
     <Page>
       <PageHeader
         backLabel="Back to Dashboard"
-        onBack={() => navigate('/')}
+        onBack={() => navigate("/")}
         rightContent={
           <>
             <div className="text-sm text-muted-foreground font-medium">
               Total: {formatElapsedTime(elapsedTime)}
             </div>
-            {sessionStatus === 'in_progress' && (
+            {sessionStatus === "in_progress" && (
               <Button
                 size="sm"
                 onClick={handleEndInterview}
                 disabled={generateFeedbackMutation.isPending}
               >
-                {generateFeedbackMutation.isPending ? 'Ending...' : 'End Interview'}
+                {generateFeedbackMutation.isPending
+                  ? "Ending..."
+                  : "End Interview"}
               </Button>
             )}
-            {sessionStatus === 'completed' && (
+            {sessionStatus === "completed" && (
               <div className="text-sm font-medium text-muted-foreground">
                 Interview Completed
               </div>
@@ -191,9 +216,7 @@ function InterviewPage() {
         }
         centerContent={
           session?.data.phaseMetadata ? (
-            <PhaseDisplay
-              phaseMetadata={session.data.phaseMetadata}
-            />
+            <PhaseDisplay phaseMetadata={session.data.phaseMetadata} />
           ) : null
         }
       />
@@ -202,10 +225,7 @@ function InterviewPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Diagram Canvas */}
         <div className="w-1/2 border-r border-border">
-          <DiagramCanvas
-            sessionId={sessionIdNum}
-            isReadOnly={isReadOnly}
-          />
+          <DiagramCanvas sessionId={sessionIdNum} isReadOnly={isReadOnly} />
         </div>
 
         {/* Chat Area (Messages + Input) */}
@@ -221,8 +241,8 @@ function InterviewPage() {
           <InterviewInput
             value={inputValue}
             isStreaming={isStreaming}
-            isDisabled={session?.data.session.status !== 'in_progress'}
-            sessionStatus={session?.data.session.status || 'in_progress'}
+            isDisabled={session?.data.session.status !== "in_progress"}
+            sessionStatus={session?.data.session.status || "in_progress"}
             onChange={setInputValue}
             onSend={handleSendMessage}
           />
@@ -239,7 +259,7 @@ export default function Interview() {
   return (
     <ErrorBoundary
       context="interview"
-      onBackToHome={() => navigate('/')}
+      onBackToHome={() => navigate("/")}
       onReset={() => queryClient.invalidateQueries()}
     >
       <InterviewPage />

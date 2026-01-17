@@ -1,33 +1,74 @@
-import { Database, Layers, Activity, Server, Box, Users, HardDrive } from 'lucide-react';
+import {
+  Database,
+  Layers,
+  Activity,
+  Server,
+  Box,
+  Users,
+  HardDrive,
+} from "lucide-react";
 
 const COMPONENT_TYPES = [
-  { type: 'database', label: 'Database', icon: Database, color: 'text-blue-600 dark:text-blue-400' },
-  { type: 'cache', label: 'Cache', icon: Layers, color: 'text-purple-600 dark:text-purple-400' },
-  { type: 'loadBalancer', label: 'Load Balancer', icon: Activity, color: 'text-green-600 dark:text-green-400' },
-  { type: 'apiServer', label: 'API Server', icon: Server, color: 'text-orange-600 dark:text-orange-400' },
-  { type: 'queue', label: 'Queue', icon: Box, color: 'text-yellow-600 dark:text-yellow-500' },
-  { type: 'client', label: 'Client', icon: Users, color: 'text-pink-600 dark:text-pink-400' },
-  { type: 'storage', label: 'Storage', icon: HardDrive, color: 'text-indigo-600 dark:text-indigo-400' },
+  {
+    type: "database",
+    label: "Database",
+    icon: Database,
+    color: "text-blue-600 dark:text-blue-400",
+  },
+  {
+    type: "cache",
+    label: "Cache",
+    icon: Layers,
+    color: "text-purple-600 dark:text-purple-400",
+  },
+  {
+    type: "loadBalancer",
+    label: "Load Balancer",
+    icon: Activity,
+    color: "text-green-600 dark:text-green-400",
+  },
+  {
+    type: "apiServer",
+    label: "API Server",
+    icon: Server,
+    color: "text-orange-600 dark:text-orange-400",
+  },
+  {
+    type: "queue",
+    label: "Queue",
+    icon: Box,
+    color: "text-yellow-600 dark:text-yellow-500",
+  },
+  {
+    type: "client",
+    label: "Client",
+    icon: Users,
+    color: "text-pink-600 dark:text-pink-400",
+  },
+  {
+    type: "storage",
+    label: "Storage",
+    icon: HardDrive,
+    color: "text-indigo-600 dark:text-indigo-400",
+  },
 ];
 
 export function ComponentPalette() {
   const onDragStart = (
     event: React.DragEvent,
     nodeType: string,
-    label: string
+    label: string,
   ) => {
-    event.dataTransfer.setData('application/reactflow', nodeType);
-    event.dataTransfer.setData('application/reactflow-label', label);
-    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData("application/reactflow", nodeType);
+    event.dataTransfer.setData("application/reactflow-label", label);
+    event.dataTransfer.effectAllowed = "move";
   };
 
   return (
     <div className="w-56 bg-card border-r border-border flex flex-col">
       <div className="p-4 border-b border-border">
         <h3 className="text-sm font-semibold text-foreground">Components</h3>
-        <p className="text-xs text-muted-foreground mt-1">
-          Drag onto canvas
-        </p>
+        <p className="text-xs text-muted-foreground mt-1">Drag onto canvas</p>
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {COMPONENT_TYPES.map((comp) => {
@@ -47,7 +88,16 @@ export function ComponentPalette() {
       </div>
       <div className="p-4 border-t border-border bg-muted/30">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          <span className="font-medium text-foreground">Tip:</span> Select a node or edge and press <kbd className="px-1.5 py-0.5 text-[10px] font-semibold bg-background border border-border rounded">Delete</kbd> or <kbd className="px-1.5 py-0.5 text-[10px] font-semibold bg-background border border-border rounded">Backspace</kbd> to remove it
+          <span className="font-medium text-foreground">Tip:</span> Select a
+          node or edge and press{" "}
+          <kbd className="px-1.5 py-0.5 text-[10px] font-semibold bg-background border border-border rounded">
+            Delete
+          </kbd>{" "}
+          or{" "}
+          <kbd className="px-1.5 py-0.5 text-[10px] font-semibold bg-background border border-border rounded">
+            Backspace
+          </kbd>{" "}
+          to remove it
         </p>
       </div>
     </div>

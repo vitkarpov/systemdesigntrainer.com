@@ -1,11 +1,15 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import React from 'react';
-import { http, HttpResponse, delay } from 'msw';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import Interview from './Interview';
-import type { GetSessionResponseDtoData, MessageResponseDto, SessionResponseDtoStatus } from '@/api/hooks.gen';
-import { AuthProvider } from '@/contexts/AuthContext';
+import type { Meta, StoryObj } from "@storybook/react";
+import React from "react";
+import { http, HttpResponse, delay } from "msw";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Interview from "./Interview";
+import type {
+  GetSessionResponseDtoData,
+  MessageResponseDto,
+  SessionResponseDtoStatus,
+} from "@/api/hooks.gen";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Predefined interviewer responses for random selection
 const interviewerResponses = [
@@ -25,82 +29,87 @@ const interviewerResponses = [
 const mockMessages: MessageResponseDto[] = [
   {
     id: 1,
-    role: 'interviewer',
+    role: "interviewer",
     text: "Hello! Welcome to today's system design interview. We'll be designing a distributed caching system. Let's start by understanding the requirements. What are your initial thoughts on the scale we should target?",
     secondsElapsed: 5,
-    createdAt: '2024-01-01T10:00:00Z',
+    createdAt: "2024-01-01T10:00:00Z",
     sessionId: 123,
-    phase: 'requirements',
+    phase: "requirements",
   },
   {
     id: 2,
-    role: 'candidate',
+    role: "candidate",
     text: "Thanks for having me! For a distributed caching system, I'd like to understand the expected throughput first. Are we looking at thousands, millions, or billions of requests per day? This will help determine the architecture.",
     secondsElapsed: 45,
-    createdAt: '2024-01-01T10:00:40Z',
+    createdAt: "2024-01-01T10:00:40Z",
     sessionId: 123,
-    phase: 'requirements',
+    phase: "requirements",
   },
   {
     id: 3,
-    role: 'interviewer',
+    role: "interviewer",
     text: "Great question! Let's target **10 million requests per day** with peaks that could be 5x the average. We also need to consider:\n\n- Average response time under 50ms\n- 99.9% availability\n- Global distribution across multiple regions\n\nHow would you approach the high-level design?",
     secondsElapsed: 60,
-    createdAt: '2024-01-01T10:01:00Z',
+    createdAt: "2024-01-01T10:01:00Z",
     sessionId: 123,
-    phase: 'requirements',
+    phase: "requirements",
   },
   {
     id: 4,
-    role: 'candidate',
+    role: "candidate",
     text: "I'd start with a **multi-tier architecture**:\n\n1. **CDN Layer**: For static content caching\n2. **Application Cache**: Redis/Memcached cluster\n3. **Database Layer**: Partitioned data stores\n\nFor the cache layer specifically, I'm thinking about using **consistent hashing** for distribution. Should I dive into the cache eviction policies?",
     secondsElapsed: 120,
-    createdAt: '2024-01-01T10:02:00Z',
+    createdAt: "2024-01-01T10:02:00Z",
     sessionId: 123,
-    phase: 'requirements',
+    phase: "requirements",
   },
   {
     id: 5,
-    role: 'interviewer',
-    text: 'Yes, please elaborate on cache eviction and also explain how you would handle **cache invalidation** in a distributed environment. This is a critical aspect.',
+    role: "interviewer",
+    text: "Yes, please elaborate on cache eviction and also explain how you would handle **cache invalidation** in a distributed environment. This is a critical aspect.",
     secondsElapsed: 135,
-    createdAt: '2024-01-01T10:02:15Z',
+    createdAt: "2024-01-01T10:02:15Z",
     sessionId: 123,
-    phase: 'requirements',
+    phase: "requirements",
   },
 ];
 
 // Mock user data
 const mockUser = {
   id: 1,
-  email: 'test@example.com',
-  firstName: 'John',
-  lastName: 'Doe',
+  email: "test@example.com",
+  firstName: "John",
+  lastName: "Doe",
   interviewsRemaining: 5,
-  createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-01T00:00:00Z',
+  createdAt: "2024-01-01T00:00:00Z",
+  updatedAt: "2024-01-01T00:00:00Z",
 };
 
 // Helper to create SSE stream response
-function createSSEStream(candidateText: string, interviewerText: string, delayMs: number = 50) {
+function createSSEStream(
+  candidateText: string,
+  interviewerText: string,
+  delayMs: number = 50,
+) {
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
       // Get current elapsed time (approximate)
-      const baseTime = currentMessages.length > 0
-        ? currentMessages[currentMessages.length - 1].secondsElapsed
-        : 0;
+      const baseTime =
+        currentMessages.length > 0
+          ? currentMessages[currentMessages.length - 1].secondsElapsed
+          : 0;
 
       // Add candidate message to state
       const candidateMessage: MessageResponseDto = {
         id: messageIdCounter++,
-        role: 'candidate',
+        role: "candidate",
         text: candidateText,
         secondsElapsed: baseTime + 5,
         createdAt: new Date().toISOString(),
         sessionId: 123,
-        phase: 'requirements',
+        phase: "requirements",
       };
       currentMessages.push(candidateMessage);
 
@@ -109,28 +118,28 @@ function createSSEStream(candidateText: string, interviewerText: string, delayMs
       controller.enqueue(encoder.encode(startEvent));
 
       // Wait a bit before starting to stream
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Stream text in chunks (word by word)
-      const words = interviewerText.split(' ');
+      const words = interviewerText.split(" ");
       for (let i = 0; i < words.length; i++) {
-        const chunk = (i === 0 ? '' : ' ') + words[i];
+        const chunk = (i === 0 ? "" : " ") + words[i];
         const deltaEvent = `event: delta\ndata: ${JSON.stringify({ text: chunk })}\n\n`;
         controller.enqueue(encoder.encode(deltaEvent));
 
         // Add delay between chunks for realistic streaming
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
 
       // Add interviewer message to state
       const interviewerMessage: MessageResponseDto = {
         id: messageIdCounter++,
-        role: 'interviewer',
+        role: "interviewer",
         text: interviewerText,
         secondsElapsed: baseTime + 15,
         createdAt: new Date().toISOString(),
         sessionId: 123,
-        phase: 'requirements',
+        phase: "requirements",
       };
       currentMessages.push(interviewerMessage);
 
@@ -144,24 +153,26 @@ function createSSEStream(candidateText: string, interviewerText: string, delayMs
 
   return new Response(stream, {
     headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
     },
   });
 }
 
 // Create mock session data
-const createMockSession = (status: SessionResponseDtoStatus = 'in_progress'): { data: GetSessionResponseDtoData } => ({
+const createMockSession = (
+  status: SessionResponseDtoStatus = "in_progress",
+): { data: GetSessionResponseDtoData } => ({
   data: {
     session: {
       id: 123,
       status,
       interviewCase: {
         id: 1,
-        title: 'Design a Distributed Caching System',
-        description: 'Design a scalable distributed caching solution',
-        difficulty: 'medium',
+        title: "Design a Distributed Caching System",
+        description: "Design a scalable distributed caching solution",
+        difficulty: "medium",
       },
       userId: 1,
       caseId: 1,
@@ -169,16 +180,16 @@ const createMockSession = (status: SessionResponseDtoStatus = 'in_progress'): { 
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       completedAt: null,
-      currentPhase: 'requirements',
+      currentPhase: "requirements",
       phaseStartedAt: new Date().toISOString(),
-      companyStyle: 'faang',
-      level: 'mid',
+      companyStyle: "faang",
+      level: "mid",
     },
     elapsedSeconds: 180,
     phaseElapsedSeconds: 120,
     phaseMetadata: {
-      name: 'Design Discussion',
-      description: 'Design the system architecture',
+      name: "Design Discussion",
+      description: "Design the system architecture",
       order: 2,
       recommendedMinutes: 10,
     },
@@ -210,7 +221,7 @@ function InterviewStoryWrapper() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <MemoryRouter initialEntries={['/interview/123']}>
+        <MemoryRouter initialEntries={["/interview/123"]}>
           <Routes>
             <Route path="/interview/:sessionId" element={<Interview />} />
           </Routes>
@@ -221,10 +232,10 @@ function InterviewStoryWrapper() {
 }
 
 const meta: Meta<typeof InterviewStoryWrapper> = {
-  title: 'Pages/Interview',
+  title: "Pages/Interview",
   component: InterviewStoryWrapper,
   parameters: {
-    layout: 'fullscreen',
+    layout: "fullscreen",
   },
 };
 
@@ -240,20 +251,20 @@ export const InProgress: Story = {
   parameters: {
     msw: {
       handlers: [
-        http.get('*/auth/user', () => {
+        http.get("*/auth/user", () => {
           return HttpResponse.json(mockUser);
         }),
-        http.get('*/sessions/:id', () => {
-          return HttpResponse.json(createMockSession('in_progress'));
+        http.get("*/sessions/:id", () => {
+          return HttpResponse.json(createMockSession("in_progress"));
         }),
-        http.get('*/sessions/:id/transcript', () => {
+        http.get("*/sessions/:id/transcript", () => {
           return HttpResponse.json({
             data: {
               messages: currentMessages,
             },
           });
         }),
-        http.get('*/sessions/:id/diagram', () => {
+        http.get("*/sessions/:id/diagram", () => {
           return HttpResponse.json({
             data: {
               nodes: [],
@@ -261,24 +272,30 @@ export const InProgress: Story = {
             },
           });
         }),
-        http.get('*/sessions/:id/conversation', ({ request }) => {
+        http.get("*/sessions/:id/conversation", ({ request }) => {
           // Extract candidate message from cookies
-          const cookies = request.headers.get('cookie') || '';
+          const cookies = request.headers.get("cookie") || "";
           const textMatch = cookies.match(/text=([^;]+)/);
-          const candidateText = textMatch ? decodeURIComponent(textMatch[1]) : 'Hello';
+          const candidateText = textMatch
+            ? decodeURIComponent(textMatch[1])
+            : "Hello";
 
           // Pick a random response from the list
-          const randomResponse = interviewerResponses[Math.floor(Math.random() * interviewerResponses.length)];
+          const randomResponse =
+            interviewerResponses[
+              Math.floor(Math.random() * interviewerResponses.length)
+            ];
           return createSSEStream(candidateText, randomResponse);
         }),
-        http.post('*/sessions/:id/feedback', () => {
+        http.post("*/sessions/:id/feedback", () => {
           return HttpResponse.json({ success: true });
         }),
       ],
     },
     docs: {
       description: {
-        story: 'Interview in progress with existing conversation history showing markdown rendering. Try sending a message - the interviewer will respond with a random question from the predefined list!',
+        story:
+          "Interview in progress with existing conversation history showing markdown rendering. Try sending a message - the interviewer will respond with a random question from the predefined list!",
       },
     },
   },
@@ -288,20 +305,20 @@ export const Completed: Story = {
   parameters: {
     msw: {
       handlers: [
-        http.get('*/auth/user', () => {
+        http.get("*/auth/user", () => {
           return HttpResponse.json(mockUser);
         }),
-        http.get('*/sessions/:id', () => {
-          return HttpResponse.json(createMockSession('completed'));
+        http.get("*/sessions/:id", () => {
+          return HttpResponse.json(createMockSession("completed"));
         }),
-        http.get('*/sessions/:id/transcript', () => {
+        http.get("*/sessions/:id/transcript", () => {
           return HttpResponse.json({
             data: {
               messages: currentMessages,
             },
           });
         }),
-        http.get('*/sessions/:id/diagram', () => {
+        http.get("*/sessions/:id/diagram", () => {
           return HttpResponse.json({
             data: {
               nodes: [],
@@ -313,7 +330,8 @@ export const Completed: Story = {
     },
     docs: {
       description: {
-        story: 'Interview completed - input is disabled and diagram is read-only.',
+        story:
+          "Interview completed - input is disabled and diagram is read-only.",
       },
     },
   },
@@ -323,23 +341,23 @@ export const Loading: Story = {
   parameters: {
     msw: {
       handlers: [
-        http.get('*/auth/user', () => {
+        http.get("*/auth/user", () => {
           return HttpResponse.json(mockUser);
         }),
-        http.get('*/sessions/:id', async () => {
-          await delay('infinite');
-          return HttpResponse.json(createMockSession('in_progress'));
+        http.get("*/sessions/:id", async () => {
+          await delay("infinite");
+          return HttpResponse.json(createMockSession("in_progress"));
         }),
-        http.get('*/sessions/:id/transcript', async () => {
-          await delay('infinite');
+        http.get("*/sessions/:id/transcript", async () => {
+          await delay("infinite");
           return HttpResponse.json({
             data: {
               messages: [],
             },
           });
         }),
-        http.get('*/sessions/:id/diagram', async () => {
-          await delay('infinite');
+        http.get("*/sessions/:id/diagram", async () => {
+          await delay("infinite");
           return HttpResponse.json({
             data: {
               nodes: [],
@@ -351,7 +369,7 @@ export const Loading: Story = {
     },
     docs: {
       description: {
-        story: 'Loading state while fetching interview data.',
+        story: "Loading state while fetching interview data.",
       },
     },
   },

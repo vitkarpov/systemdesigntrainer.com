@@ -1,22 +1,22 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/PageHeader';
-import { Page, Container, Stack } from '@/components/layout';
-import { useFeedback } from './useFeedback';
-import { LoadingState } from './states/LoadingState';
-import { ProcessingState } from './states/ProcessingState';
-import { ErrorState } from '@/pages/shared/ErrorState';
-import { NotFoundState } from '@/pages/shared/NotFoundState';
-import { OverallScoreCard } from './components/OverallScoreCard';
-import { ScoreBreakdownCard } from './components/ScoreBreakdownCard';
-import { FeedbackItemsCard } from './components/FeedbackItemsCard';
-import { NextStepsCard } from './components/NextStepsCard';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import ReactMarkdown from 'react-markdown';
-import { Card } from '@/components/ui/card';
-import { posthog } from '@/lib/posthog';
+import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/PageHeader";
+import { Page, Container, Stack } from "@/components/layout";
+import { useFeedback } from "./useFeedback";
+import { LoadingState } from "./states/LoadingState";
+import { ProcessingState } from "./states/ProcessingState";
+import { ErrorState } from "@/pages/shared/ErrorState";
+import { NotFoundState } from "@/pages/shared/NotFoundState";
+import { OverallScoreCard } from "./components/OverallScoreCard";
+import { ScoreBreakdownCard } from "./components/ScoreBreakdownCard";
+import { FeedbackItemsCard } from "./components/FeedbackItemsCard";
+import { NextStepsCard } from "./components/NextStepsCard";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import ReactMarkdown from "react-markdown";
+import { Card } from "@/components/ui/card";
+import { posthog } from "@/lib/posthog";
 
 function FeedbackPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -34,16 +34,18 @@ function FeedbackPage() {
     handleRetry,
   } = useFeedback(sessionIdNum, isValidId);
 
-  const handleBackToHome = () => navigate('/');
+  const handleBackToHome = () => navigate("/");
 
   // Use feedback from main endpoint (which polls until ready)
   // Fallback to status feedback if status shows completed
-  const completedFeedback = feedback || (statusInfo?.status === 'completed' ? statusInfo.feedback : null);
+  const completedFeedback =
+    feedback ||
+    (statusInfo?.status === "completed" ? statusInfo.feedback : null);
 
   // Track feedback viewed when feedback is loaded
   useEffect(() => {
     if (completedFeedback) {
-      posthog.capture('feedback_viewed', {
+      posthog.capture("feedback_viewed", {
         sessionId: sessionIdNum,
         overallScore: completedFeedback.overallScore,
         requirementsScore: completedFeedback.requirementsScore,
@@ -53,19 +55,18 @@ function FeedbackPage() {
     }
   }, [completedFeedback, sessionIdNum]);
 
-
   // Show loading state while checking for feedback or generating
   if (isFeedbackLoading || isStatusLoading) {
     return <LoadingState />;
   }
 
   // Show generation in progress
-  if (statusInfo?.status === 'processing' || generateMutation.isPending) {
+  if (statusInfo?.status === "processing" || generateMutation.isPending) {
     return <ProcessingState />;
   }
 
   // Show error state for failed feedback generation
-  if (statusInfo?.status === 'failed') {
+  if (statusInfo?.status === "failed") {
     return (
       <ErrorState
         error={statusInfo?.error}
@@ -92,14 +93,14 @@ function FeedbackPage() {
         <PageHeader
           backLabel="Back to Dashboard"
           onBack={handleBackToHome}
-          rightContent={<Button onClick={handleBackToHome}>New Interview</Button>}
+          rightContent={
+            <Button onClick={handleBackToHome}>New Interview</Button>
+          }
         />
         <Container maxWidth="6xl" gap="6">
           {completedFeedback.overallSummary && (
             <Card className="p-6">
-              <ReactMarkdown>
-                {completedFeedback.overallSummary}
-              </ReactMarkdown>
+              <ReactMarkdown>{completedFeedback.overallSummary}</ReactMarkdown>
             </Card>
           )}
 
@@ -115,9 +116,18 @@ function FeedbackPage() {
 
           {completedFeedback.items && (
             <Stack gap="6">
-              <FeedbackItemsCard items={completedFeedback.items} type="strength" />
-              <FeedbackItemsCard items={completedFeedback.items} type="weakness" />
-              <FeedbackItemsCard items={completedFeedback.items} type="suggestion" />
+              <FeedbackItemsCard
+                items={completedFeedback.items}
+                type="strength"
+              />
+              <FeedbackItemsCard
+                items={completedFeedback.items}
+                type="weakness"
+              />
+              <FeedbackItemsCard
+                items={completedFeedback.items}
+                type="suggestion"
+              />
             </Stack>
           )}
 
@@ -136,7 +146,7 @@ export default function Feedback() {
   return (
     <ErrorBoundary
       context="feedback"
-      onBackToHome={() => navigate('/')}
+      onBackToHome={() => navigate("/")}
       onReset={() => queryClient.invalidateQueries()}
     >
       <FeedbackPage />

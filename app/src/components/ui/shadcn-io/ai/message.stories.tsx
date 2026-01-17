@@ -1,29 +1,29 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Message, MessageContent, MessageAvatar } from './message';
-import { MOCK_AVATAR_URLS } from './__stories__/mock-data';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Message, MessageContent, MessageAvatar } from "./message";
+import { MOCK_AVATAR_URLS } from "./__stories__/mock-data";
 
 const meta: Meta<typeof Message> = {
-  title: 'AI Components/Content Display/Message',
+  title: "AI Components/Content Display/Message",
   component: Message,
   parameters: {
-    layout: 'padded',
+    layout: "padded",
     docs: {
       description: {
         component:
-          'Container for chat messages with support for user and assistant roles. Handles layout, spacing, and alignment based on message role.',
+          "Container for chat messages with support for user and assistant roles. Handles layout, spacing, and alignment based on message role.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     from: {
-      control: 'select',
-      options: ['user', 'assistant'],
-      description: 'Message role - determines layout and styling',
+      control: "select",
+      options: ["user", "assistant"],
+      description: "Message role - determines layout and styling",
     },
     className: {
-      control: 'text',
-      description: 'Additional CSS classes',
+      control: "text",
+      description: "Additional CSS classes",
     },
   },
 };
@@ -41,12 +41,12 @@ export const UserMessage: Story = {
     </Message>
   ),
   args: {
-    from: 'user',
+    from: "user",
   },
   parameters: {
     docs: {
       description: {
-        story: 'User message with avatar and content.',
+        story: "User message with avatar and content.",
       },
     },
   },
@@ -64,12 +64,12 @@ export const AssistantMessage: Story = {
     </Message>
   ),
   args: {
-    from: 'assistant',
+    from: "assistant",
   },
   parameters: {
     docs: {
       description: {
-        story: 'Assistant message with avatar and content.',
+        story: "Assistant message with avatar and content.",
       },
     },
   },
@@ -89,7 +89,7 @@ export const WithoutAvatar: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Messages can be displayed without avatars.',
+        story: "Messages can be displayed without avatars.",
       },
     },
   },
@@ -128,7 +128,7 @@ export const WithLongContent: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Messages with longer content demonstrating text wrapping.',
+        story: "Messages with longer content demonstrating text wrapping.",
       },
     },
   },
@@ -139,9 +139,7 @@ export const Conversation: Story = {
     <div className="space-y-4">
       <Message from="user">
         <MessageAvatar src={MOCK_AVATAR_URLS.user} name="User" />
-        <MessageContent>
-          What are microservices?
-        </MessageContent>
+        <MessageContent>What are microservices?</MessageContent>
       </Message>
       <Message from="assistant">
         <MessageAvatar src={MOCK_AVATAR_URLS.assistant} name="AI" />
@@ -153,9 +151,7 @@ export const Conversation: Story = {
       </Message>
       <Message from="user">
         <MessageAvatar src={MOCK_AVATAR_URLS.user} name="User" />
-        <MessageContent>
-          What are the main benefits?
-        </MessageContent>
+        <MessageContent>What are the main benefits?</MessageContent>
       </Message>
       <Message from="assistant">
         <MessageAvatar src={MOCK_AVATAR_URLS.assistant} name="AI" />
@@ -169,7 +165,7 @@ export const Conversation: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Multiple messages forming a conversation.',
+        story: "Multiple messages forming a conversation.",
       },
     },
   },
@@ -180,15 +176,11 @@ export const MessageContentVariants: Story = {
     <div className="space-y-4">
       <Message from="assistant">
         <MessageAvatar src={MOCK_AVATAR_URLS.assistant} name="AI" />
-        <MessageContent>
-          Simple text message
-        </MessageContent>
+        <MessageContent>Simple text message</MessageContent>
       </Message>
       <Message from="assistant">
         <MessageAvatar src={MOCK_AVATAR_URLS.assistant} name="AI" />
-        <MessageContent>
-          Message with **bold** and *italic* text
-        </MessageContent>
+        <MessageContent>Message with **bold** and *italic* text</MessageContent>
       </Message>
       <Message from="assistant">
         <MessageAvatar src={MOCK_AVATAR_URLS.assistant} name="AI" />
@@ -204,7 +196,7 @@ export const MessageContentVariants: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Different content variations within MessageContent.',
+        story: "Different content variations within MessageContent.",
       },
     },
   },
@@ -245,7 +237,7 @@ export const ThemeVariations: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Messages displayed in both light and dark themes.',
+        story: "Messages displayed in both light and dark themes.",
       },
     },
   },

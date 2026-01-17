@@ -1,34 +1,34 @@
-import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
-  const email = searchParams.get('email');
-  const pendingToken = searchParams.get('pending_token');
-  const [code, setCode] = useState('');
+  const email = searchParams.get("email");
+  const pendingToken = searchParams.get("pending_token");
+  const [code, setCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!code.trim()) {
-      setError('Please enter the verification code');
+      setError("Please enter the verification code");
       return;
     }
 
     if (!pendingToken) {
-      setError('Missing verification token. Please try signing in again.');
+      setError("Missing verification token. Please try signing in again.");
       return;
     }
 
     setIsSubmitting(true);
-    setError('');
+    setError("");
 
     try {
       // Redirect to the backend endpoint which will complete verification
       // and set cookies, then redirect back to the frontend
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
       const params = new URLSearchParams({
         code: code.trim(),
         pending_token: pendingToken,
@@ -36,7 +36,7 @@ const VerifyEmail = () => {
 
       window.location.href = `${apiUrl}/auth/verify-email?${params}`;
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError("Something went wrong. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -67,11 +67,10 @@ const VerifyEmail = () => {
           <p className="mt-2 text-gray-600">
             We've sent a verification code to:
           </p>
-          <p className="mt-1 text-sm font-medium text-gray-900">
-            {email}
-          </p>
+          <p className="mt-1 text-sm font-medium text-gray-900">{email}</p>
           <p className="mt-4 text-sm text-gray-500">
-            Please check your inbox and enter the code below to complete your sign in.
+            Please check your inbox and enter the code below to complete your
+            sign in.
           </p>
         </div>
 
@@ -147,14 +146,14 @@ const VerifyEmail = () => {
                   Verifying...
                 </>
               ) : (
-                'Verify Email'
+                "Verify Email"
               )}
             </button>
           </div>
 
           <div className="text-center">
             <p className="text-sm text-gray-500">
-              Didn't receive the code?{' '}
+              Didn't receive the code?{" "}
               <a
                 href="/login"
                 className="font-medium text-blue-600 hover:text-blue-500"

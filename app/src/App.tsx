@@ -1,19 +1,19 @@
-import { Routes, Route } from 'react-router-dom';
-import Home from './pages/Home/Home';
-import Dashboard from './pages/Dashboard/Dashboard';
-import Interview from './pages/Interview/Interview';
-import Feedback from './pages/Feedback/Feedback';
-import Pricing from './pages/Pricing/Pricing';
-import PaymentSuccess from './pages/Payment/Success';
-import Login from './pages/Auth/Login';
-import Signup from './pages/Auth/Signup';
-import Callback from './pages/Auth/Callback';
-import AuthError from './pages/Auth/Error';
-import VerifyEmail from './pages/Auth/VerifyEmail';
-import TermsOfService from './pages/Legal/TermsOfService';
-import PrivacyPolicy from './pages/Legal/PrivacyPolicy';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { Toaster } from '@/components/ui/sonner';
+import { Routes, Route } from "react-router-dom";
+import Home from "./pages/Home/Home";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import Interview from "./pages/Interview/Interview";
+import Feedback from "./pages/Feedback/Feedback";
+import Pricing from "./pages/Pricing/Pricing";
+import PaymentSuccess from "./pages/Payment/Success";
+import Login from "./pages/Auth/Login";
+import Signup from "./pages/Auth/Signup";
+import Callback from "./pages/Auth/Callback";
+import AuthError from "./pages/Auth/Error";
+import VerifyEmail from "./pages/Auth/VerifyEmail";
+import TermsOfService from "./pages/Legal/TermsOfService";
+import PrivacyPolicy from "./pages/Legal/PrivacyPolicy";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Toaster } from "@/components/ui/sonner";
 
 function App() {
   return (

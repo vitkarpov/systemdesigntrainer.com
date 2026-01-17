@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScoreItem } from './ScoreItem';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScoreItem } from "./ScoreItem";
 
 interface ScoreBreakdownCardProps {
   requirementsScore: number;
@@ -27,11 +27,7 @@ export function ScoreBreakdownCard({
           score={requirementsScore}
           weight="25%"
         />
-        <ScoreItem
-          label="System Design"
-          score={designScore}
-          weight="25%"
-        />
+        <ScoreItem label="System Design" score={designScore} weight="25%" />
         <ScoreItem
           label="Communication"
           score={communicationScore}

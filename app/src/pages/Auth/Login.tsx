@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
   const { login, isAuthenticated } = useAuth();
@@ -8,7 +8,7 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -20,9 +20,7 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">
-            Welcome back
-          </h2>
+          <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
           <p className="mt-2 text-gray-600">
             Sign in to continue your practice
           </p>
@@ -48,12 +46,18 @@ const Login = () => {
           </button>
 
           <p className="text-xs text-center text-gray-500 mt-4">
-            By signing in, you agree to our{' '}
-            <Link to="/terms" className="text-blue-600 hover:text-blue-500 hover:underline">
+            By signing in, you agree to our{" "}
+            <Link
+              to="/terms"
+              className="text-blue-600 hover:text-blue-500 hover:underline"
+            >
               Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link to="/privacy" className="text-blue-600 hover:text-blue-500 hover:underline">
+            </Link>{" "}
+            and{" "}
+            <Link
+              to="/privacy"
+              className="text-blue-600 hover:text-blue-500 hover:underline"
+            >
               Privacy Policy
             </Link>
           </p>
@@ -61,8 +65,11 @@ const Login = () => {
 
         <div className="text-center pt-4 border-t border-gray-200">
           <p className="text-sm text-gray-600">
-            First time here?{' '}
-            <a href="https://systemdesigntrainer.com" className="font-medium text-blue-600 hover:text-blue-500">
+            First time here?{" "}
+            <a
+              href="https://systemdesigntrainer.com"
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
               Learn more about System Design Trainer
             </a>
           </p>

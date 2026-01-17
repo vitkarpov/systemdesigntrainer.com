@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Actions, Action } from './actions';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Actions, Action } from "./actions";
 import {
   CopyIcon,
   ThumbsUpIcon,
@@ -7,25 +7,25 @@ import {
   RefreshCwIcon,
   Share2Icon,
   BookmarkIcon,
-} from 'lucide-react';
+} from "lucide-react";
 
 const meta: Meta<typeof Actions> = {
-  title: 'AI Components/Presentation/Actions',
+  title: "AI Components/Presentation/Actions",
   component: Actions,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'A container for action buttons with tooltips. Used to display a group of actions that can be performed on AI messages or content.',
+          "A container for action buttons with tooltips. Used to display a group of actions that can be performed on AI messages or content.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     className: {
-      control: 'text',
-      description: 'Additional CSS classes',
+      control: "text",
+      description: "Additional CSS classes",
     },
   },
 };
@@ -36,16 +36,16 @@ type Story = StoryObj<typeof Actions>;
 export const Default: Story = {
   render: () => (
     <Actions>
-      <Action tooltip="Copy to clipboard" onClick={() => console.log('Copy')}>
+      <Action tooltip="Copy to clipboard" onClick={() => console.log("Copy")}>
         <CopyIcon className="size-4" />
       </Action>
-      <Action tooltip="Good response" onClick={() => console.log('Thumbs up')}>
+      <Action tooltip="Good response" onClick={() => console.log("Thumbs up")}>
         <ThumbsUpIcon className="size-4" />
       </Action>
-      <Action tooltip="Bad response" onClick={() => console.log('Thumbs down')}>
+      <Action tooltip="Bad response" onClick={() => console.log("Thumbs down")}>
         <ThumbsDownIcon className="size-4" />
       </Action>
-      <Action tooltip="Regenerate" onClick={() => console.log('Regenerate')}>
+      <Action tooltip="Regenerate" onClick={() => console.log("Regenerate")}>
         <RefreshCwIcon className="size-4" />
       </Action>
     </Actions>
@@ -53,7 +53,7 @@ export const Default: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Default action group with common AI message actions.',
+        story: "Default action group with common AI message actions.",
       },
     },
   },
@@ -62,7 +62,7 @@ export const Default: Story = {
 export const SingleAction: Story = {
   render: () => (
     <Actions>
-      <Action tooltip="Copy to clipboard" onClick={() => console.log('Copy')}>
+      <Action tooltip="Copy to clipboard" onClick={() => console.log("Copy")}>
         <CopyIcon className="size-4" />
       </Action>
     </Actions>
@@ -70,7 +70,7 @@ export const SingleAction: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Single action in the group.',
+        story: "Single action in the group.",
       },
     },
   },
@@ -79,13 +79,13 @@ export const SingleAction: Story = {
 export const WithoutTooltips: Story = {
   render: () => (
     <Actions>
-      <Action label="Copy" onClick={() => console.log('Copy')}>
+      <Action label="Copy" onClick={() => console.log("Copy")}>
         <CopyIcon className="size-4" />
       </Action>
-      <Action label="Share" onClick={() => console.log('Share')}>
+      <Action label="Share" onClick={() => console.log("Share")}>
         <Share2Icon className="size-4" />
       </Action>
-      <Action label="Bookmark" onClick={() => console.log('Bookmark')}>
+      <Action label="Bookmark" onClick={() => console.log("Bookmark")}>
         <BookmarkIcon className="size-4" />
       </Action>
     </Actions>
@@ -94,7 +94,7 @@ export const WithoutTooltips: Story = {
     docs: {
       description: {
         story:
-          'Actions without tooltips but with aria-labels for accessibility.',
+          "Actions without tooltips but with aria-labels for accessibility.",
       },
     },
   },
@@ -104,44 +104,28 @@ export const WithDifferentSizes: Story = {
   render: () => (
     <div className="flex flex-col gap-4">
       <Actions>
-        <Action
-          tooltip="Small"
-          size="sm"
-          onClick={() => console.log('Small')}
-        >
+        <Action tooltip="Small" size="sm" onClick={() => console.log("Small")}>
           <CopyIcon className="size-3" />
         </Action>
-        <Action
-          tooltip="Small"
-          size="sm"
-          onClick={() => console.log('Small')}
-        >
+        <Action tooltip="Small" size="sm" onClick={() => console.log("Small")}>
           <ThumbsUpIcon className="size-3" />
         </Action>
       </Actions>
 
       <Actions>
-        <Action tooltip="Default" onClick={() => console.log('Default')}>
+        <Action tooltip="Default" onClick={() => console.log("Default")}>
           <CopyIcon className="size-4" />
         </Action>
-        <Action tooltip="Default" onClick={() => console.log('Default')}>
+        <Action tooltip="Default" onClick={() => console.log("Default")}>
           <ThumbsUpIcon className="size-4" />
         </Action>
       </Actions>
 
       <Actions>
-        <Action
-          tooltip="Large"
-          size="lg"
-          onClick={() => console.log('Large')}
-        >
+        <Action tooltip="Large" size="lg" onClick={() => console.log("Large")}>
           <CopyIcon className="size-5" />
         </Action>
-        <Action
-          tooltip="Large"
-          size="lg"
-          onClick={() => console.log('Large')}
-        >
+        <Action tooltip="Large" size="lg" onClick={() => console.log("Large")}>
           <ThumbsUpIcon className="size-5" />
         </Action>
       </Actions>
@@ -150,7 +134,7 @@ export const WithDifferentSizes: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Actions with different sizes: sm, default, and lg.',
+        story: "Actions with different sizes: sm, default, and lg.",
       },
     },
   },
@@ -160,7 +144,9 @@ export const WithVariants: Story = {
   render: () => (
     <div className="flex flex-col gap-4">
       <div>
-        <div className="text-sm text-muted-foreground mb-2">Ghost (default)</div>
+        <div className="text-sm text-muted-foreground mb-2">
+          Ghost (default)
+        </div>
         <Actions>
           <Action tooltip="Copy" variant="ghost">
             <CopyIcon className="size-4" />
@@ -199,7 +185,7 @@ export const WithVariants: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Actions with different button variants.',
+        story: "Actions with different button variants.",
       },
     },
   },
@@ -219,25 +205,25 @@ export const InMessageContext: Story = {
         <Actions>
           <Action
             tooltip="Copy to clipboard"
-            onClick={() => console.log('Copy')}
+            onClick={() => console.log("Copy")}
           >
             <CopyIcon className="size-4" />
           </Action>
           <Action
             tooltip="Good response"
-            onClick={() => console.log('Thumbs up')}
+            onClick={() => console.log("Thumbs up")}
           >
             <ThumbsUpIcon className="size-4" />
           </Action>
           <Action
             tooltip="Bad response"
-            onClick={() => console.log('Thumbs down')}
+            onClick={() => console.log("Thumbs down")}
           >
             <ThumbsDownIcon className="size-4" />
           </Action>
           <Action
             tooltip="Regenerate"
-            onClick={() => console.log('Regenerate')}
+            onClick={() => console.log("Regenerate")}
           >
             <RefreshCwIcon className="size-4" />
           </Action>
@@ -249,9 +235,9 @@ export const InMessageContext: Story = {
     docs: {
       description: {
         story:
-          'Actions displayed in context of a message card, showing typical usage in a chat interface.',
+          "Actions displayed in context of a message card, showing typical usage in a chat interface.",
       },
     },
-    layout: 'padded',
+    layout: "padded",
   },
 };

@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Zap } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import { AlertCircle, Zap } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -7,8 +7,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from './ui/alert-dialog';
-import { Button } from './ui/button';
+} from "./ui/alert-dialog";
+import { Button } from "./ui/button";
 
 interface PaywallModalProps {
   open: boolean;
@@ -20,7 +20,7 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
 
   const handleViewPricing = () => {
     onOpenChange(false);
-    navigate('/pricing');
+    navigate("/pricing");
   };
 
   return (

@@ -1,13 +1,13 @@
-import * as React from 'react';
-import { cn } from '@/lib/utils';
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
-type Gap = 'none' | 'sm' | 'md' | 'lg';
+type Gap = "none" | "sm" | "md" | "lg";
 
 const gapMap: Record<Gap, string> = {
-  none: 'gap-0',
-  sm: 'gap-1',
-  md: 'gap-2',
-  lg: 'gap-4',
+  none: "gap-0",
+  sm: "gap-1",
+  md: "gap-2",
+  lg: "gap-4",
 };
 
 interface ButtonBarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -24,18 +24,18 @@ interface ButtonBarProps extends React.HTMLAttributes<HTMLDivElement> {
  * appear connected together.
  */
 export const ButtonBar = React.forwardRef<HTMLDivElement, ButtonBarProps>(
-  ({ className, gap = 'md', merged = false, children, ...props }, ref) => {
+  ({ className, gap = "md", merged = false, children, ...props }, ref) => {
     if (merged) {
       return (
         <div
           ref={ref}
           className={cn(
-            'inline-flex',
-            '[&>*:first-child]:rounded-r-none',
-            '[&>*:last-child]:rounded-l-none',
-            '[&>*:not(:first-child):not(:last-child)]:rounded-none',
-            '[&>*:not(:first-child)]:-ml-px',
-            className
+            "inline-flex",
+            "[&>*:first-child]:rounded-r-none",
+            "[&>*:last-child]:rounded-l-none",
+            "[&>*:not(:first-child):not(:last-child)]:rounded-none",
+            "[&>*:not(:first-child)]:-ml-px",
+            className,
           )}
           {...props}
         >
@@ -47,13 +47,13 @@ export const ButtonBar = React.forwardRef<HTMLDivElement, ButtonBarProps>(
     return (
       <div
         ref={ref}
-        className={cn('inline-flex', gapMap[gap], className)}
+        className={cn("inline-flex", gapMap[gap], className)}
         {...props}
       >
         {children}
       </div>
     );
-  }
+  },
 );
 
-ButtonBar.displayName = 'ButtonBar';
+ButtonBar.displayName = "ButtonBar";

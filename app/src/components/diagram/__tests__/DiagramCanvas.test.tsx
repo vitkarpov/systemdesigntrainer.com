@@ -1,157 +1,148 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { screen } from '@testing-library/react'
-import { renderWithProviders } from '@/tests/utils'
-import { DiagramCanvas } from '../DiagramCanvas'
-import { useDiagramStore } from '@/stores'
-import type { Node, Edge } from '@xyflow/react'
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { screen } from "@testing-library/react";
+import { renderWithProviders } from "@/tests/utils";
+import { DiagramCanvas } from "../DiagramCanvas";
+import { useDiagramStore } from "@/stores";
+import type { Node, Edge } from "@xyflow/react";
 
 // Mock ReactFlow components
-vi.mock('@xyflow/react', () => ({
+vi.mock("@xyflow/react", () => ({
   ReactFlow: (props: any) => {
     // Extract only serializable props for testing
     const testableProps = {
       defaultEdgeOptions: props.defaultEdgeOptions,
       edges: props.edges,
       nodes: props.nodes,
-      onDrop: props.onDrop ? 'function' : undefined,
-      onDragOver: props.onDragOver ? 'function' : undefined,
-    }
+      onDrop: props.onDrop ? "function" : undefined,
+      onDragOver: props.onDragOver ? "function" : undefined,
+    };
     return (
       <div data-testid="react-flow" data-props={JSON.stringify(testableProps)}>
         {props.children}
       </div>
-    )
+    );
   },
   Background: () => <div data-testid="background" />,
   Controls: () => <div data-testid="controls" />,
   MiniMap: () => <div data-testid="minimap" />,
   Position: {
-    Top: 'top',
-    Bottom: 'bottom',
-    Left: 'left',
-    Right: 'right',
+    Top: "top",
+    Bottom: "bottom",
+    Left: "left",
+    Right: "right",
   },
-}))
+}));
 
 // Mock ComponentPalette
-vi.mock('../ComponentPalette', () => ({
-  ComponentPalette: () => <div data-testid="component-palette">Component Palette</div>,
-}))
+vi.mock("../ComponentPalette", () => ({
+  ComponentPalette: () => (
+    <div data-testid="component-palette">Component Palette</div>
+  ),
+}));
 
 // Mock SaveIndicator
-vi.mock('../SaveIndicator', () => ({
+vi.mock("../SaveIndicator", () => ({
   SaveIndicator: ({ status }: { status: string }) => (
     <div data-testid="save-indicator">{status}</div>
   ),
-}))
+}));
 
 // Mock useDiagramAutoSave hook
-vi.mock('@/hooks/useDiagramAutoSave', () => ({
+vi.mock("@/hooks/useDiagramAutoSave", () => ({
   useDiagramAutoSave: () => ({
-    saveStatus: 'saved',
+    saveStatus: "saved",
   }),
-}))
+}));
 
 // Mock API hook
-vi.mock('@/api/hooks.gen', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/api/hooks.gen')>();
+vi.mock("@/api/hooks.gen", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/api/hooks.gen")>();
   return {
     ...actual,
     useSessionsControllerGetDiagram: vi.fn(),
   };
-})
+});
 
-import { useSessionsControllerGetDiagram } from '@/api/hooks.gen'
-const mockUseSessionsControllerGetDiagram = useSessionsControllerGetDiagram as ReturnType<typeof vi.fn>
+import { useSessionsControllerGetDiagram } from "@/api/hooks.gen";
+const mockUseSessionsControllerGetDiagram =
+  useSessionsControllerGetDiagram as ReturnType<typeof vi.fn>;
 
-describe('DiagramCanvas', () => {
-  const sessionId = 123
+describe("DiagramCanvas", () => {
+  const sessionId = 123;
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.clearAllMocks();
 
     // Reset diagram store
-    useDiagramStore.getState().clearDiagram(sessionId)
+    useDiagramStore.getState().clearDiagram(sessionId);
 
     // Default mock: no diagram data
     mockUseSessionsControllerGetDiagram.mockReturnValue({
       data: { data: { nodes: null, edges: null } },
       isLoading: false,
-    })
-  })
+    });
+  });
 
-  it('should show loading state while fetching diagram', () => {
+  it("should show loading state while fetching diagram", () => {
     mockUseSessionsControllerGetDiagram.mockReturnValue({
       data: undefined,
       isLoading: true,
-    })
+    });
 
     renderWithProviders(
-      <DiagramCanvas
-        sessionId={sessionId}
-        isReadOnly={false}
-      />
-    )
+      <DiagramCanvas sessionId={sessionId} isReadOnly={false} />,
+    );
 
-    expect(screen.getByText('Loading diagram...')).toBeInTheDocument()
-    expect(screen.queryByTestId('react-flow')).not.toBeInTheDocument()
-  })
+    expect(screen.getByText("Loading diagram...")).toBeInTheDocument();
+    expect(screen.queryByTestId("react-flow")).not.toBeInTheDocument();
+  });
 
-  it('should render diagram canvas (available in all phases)', () => {
+  it("should render diagram canvas (available in all phases)", () => {
     renderWithProviders(
-      <DiagramCanvas
-        sessionId={sessionId}
-        isReadOnly={true}
-      />
-    )
+      <DiagramCanvas sessionId={sessionId} isReadOnly={true} />,
+    );
 
-    expect(screen.getByTestId('react-flow')).toBeInTheDocument()
-    expect(screen.getByTestId('background')).toBeInTheDocument()
-    expect(screen.getByTestId('controls')).toBeInTheDocument()
-  })
+    expect(screen.getByTestId("react-flow")).toBeInTheDocument();
+    expect(screen.getByTestId("background")).toBeInTheDocument();
+    expect(screen.getByTestId("controls")).toBeInTheDocument();
+  });
 
-  it('should show editing UI when editable', () => {
+  it("should show editing UI when editable", () => {
     renderWithProviders(
-      <DiagramCanvas
-        sessionId={sessionId}
-        isReadOnly={false}
-      />
-    )
+      <DiagramCanvas sessionId={sessionId} isReadOnly={false} />,
+    );
 
-    expect(screen.getByTestId('component-palette')).toBeInTheDocument()
-    expect(screen.getByTestId('save-indicator')).toBeInTheDocument()
-    expect(screen.getByTestId('minimap')).toBeInTheDocument()
-  })
+    expect(screen.getByTestId("component-palette")).toBeInTheDocument();
+    expect(screen.getByTestId("save-indicator")).toBeInTheDocument();
+    expect(screen.getByTestId("minimap")).toBeInTheDocument();
+  });
 
-  it('should hide editing UI when read-only', () => {
+  it("should hide editing UI when read-only", () => {
     renderWithProviders(
-      <DiagramCanvas
-        sessionId={sessionId}
-        isReadOnly={true}
-      />
-    )
+      <DiagramCanvas sessionId={sessionId} isReadOnly={true} />,
+    );
 
-    expect(screen.queryByTestId('component-palette')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('save-indicator')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('minimap')).not.toBeInTheDocument()
-  })
+    expect(screen.queryByTestId("component-palette")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("save-indicator")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("minimap")).not.toBeInTheDocument();
+  });
 
-  it('should initialize diagram from backend data', () => {
+  it("should initialize diagram from backend data", () => {
     const mockNodes: Node[] = [
       {
-        id: 'node-1',
-        type: 'database',
+        id: "node-1",
+        type: "database",
         position: { x: 100, y: 100 },
-        data: { label: 'Database' },
+        data: { label: "Database" },
       },
-    ]
+    ];
     const mockEdges: Edge[] = [
       {
-        id: 'edge-1',
-        source: 'node-1',
-        target: 'node-2',
+        id: "edge-1",
+        source: "node-1",
+        target: "node-2",
       },
-    ]
+    ];
 
     mockUseSessionsControllerGetDiagram.mockReturnValue({
       data: {
@@ -161,173 +152,164 @@ describe('DiagramCanvas', () => {
         },
       },
       isLoading: false,
-    })
+    });
 
     renderWithProviders(
-      <DiagramCanvas
-        sessionId={sessionId}
-        isReadOnly={false}
-      />
-    )
+      <DiagramCanvas sessionId={sessionId} isReadOnly={false} />,
+    );
 
-    const diagram = useDiagramStore.getState().getDiagram(sessionId)
-    expect(diagram?.nodes).toHaveLength(1)
-    expect(diagram?.edges).toHaveLength(1)
-  })
+    const diagram = useDiagramStore.getState().getDiagram(sessionId);
+    expect(diagram?.nodes).toHaveLength(1);
+    expect(diagram?.edges).toHaveLength(1);
+  });
 
-  it('should configure drag handlers correctly', () => {
+  it("should configure drag handlers correctly", () => {
     renderWithProviders(
-      <DiagramCanvas
-        sessionId={sessionId}
-        isReadOnly={false}
-      />
-    )
+      <DiagramCanvas sessionId={sessionId} isReadOnly={false} />,
+    );
 
-    const reactFlow = screen.getByTestId('react-flow')
-    const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
+    const reactFlow = screen.getByTestId("react-flow");
+    const props = JSON.parse(reactFlow.getAttribute("data-props") || "{}");
 
     // Drag handlers on parent, not ReactFlow (prevents past bug)
-    expect(props.onDrop).toBeUndefined()
-    expect(props.onDragOver).toBeUndefined()
-  })
+    expect(props.onDrop).toBeUndefined();
+    expect(props.onDragOver).toBeUndefined();
+  });
 
-  describe('Edge Selection Styling', () => {
-    it('should apply default styling to unselected edges', () => {
+  describe("Edge Selection Styling", () => {
+    it("should apply default styling to unselected edges", () => {
       const mockEdges: Edge[] = [
         {
-          id: 'edge-1',
-          source: 'node-1',
-          target: 'node-2',
+          id: "edge-1",
+          source: "node-1",
+          target: "node-2",
           selected: false,
         },
         {
-          id: 'edge-2',
-          source: 'node-2',
-          target: 'node-3',
+          id: "edge-2",
+          source: "node-2",
+          target: "node-3",
           selected: false,
         },
-      ]
+      ];
 
-      useDiagramStore.getState().setDiagram(sessionId, { nodes: [], edges: mockEdges })
+      useDiagramStore
+        .getState()
+        .setDiagram(sessionId, { nodes: [], edges: mockEdges });
 
       renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={false}
-        />
-      )
+        <DiagramCanvas sessionId={sessionId} isReadOnly={false} />,
+      );
 
-      const reactFlow = screen.getByTestId('react-flow')
-      const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
-      const edges = props.edges
+      const reactFlow = screen.getByTestId("react-flow");
+      const props = JSON.parse(reactFlow.getAttribute("data-props") || "{}");
+      const edges = props.edges;
 
       // All unselected edges should have default styling
-      expect(edges).toHaveLength(2)
+      expect(edges).toHaveLength(2);
       edges.forEach((edge: any) => {
         expect(edge.style).toEqual({
-          stroke: '#333333',
+          stroke: "#333333",
           strokeWidth: 2,
-        })
-        expect(edge.animated).toBe(false)
-      })
-    })
+        });
+        expect(edge.animated).toBe(false);
+      });
+    });
 
-    it('should apply selected styling to selected edges', () => {
+    it("should apply selected styling to selected edges", () => {
       const mockEdges: Edge[] = [
         {
-          id: 'edge-1',
-          source: 'node-1',
-          target: 'node-2',
+          id: "edge-1",
+          source: "node-1",
+          target: "node-2",
           selected: true,
         },
         {
-          id: 'edge-2',
-          source: 'node-2',
-          target: 'node-3',
+          id: "edge-2",
+          source: "node-2",
+          target: "node-3",
           selected: false,
         },
-      ]
+      ];
 
-      useDiagramStore.getState().setDiagram(sessionId, { nodes: [], edges: mockEdges })
+      useDiagramStore
+        .getState()
+        .setDiagram(sessionId, { nodes: [], edges: mockEdges });
 
       renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={false}
-        />
-      )
+        <DiagramCanvas sessionId={sessionId} isReadOnly={false} />,
+      );
 
-      const reactFlow = screen.getByTestId('react-flow')
-      const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
-      const edges = props.edges
+      const reactFlow = screen.getByTestId("react-flow");
+      const props = JSON.parse(reactFlow.getAttribute("data-props") || "{}");
+      const edges = props.edges;
 
-      expect(edges).toHaveLength(2)
+      expect(edges).toHaveLength(2);
 
       // First edge (selected) should have blue stroke, thicker width, and animation
       expect(edges[0].style).toEqual({
-        stroke: '#3b82f6',
+        stroke: "#3b82f6",
         strokeWidth: 3,
-      })
-      expect(edges[0].animated).toBe(true)
+      });
+      expect(edges[0].animated).toBe(true);
 
       // Second edge (unselected) should have default styling
       expect(edges[1].style).toEqual({
-        stroke: '#333333',
+        stroke: "#333333",
         strokeWidth: 2,
-      })
-      expect(edges[1].animated).toBe(false)
-    })
+      });
+      expect(edges[1].animated).toBe(false);
+    });
 
-    it('should handle mixed selected and unselected edges', () => {
+    it("should handle mixed selected and unselected edges", () => {
       const mockEdges: Edge[] = [
         {
-          id: 'edge-1',
-          source: 'node-1',
-          target: 'node-2',
+          id: "edge-1",
+          source: "node-1",
+          target: "node-2",
           selected: true,
         },
         {
-          id: 'edge-2',
-          source: 'node-2',
-          target: 'node-3',
+          id: "edge-2",
+          source: "node-2",
+          target: "node-3",
           selected: true,
         },
         {
-          id: 'edge-3',
-          source: 'node-3',
-          target: 'node-4',
+          id: "edge-3",
+          source: "node-3",
+          target: "node-4",
           selected: false,
         },
-      ]
+      ];
 
-      useDiagramStore.getState().setDiagram(sessionId, { nodes: [], edges: mockEdges })
+      useDiagramStore
+        .getState()
+        .setDiagram(sessionId, { nodes: [], edges: mockEdges });
 
       renderWithProviders(
-        <DiagramCanvas
-          sessionId={sessionId}
-          isReadOnly={false}
-        />
-      )
+        <DiagramCanvas sessionId={sessionId} isReadOnly={false} />,
+      );
 
-      const reactFlow = screen.getByTestId('react-flow')
-      const props = JSON.parse(reactFlow.getAttribute('data-props') || '{}')
-      const edges = props.edges
+      const reactFlow = screen.getByTestId("react-flow");
+      const props = JSON.parse(reactFlow.getAttribute("data-props") || "{}");
+      const edges = props.edges;
 
-      expect(edges).toHaveLength(3)
+      expect(edges).toHaveLength(3);
 
       // First two edges (selected) should have selected styling
-      expect(edges[0].animated).toBe(true)
-      expect(edges[0].style.stroke).toBe('#3b82f6')
-      expect(edges[0].style.strokeWidth).toBe(3)
+      expect(edges[0].animated).toBe(true);
+      expect(edges[0].style.stroke).toBe("#3b82f6");
+      expect(edges[0].style.strokeWidth).toBe(3);
 
-      expect(edges[1].animated).toBe(true)
-      expect(edges[1].style.stroke).toBe('#3b82f6')
-      expect(edges[1].style.strokeWidth).toBe(3)
+      expect(edges[1].animated).toBe(true);
+      expect(edges[1].style.stroke).toBe("#3b82f6");
+      expect(edges[1].style.strokeWidth).toBe(3);
 
       // Third edge (unselected) should have default styling
-      expect(edges[2].animated).toBe(false)
-      expect(edges[2].style.stroke).toBe('#333333')
-      expect(edges[2].style.strokeWidth).toBe(2)
-    })
-  })
-})
+      expect(edges[2].animated).toBe(false);
+      expect(edges[2].style.stroke).toBe("#333333");
+      expect(edges[2].style.strokeWidth).toBe(2);
+    });
+  });
+});

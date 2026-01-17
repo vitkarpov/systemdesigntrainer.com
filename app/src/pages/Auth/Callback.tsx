@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const Callback = () => {
   const navigate = useNavigate();
@@ -8,8 +8,8 @@ const Callback = () => {
   useEffect(() => {
     // Token is now stored in HTTP-only cookie by backend
     // Just handle the redirect based on state parameter
-    const state = searchParams.get('state');
-    const redirectTo = state || '/';
+    const state = searchParams.get("state");
+    const redirectTo = state || "/";
 
     // Wait a moment for the cookie to be set and then redirect
     setTimeout(() => {
