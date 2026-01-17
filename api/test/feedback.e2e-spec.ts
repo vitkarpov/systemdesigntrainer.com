@@ -68,13 +68,15 @@ describe('Feedback Generation (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       if (statusResponse.body.data.status === 'completed') {
-        return statusResponse.body.data.feedback;
+        // Fetch the actual feedback data from the feedback endpoint
+        const feedbackResponse = await request(app.getHttpServer())
+          .get(`/sessions/${sessionId}/feedback`)
+          .set('Authorization', `Bearer ${authToken}`);
+        return feedbackResponse.body.data;
       }
 
       if (statusResponse.body.data.status === 'failed') {
-        throw new Error(
-          `Feedback generation failed: ${statusResponse.body.data.error}`,
-        );
+        throw new Error('Feedback generation failed');
       }
 
       // Wait 1000ms before next check
@@ -241,7 +243,7 @@ describe('Feedback Generation (e2e)', () => {
         .get(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
-        .expect({ success: true, data: feedback });
+        .expect({ data: feedback });
     });
 
     it('should grade poorly-performed interview', async () => {
@@ -279,7 +281,7 @@ describe('Feedback Generation (e2e)', () => {
         .get(`/sessions/${sessionId}/feedback`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
-        .expect({ success: true, data: feedback });
+        .expect({ data: feedback });
     });
 
     it('should return 403 for unauthorized session access', async () => {

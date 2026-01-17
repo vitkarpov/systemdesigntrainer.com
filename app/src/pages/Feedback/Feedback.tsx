@@ -1,6 +1,5 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
 import { Page, Container, Stack } from "@/components/layout";
@@ -16,68 +15,26 @@ import { NextStepsCard } from "./components/NextStepsCard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import ReactMarkdown from "react-markdown";
 import { Card } from "@/components/ui/card";
-import { posthog } from "@/lib/posthog";
 
 function FeedbackPage() {
-  const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-
-  const sessionIdNum = Number(sessionId);
-  const isValidId = !!sessionId && !isNaN(sessionIdNum);
-
-  const {
-    feedback,
-    statusInfo,
-    isFeedbackLoading,
-    isStatusLoading,
-    generateMutation,
-    handleRetry,
-  } = useFeedback(sessionIdNum, isValidId);
+  const { state, feedback, handleRetry } = useFeedback();
 
   const handleBackToHome = () => navigate("/");
 
-  // Use feedback from main endpoint (which polls until ready)
-  // Fallback to status feedback if status shows completed
-  const completedFeedback =
-    feedback ||
-    (statusInfo?.status === "completed" ? statusInfo.feedback : null);
-
-  // Track feedback viewed when feedback is loaded
-  useEffect(() => {
-    if (completedFeedback) {
-      posthog.capture("feedback_viewed", {
-        sessionId: sessionIdNum,
-        overallScore: completedFeedback.overallScore,
-        requirementsScore: completedFeedback.requirementsScore,
-        designScore: completedFeedback.designScore,
-        communicationScore: completedFeedback.communicationScore,
-      });
-    }
-  }, [completedFeedback, sessionIdNum]);
-
-  // Show loading state while checking for feedback or generating
-  if (isFeedbackLoading || isStatusLoading) {
-    return <LoadingState />;
-  }
-
-  // Show generation in progress
-  if (statusInfo?.status === "processing" || generateMutation.isPending) {
+  if (state === "checking" || state === "processing") {
     return <ProcessingState />;
   }
 
-  // Show error state for failed feedback generation
-  if (statusInfo?.status === "failed") {
-    return (
-      <ErrorState
-        error={statusInfo?.error}
-        onRetry={handleRetry}
-        onBackToHome={handleBackToHome}
-      />
-    );
+  if (state === "loading") {
+    return <LoadingState />;
   }
 
-  // Show not found if no feedback exists
-  if (!completedFeedback) {
+  if (state === "failed") {
+    return <ErrorState onRetry={handleRetry} onBackToHome={handleBackToHome} />;
+  }
+
+  if (state === "not_found") {
     return (
       <NotFoundState
         onBackToHome={handleBackToHome}
@@ -85,6 +42,10 @@ function FeedbackPage() {
         message="The feedback you're looking for doesn't exist or hasn't been generated yet."
       />
     );
+  }
+
+  if (!feedback) {
+    throw new Error("Feedback not found");
   }
 
   return (
@@ -98,40 +59,31 @@ function FeedbackPage() {
           }
         />
         <Container maxWidth="6xl" gap="6">
-          {completedFeedback.overallSummary && (
+          {feedback.overallSummary && (
             <Card className="p-6">
-              <ReactMarkdown>{completedFeedback.overallSummary}</ReactMarkdown>
+              <ReactMarkdown>{feedback.overallSummary}</ReactMarkdown>
             </Card>
           )}
 
-          <OverallScoreCard score={completedFeedback.overallScore} />
+          <OverallScoreCard score={feedback.overallScore} />
 
           <ScoreBreakdownCard
-            requirementsScore={completedFeedback.requirementsScore}
-            designScore={completedFeedback.designScore}
-            communicationScore={completedFeedback.communicationScore}
-            timeManagementScore={completedFeedback.timeManagementScore}
-            depthScore={completedFeedback.depthScore}
+            requirementsScore={feedback.requirementsScore}
+            designScore={feedback.designScore}
+            communicationScore={feedback.communicationScore}
+            timeManagementScore={feedback.timeManagementScore}
+            depthScore={feedback.depthScore}
           />
 
-          {completedFeedback.items && (
+          {feedback.items && (
             <Stack gap="6">
-              <FeedbackItemsCard
-                items={completedFeedback.items}
-                type="strength"
-              />
-              <FeedbackItemsCard
-                items={completedFeedback.items}
-                type="weakness"
-              />
-              <FeedbackItemsCard
-                items={completedFeedback.items}
-                type="suggestion"
-              />
+              <FeedbackItemsCard items={feedback.items} type="strength" />
+              <FeedbackItemsCard items={feedback.items} type="weakness" />
+              <FeedbackItemsCard items={feedback.items} type="suggestion" />
             </Stack>
           )}
 
-          <NextStepsCard steps={completedFeedback.nextSteps || []} />
+          <NextStepsCard steps={feedback.nextSteps || []} />
           <div className="h-4" />
         </Container>
       </Stack>

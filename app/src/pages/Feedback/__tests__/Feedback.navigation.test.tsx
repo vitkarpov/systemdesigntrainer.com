@@ -58,16 +58,8 @@ describe("Feedback - Navigation Consistency", () => {
     };
 
     mockUseFeedback.mockReturnValue({
+      state: "ready",
       feedback: mockFeedbackData,
-      statusInfo: {
-        status: "completed",
-        feedback: mockFeedbackData,
-        progress: 100,
-      },
-      isFeedbackLoading: false,
-      isStatusLoading: false,
-      feedbackError: null,
-      generateMutation: { isPending: false },
       handleRetry: vi.fn(),
     });
   });
@@ -149,16 +141,8 @@ describe("Feedback - Navigation Consistency", () => {
   describe("Error State Navigation", () => {
     it('should show "Back to Home" button in error state', () => {
       mockUseFeedback.mockReturnValue({
+        state: "failed",
         feedback: null,
-        statusInfo: {
-          status: "failed",
-          error: "Generation failed",
-          progress: 0,
-        },
-        isFeedbackLoading: false,
-        isStatusLoading: false,
-        feedbackError: null,
-        generateMutation: { isPending: false },
         handleRetry: vi.fn(),
       });
 
@@ -172,16 +156,8 @@ describe("Feedback - Navigation Consistency", () => {
     it('should navigate to "/" when "Back to Home" is clicked in error state', async () => {
       const user = userEvent.setup();
       mockUseFeedback.mockReturnValue({
+        state: "failed",
         feedback: null,
-        statusInfo: {
-          status: "failed",
-          error: "Generation failed",
-          progress: 0,
-        },
-        isFeedbackLoading: false,
-        isStatusLoading: false,
-        feedbackError: null,
-        generateMutation: { isPending: false },
         handleRetry: vi.fn(),
       });
 
@@ -197,12 +173,8 @@ describe("Feedback - Navigation Consistency", () => {
   describe("Not Found State Navigation", () => {
     it('should show "Back to Dashboard" button in not found state', () => {
       mockUseFeedback.mockReturnValue({
+        state: "not_found",
         feedback: null,
-        statusInfo: null,
-        isFeedbackLoading: false,
-        isStatusLoading: false,
-        feedbackError: null,
-        generateMutation: { isPending: false },
         handleRetry: vi.fn(),
       });
 
@@ -217,12 +189,8 @@ describe("Feedback - Navigation Consistency", () => {
   describe("Loading State Navigation", () => {
     it("should not show navigation elements during loading", () => {
       mockUseFeedback.mockReturnValue({
+        state: "loading",
         feedback: null,
-        statusInfo: null,
-        isFeedbackLoading: true,
-        isStatusLoading: false,
-        feedbackError: null,
-        generateMutation: { isPending: false },
         handleRetry: vi.fn(),
       });
 
@@ -238,12 +206,8 @@ describe("Feedback - Navigation Consistency", () => {
   describe("Processing State Navigation", () => {
     it("should not show navigation elements during processing", () => {
       mockUseFeedback.mockReturnValue({
+        state: "processing",
         feedback: null,
-        statusInfo: { status: "processing", progress: 50 },
-        isFeedbackLoading: false,
-        isStatusLoading: false,
-        feedbackError: null,
-        generateMutation: { isPending: false },
         handleRetry: vi.fn(),
       });
 
