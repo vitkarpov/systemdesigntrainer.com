@@ -18,6 +18,22 @@ export const getApiBaseUrl = () => {
   return import.meta.env.VITE_API_URL ?? "/api";
 };
 
+// ETag cache for conditional requests
+const etagCache = new Map<string, string>();
+
+// Store ETag for a URL
+const storeETag = (url: string, etag: string) => {
+  etagCache.set(url, etag);
+};
+
+// Get stored ETag for a URL
+const getStoredETag = (url: string): string | undefined => {
+  return etagCache.get(url);
+};
+
+// Track last successful response data for 304 handling
+const lastResponseCache = new Map<string, unknown>();
+
 export const customInstance = async <T>(config: {
   url: string;
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -44,6 +60,14 @@ export const customInstance = async <T>(config: {
     ...config.headers,
   };
 
+  // Add If-None-Match header for GET requests if we have a stored ETag
+  if (config.method === "GET") {
+    const storedETag = getStoredETag(url);
+    if (storedETag) {
+      headers["If-None-Match"] = storedETag;
+    }
+  }
+
   // Build fetch options
   const fetchOptions: RequestInit = {
     method: config.method,
@@ -60,6 +84,21 @@ export const customInstance = async <T>(config: {
   // Make the request
   const response = await fetch(url, fetchOptions);
 
+  // Handle 304 Not Modified - content hasn't changed
+  if (response.status === 304) {
+    // Return cached response data
+    const cachedData = lastResponseCache.get(url);
+    if (cachedData) {
+      return cachedData as T;
+    }
+    // If no cache exists (shouldn't happen), throw error
+    throw new ApiError(
+      "304 Not Modified but no cached data available",
+      304,
+      "Not Modified",
+    );
+  }
+
   // Handle errors
   if (!response.ok) {
     const errorText = await response.text();
@@ -70,7 +109,19 @@ export const customInstance = async <T>(config: {
     );
   }
 
+  // Store ETag from response for future requests
+  const etag = response.headers.get("ETag");
+  if (etag && config.method === "GET") {
+    storeETag(url, etag);
+  }
+
   // Parse and return JSON response
   const data = await response.json();
+
+  // Cache the successful response for 304 handling
+  if (config.method === "GET") {
+    lastResponseCache.set(url, data);
+  }
+
   return data as T;
 };
