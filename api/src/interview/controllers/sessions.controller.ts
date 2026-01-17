@@ -890,13 +890,6 @@ export class SessionsController {
   /**
    * POST /sessions/:id/feedback
    * Enqueue feedback generation job for a completed session
-   * Returns immediately with job ID for status polling
-   *
-   * This endpoint:
-   * 1. Validates session ownership
-   * 2. Completes the session if not already completed
-   * 3. Enqueues a background job for feedback generation
-   * 4. Returns job ID for status checking
    *
    * Note: Feedback generation now happens asynchronously to avoid blocking HTTP requests
    */
@@ -918,32 +911,15 @@ export class SessionsController {
     // Check if feedback already exists
     const feedbackExists = await this.feedbackService.feedbackExists(id);
     if (feedbackExists) {
-      const existing = await this.feedbackService.getFeedback(id);
       return {
-        success: true,
-        message: 'Feedback already exists',
         data: {
           status: 'completed',
-          feedback: existing,
         },
       };
     }
 
-    // Complete the session (mark as terminal status)
-    // If already completed, this will gracefully handle it
-    try {
-      await this.sessionService.completeSession(id);
-    } catch (err) {
-      // If session is already completed, that's fine - continue to generate/return feedback
-      const session = await this.sessionService.getSession(id);
-      if (session.status !== 'completed') {
-        // If it's not completed and we got an error, rethrow
-        throw err;
-      }
-    }
-
     // Enqueue feedback generation job
-    const job = await this.feedbackQueue.add(
+    await this.feedbackQueue.add(
       'generate',
       {
         sessionId: id,
@@ -963,12 +939,8 @@ export class SessionsController {
     );
 
     return {
-      success: true,
-      message: 'Feedback generation started',
       data: {
-        jobId: job.id,
         status: 'processing',
-        estimatedTime: '5-10 seconds',
       },
     };
   }
@@ -994,12 +966,9 @@ export class SessionsController {
     // First, check if feedback already exists in the database
     const feedbackExists = await this.feedbackService.feedbackExists(id);
     if (feedbackExists) {
-      const feedback = await this.feedbackService.getFeedback(id);
       return {
-        success: true,
         data: {
           status: 'completed',
-          feedback,
         },
       };
     }
@@ -1015,46 +984,34 @@ export class SessionsController {
     if (!activeJob) {
       // No active job and no feedback = not started
       return {
-        success: true,
         data: {
           status: 'not_started',
-          message: 'Feedback generation has not been started',
         },
       };
     }
 
     // Check job status
     const state = await activeJob.getState();
-    const progress = activeJob.progress();
 
     if (state === 'completed') {
-      const result = activeJob.returnvalue;
       return {
-        success: true,
         data: {
           status: 'completed',
-          feedback: result,
         },
       };
     }
 
     if (state === 'failed') {
       return {
-        success: true,
         data: {
           status: 'failed',
-          error: activeJob.failedReason || 'Unknown error',
-          message: 'Feedback generation failed. You can try again.',
         },
       };
     }
 
     return {
-      success: true,
       data: {
         status: 'processing',
-        progress,
-        jobId: activeJob.id,
       },
     };
   }
@@ -1062,15 +1019,19 @@ export class SessionsController {
   /**
    * GET /sessions/:id/feedback
    * Get existing feedback report for a session
-   * Returns null if feedback doesn't exist yet (still generating)
+   * Returns 404 if feedback doesn't exist yet
    */
   @Get(':id/feedback')
   @ApiOperation({ summary: 'Get feedback report' })
   @ApiParam({ name: 'id', description: 'Session ID' })
   @ApiResponse({
     status: 200,
-    description: 'Feedback retrieved (or null if not generated yet)',
+    description: 'Feedback retrieved',
     type: GetFeedbackResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Feedback not found',
   })
   async getFeedback(
     @CurrentUser() user: User,
@@ -1078,20 +1039,9 @@ export class SessionsController {
   ) {
     await this.verifySessionOwnership(id, user.id);
 
-    // Check if feedback exists before trying to get it
-    const feedbackExists = await this.feedbackService.feedbackExists(id);
-    if (!feedbackExists) {
-      return {
-        success: true,
-        data: null,
-        message: 'Feedback not generated yet',
-      };
-    }
-
     const feedback = await this.feedbackService.getFeedback(id);
 
     return {
-      success: true,
       data: feedback,
     };
   }

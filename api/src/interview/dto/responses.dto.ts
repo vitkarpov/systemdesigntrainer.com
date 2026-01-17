@@ -413,10 +413,7 @@ export class GenerateFeedbackResponseDto {
 }
 
 export class GetFeedbackResponseDto {
-  @ApiProperty({ default: true })
-  success: boolean;
-
-  @ApiProperty()
+  @ApiProperty({ type: FeedbackReportDto })
   data: FeedbackReportDto;
 }
 
@@ -426,83 +423,22 @@ export class FeedbackStatusDataDto {
     description: 'Current status of feedback generation',
   })
   status: 'not_started' | 'processing' | 'completed' | 'failed';
-
-  @ApiProperty({
-    required: false,
-    description: 'Progress percentage (0-100) when processing',
-  })
-  progress?: number;
-
-  @ApiProperty({
-    required: false,
-    description: 'Job ID for tracking',
-  })
-  jobId?: string;
-
-  @ApiProperty({
-    required: false,
-    type: FeedbackReportDto,
-    description: 'Completed feedback report',
-  })
-  feedback?: FeedbackReportDto;
-
-  @ApiProperty({
-    required: false,
-    description: 'Error message if failed',
-  })
-  error?: string;
-
-  @ApiProperty({
-    required: false,
-    description: 'Additional status message',
-  })
-  message?: string;
 }
 
 export class GetFeedbackStatusResponseDto {
-  @ApiProperty({ default: true })
-  success: boolean;
-
   @ApiProperty({ type: FeedbackStatusDataDto })
   data: FeedbackStatusDataDto;
 }
 
 export class StartFeedbackGenerationDataDto {
   @ApiProperty({
-    description: 'Job ID for tracking',
-  })
-  jobId: string;
-
-  @ApiProperty({
     enum: ['processing', 'completed'],
     description: 'Initial status',
   })
   status: 'processing' | 'completed';
-
-  @ApiProperty({
-    required: false,
-    description: 'Estimated time for completion',
-  })
-  estimatedTime?: string;
-
-  @ApiProperty({
-    required: false,
-    type: FeedbackReportDto,
-    description: 'Feedback if already exists',
-  })
-  feedback?: FeedbackReportDto;
 }
 
 export class StartFeedbackGenerationResponseDto {
-  @ApiProperty({ default: true })
-  success: boolean;
-
-  @ApiProperty({
-    required: false,
-    description: 'Status message',
-  })
-  message?: string;
-
   @ApiProperty({ type: StartFeedbackGenerationDataDto })
   data: StartFeedbackGenerationDataDto;
 }
