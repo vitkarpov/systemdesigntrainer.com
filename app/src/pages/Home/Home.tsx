@@ -19,7 +19,6 @@ export default function Home() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
-  const [selectedCase, setSelectedCase] = useState<InterviewCaseDto | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
 
   const { data: user } = useAuthControllerGetUser();
@@ -28,23 +27,12 @@ export default function Home() {
   const startSessionMutation = useSessionsControllerStartSession();
 
   useEffect(() => {
-    if (cases.length > 0 && !selectedCase) {
-      setSelectedCase(cases[0]);
-    }
-  }, [cases, selectedCase]);
-
-  useEffect(() => {
     if (casesError) {
       setError('Failed to load cases. Please refresh the page.');
     }
   }, [casesError]);
 
-  const handleStartInterview = async () => {
-    if (!selectedCase) {
-      setError('Please select an interview case.');
-      return;
-    }
-
+  const handleStartInterview = async (interviewCase: InterviewCaseDto) => {
     // Check if user has interviews remaining
     if (user?.subscriptionStatus !== 'unlimited' && (!user?.interviewsRemaining || user.interviewsRemaining <= 0)) {
       setShowPaywall(true);
@@ -56,7 +44,7 @@ export default function Home() {
     try {
       const sessionResponse = await createSessionMutation.mutateAsync({
         data: {
-          caseId: selectedCase.id,
+          caseId: interviewCase.id,
           companyStyle: 'generic',
           level: 'mid',
         },
@@ -69,9 +57,9 @@ export default function Home() {
       // Track interview started
       posthog.capture('interview_started', {
         sessionId: sessionResponse.data.session.id,
-        caseId: selectedCase.id,
-        caseTitle: selectedCase.title,
-        caseDifficulty: selectedCase.difficulty,
+        caseId: interviewCase.id,
+        caseTitle: interviewCase.title,
+        caseDifficulty: interviewCase.difficulty,
         companyStyle: 'generic',
         level: 'mid',
       });
@@ -122,16 +110,14 @@ export default function Home() {
                 ) : (
                   <div className="grid gap-3 md:grid-cols-2">
                     {cases.map((interviewCase) => (
-                      <button
+                      <Button
                         key={interviewCase.id}
-                        onClick={() => setSelectedCase(interviewCase)}
-                        className={`relative text-left p-4 rounded-lg border-2 transition-all hover:shadow-md ${
-                          selectedCase?.id === interviewCase.id
-                            ? 'border-primary bg-primary/10 shadow-sm ring-2 ring-primary/20'
-                            : 'border-muted bg-muted hover:border-muted-foreground/50'
-                        }`}
+                        variant="outline"
+                        onClick={() => handleStartInterview(interviewCase)}
+                        disabled={createSessionMutation.isPending || startSessionMutation.isPending}
+                        className="relative text-left p-4 h-auto flex-col items-start hover:shadow-md"
                       >
-                        <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-start justify-between gap-2 w-full">
                           <h4 className="font-semibold">{interviewCase.title}</h4>
                           <span
                             className={`text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap ${
@@ -145,10 +131,10 @@ export default function Home() {
                             {interviewCase.difficulty}
                           </span>
                         </div>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs text-muted-foreground text-left">
                           {interviewCase.description}
                         </p>
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 )}
@@ -156,7 +142,7 @@ export default function Home() {
 
               <div className="bg-muted rounded-lg p-4">
                 <h3 className="font-semibold mb-2">Interview Format:</h3>
-                <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <ul className="text-sm space-y-1 list-disc list-inside">
                   <li>45-60 minutes of interactive discussion</li>
                   <li>Progress through phases: requirements, design, deep-dive</li>
                   <li>AI interviewer tracks your signals and provides feedback</li>
@@ -170,17 +156,6 @@ export default function Home() {
                 {error}
               </div>
             )}
-
-            <Button
-              onClick={handleStartInterview}
-              disabled={isLoadingCases || createSessionMutation.isPending || startSessionMutation.isPending}
-              size="lg"
-              className="w-full text-lg h-12"
-            >
-              {createSessionMutation.isPending || startSessionMutation.isPending
-                ? 'Starting Interview...'
-                : 'Start Interview'}
-            </Button>
           </CardContent>
         </Card>
       </div>

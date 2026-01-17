@@ -122,13 +122,6 @@ describe('Home - Navigation Consistency', () => {
       const backButton = screen.getByRole('button', { name: /back to dashboard/i })
       expect(backButton).toHaveTextContent('Back to Dashboard')
     })
-
-    it('should provide clear path forward with "Start Interview" button', () => {
-      renderWithProviders(<Home />)
-
-      const startButton = screen.getByRole('button', { name: /start interview/i })
-      expect(startButton).toBeInTheDocument()
-    })
   })
 
   describe('Navigation Flow', () => {
@@ -156,13 +149,9 @@ describe('Home - Navigation Consistency', () => {
         expect(screen.getByText('Design a URL Shortener')).toBeInTheDocument()
       })
 
-      // User explicitly selects the case
+      // Click the case to start the interview directly
       const caseButton = screen.getByRole('button', { name: /Design a URL Shortener/i })
       await user.click(caseButton)
-
-      // Start the interview
-      const startButton = screen.getByRole('button', { name: /start interview/i })
-      await user.click(startButton)
 
       // Wait for both mutations to be called
       await waitFor(() => {
