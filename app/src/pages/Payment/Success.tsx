@@ -18,8 +18,8 @@ export default function PaymentSuccess() {
 
   useEffect(() => {
     // Invalidate queries to refetch updated interview count
-    queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/sessions/dashboard"] });
+    queryClient.invalidateQueries({ queryKey: ["/auth/user"] });
+    queryClient.invalidateQueries({ queryKey: ["/sessions/dashboard"] });
     console.log("Payment successful! Refreshing user data...");
   }, [queryClient]);
 

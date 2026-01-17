@@ -87,8 +87,8 @@ export default function Home() {
       });
 
       // Invalidate queries so dashboard and counter update
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/sessions/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/sessions/dashboard"] });
 
       navigate(`/interview/${sessionResponse.data.session.id}`);
     } catch (err) {
