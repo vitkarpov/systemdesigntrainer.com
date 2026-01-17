@@ -13,8 +13,10 @@ import {
   Sse,
   MessageEvent,
   Req,
+  Res,
   Logger,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
@@ -104,6 +106,17 @@ export class SessionsController {
       );
       throw new ForbiddenException('You do not have access to this session');
     }
+  }
+
+  /**
+   * Generate ETag for session data based on updatedAt timestamp
+   * Since updatedAt changes whenever the session is modified (status, phase, etc.),
+   * it's a perfect indicator of session state changes
+   */
+  private generateSessionETag(session: any): string {
+    const timestamp =
+      session.updatedAt?.getTime() || session.createdAt?.getTime() || 0;
+    return `"${timestamp}"`;
   }
 
   /**
@@ -329,7 +342,8 @@ export class SessionsController {
 
   /**
    * GET /sessions/:id
-   * Get session details
+   * Get session details with ETag-based caching
+   * Returns 304 Not Modified if content hasn't changed
    */
   @Get(':id')
   @ApiOperation({ summary: 'Get session details' })
@@ -339,12 +353,38 @@ export class SessionsController {
     description: 'Session details retrieved',
     type: GetSessionResponseDto,
   })
+  @ApiResponse({
+    status: 304,
+    description: 'Not Modified - content unchanged',
+  })
   async getSession(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
   ) {
     await this.verifySessionOwnership(id, user.id);
     const session = await this.sessionService.getSession(id);
+
+    // Generate ETag based on session updatedAt
+    const etag = this.generateSessionETag(session);
+
+    // Check If-None-Match header for conditional request
+    const ifNoneMatch = request.headers['if-none-match'];
+
+    // Set Cache-Control headers
+    // - no-cache: Must revalidate with server (sends If-None-Match)
+    // - must-revalidate: Cache must check with server when stale
+    response.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    response.setHeader('ETag', etag);
+
+    // Return 304 if ETag matches
+    if (ifNoneMatch === etag) {
+      response.status(HttpStatus.NOT_MODIFIED);
+      return;
+    }
+
+    // Calculate elapsed times (client-side calculable, but provided for convenience)
     const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
     const phaseElapsed = this.sessionService.getPhaseElapsedSeconds(session);
 

@@ -6,7 +6,7 @@ if (process.env.NODE_ENV === 'production') {
     sendDefaultPii: true,
     tracesSampleRate: 0.1,
     integrations: [
-      Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
+      Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
     ],
     enableLogs: true,
   });

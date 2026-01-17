@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import {
   useSessionsControllerGenerateFeedback,
 } from "@/api/hooks.gen";
 import { useConversationStream } from "@/hooks/useConversationStream";
+import { useElapsedTime } from "@/hooks/useElapsedTime";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Page } from "@/components/layout/Page";
 import { posthog } from "@/lib/posthog";
@@ -36,8 +37,6 @@ function InterviewPage() {
   const setOptimisticMessage = useInterviewStore(
     (state) => state.setOptimisticMessage,
   );
-
-  const [elapsedTime, setElapsedTime] = useState(0);
 
   const sessionIdNum = Number(sessionId);
 
@@ -88,21 +87,12 @@ function InterviewPage() {
 
   const generateFeedbackMutation = useSessionsControllerGenerateFeedback();
 
-  useEffect(() => {
-    if (session) {
-      setElapsedTime(session.data.elapsedSeconds);
-    }
-  }, [session]);
-
-  useEffect(() => {
-    if (!session || session.data.session.status !== "in_progress") return;
-
-    const timer = setInterval(() => {
-      setElapsedTime((prev) => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [session]);
+  const elapsedTime = useElapsedTime({
+    startedAt: session?.data.session.startedAt,
+    completedAt: session?.data.session.completedAt,
+    status: session?.data.session.status,
+    serverElapsedSeconds: session?.data.elapsedSeconds,
+  });
 
   // Cleanup on unmount
   useEffect(() => {
