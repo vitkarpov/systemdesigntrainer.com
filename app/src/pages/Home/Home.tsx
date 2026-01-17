@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -7,11 +7,20 @@ import { PageHeader } from '@/components/PageHeader';
 import { InterviewCounter } from '@/components/InterviewCounter';
 import { PaywallModal } from '@/components/PaywallModal';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   useCasesControllerGetAllCases,
   useSessionsControllerCreateSession,
   useSessionsControllerStartSession,
   useAuthControllerGetUser,
   type InterviewCaseDto,
+  type CreateSessionDtoCompanyStyle,
+  type CreateSessionDtoLevel,
 } from '@/api/hooks.gen';
 import { posthog } from '@/lib/posthog';
 
@@ -20,6 +29,8 @@ export default function Home() {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [level, setLevel] = useState<CreateSessionDtoLevel>('mid');
+  const [companyStyle, setCompanyStyle] = useState<CreateSessionDtoCompanyStyle>('generic');
 
   const { data: user } = useAuthControllerGetUser();
   const { data: cases = [], isLoading: isLoadingCases, error: casesError } = useCasesControllerGetAllCases();
@@ -32,9 +43,10 @@ export default function Home() {
     }
   }, [casesError]);
 
+  const hasUserInterviewsRemaining = useMemo(() => user?.subscriptionStatus !== 'unlimited' && (!user?.interviewsRemaining || user.interviewsRemaining <= 0), [user]);
+
   const handleStartInterview = async (interviewCase: InterviewCaseDto) => {
-    // Check if user has interviews remaining
-    if (user?.subscriptionStatus !== 'unlimited' && (!user?.interviewsRemaining || user.interviewsRemaining <= 0)) {
+    if (hasUserInterviewsRemaining) {
       setShowPaywall(true);
       return;
     }
@@ -45,8 +57,8 @@ export default function Home() {
       const sessionResponse = await createSessionMutation.mutateAsync({
         data: {
           caseId: interviewCase.id,
-          companyStyle: 'generic',
-          level: 'mid',
+          companyStyle,
+          level,
         },
       });
 
@@ -60,8 +72,8 @@ export default function Home() {
         caseId: interviewCase.id,
         caseTitle: interviewCase.title,
         caseDifficulty: interviewCase.difficulty,
-        companyStyle: 'generic',
-        level: 'mid',
+        companyStyle,
+        level,
       });
 
       // Invalidate queries so dashboard and counter update
@@ -97,6 +109,35 @@ export default function Home() {
         <Card className="w-full max-w-6xl">
           <CardContent className="space-y-6 pt-6">
             <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Interview Level</label>
+                  <Select value={level} onValueChange={(value) => setLevel(value as CreateSessionDtoLevel)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mid">Mid-Level</SelectItem>
+                      <SelectItem value="senior">Senior</SelectItem>
+                      <SelectItem value="staff">Staff</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Company Style</label>
+                  <Select value={companyStyle} onValueChange={(value) => setCompanyStyle(value as CreateSessionDtoCompanyStyle)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select company style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="faang">FAANG</SelectItem>
+                      <SelectItem value="startup">Startup</SelectItem>
+                      <SelectItem value="generic">Generic</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div>
                 <h3 className="font-semibold mb-3">Select an Interview Case:</h3>
                 {isLoadingCases ? (
