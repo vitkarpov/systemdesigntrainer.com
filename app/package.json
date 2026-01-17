@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "format": "prettier --write \"**/*.(ts|js)\" \"!**/node_modules/**\" \"!**/dist/**\" \"!**/coverage/**\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx}\" \"!**/node_modules/**\" \"!**/dist/**\" \"!**/coverage/**\"",
     "lint": "eslint .",
     "preview": "vite preview",
     "codegen": "orval --config orval.config.ts",
