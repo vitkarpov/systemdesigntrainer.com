@@ -22,12 +22,12 @@ function FeedbackPage() {
 
   const handleBackToHome = () => navigate("/");
 
-  if (state === "checking" || state === "processing") {
-    return <ProcessingState />;
+  if (state === "checking" || state === "loading") {
+    return <LoadingState />;
   }
 
-  if (state === "loading") {
-    return <LoadingState />;
+  if (state === "processing") {
+    return <ProcessingState />;
   }
 
   if (state === "failed") {
