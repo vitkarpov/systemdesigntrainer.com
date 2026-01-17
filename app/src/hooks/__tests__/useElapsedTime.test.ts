@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useElapsedTime } from "../useElapsedTime";
+import type { UseElapsedTimeOptions } from "../useElapsedTime";
 
 describe("useElapsedTime", () => {
   beforeEach(() => {
@@ -205,7 +206,7 @@ describe("useElapsedTime", () => {
             completedAt: null,
             status: "in_progress",
             serverElapsedSeconds: 0,
-          },
+          } as UseElapsedTimeOptions,
         },
       );
 
