@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { customInstance } from "../client";
 
+const createMockResponse = (data: any = { data: "test" }) => ({
+  ok: true,
+  json: async () => data,
+  headers: new Headers(),
+});
+
 describe("client", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -18,10 +24,7 @@ describe("client", () => {
       });
 
       // Mock successful response
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: "test" }),
-      });
+      (global.fetch as any).mockResolvedValueOnce(createMockResponse());
 
       await customInstance({
         url: "/test",
@@ -39,10 +42,7 @@ describe("client", () => {
         env: {},
       });
 
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: "test" }),
-      });
+      (global.fetch as any).mockResolvedValueOnce(createMockResponse());
 
       await customInstance({
         url: "/test",
@@ -61,10 +61,7 @@ describe("client", () => {
         },
       });
 
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: "test" }),
-      });
+      (global.fetch as any).mockResolvedValueOnce(createMockResponse());
 
       await customInstance({
         url: "/test",
@@ -83,10 +80,7 @@ describe("client", () => {
         },
       });
 
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: "test" }),
-      });
+      (global.fetch as any).mockResolvedValueOnce(createMockResponse());
 
       await customInstance({
         url: "/test",
@@ -107,10 +101,7 @@ describe("client", () => {
         },
       });
 
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: "test" }),
-      });
+      (global.fetch as any).mockResolvedValue(createMockResponse());
     });
 
     it("should remove leading slash from URL", async () => {
@@ -178,10 +169,7 @@ describe("client", () => {
     });
 
     it("should include credentials in request", async () => {
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: "test" }),
-      });
+      (global.fetch as any).mockResolvedValueOnce(createMockResponse());
 
       await customInstance({
         url: "/test",
@@ -197,10 +185,7 @@ describe("client", () => {
     });
 
     it("should set Content-Type header", async () => {
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: "test" }),
-      });
+      (global.fetch as any).mockResolvedValueOnce(createMockResponse());
 
       await customInstance({
         url: "/test",
@@ -218,10 +203,7 @@ describe("client", () => {
     });
 
     it("should merge custom headers", async () => {
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: "test" }),
-      });
+      (global.fetch as any).mockResolvedValueOnce(createMockResponse());
 
       await customInstance({
         url: "/test",
@@ -243,10 +225,7 @@ describe("client", () => {
     });
 
     it("should include body for POST requests", async () => {
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: "test" }),
-      });
+      (global.fetch as any).mockResolvedValueOnce(createMockResponse());
 
       const data = { name: "John Doe" };
 
@@ -266,10 +245,7 @@ describe("client", () => {
     });
 
     it("should include body for PUT requests", async () => {
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: "test" }),
-      });
+      (global.fetch as any).mockResolvedValueOnce(createMockResponse());
 
       const data = { name: "Jane Doe" };
 
@@ -289,10 +265,7 @@ describe("client", () => {
     });
 
     it("should not include body for GET requests", async () => {
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: "test" }),
-      });
+      (global.fetch as any).mockResolvedValueOnce(createMockResponse());
 
       await customInstance({
         url: "/users",
@@ -336,10 +309,7 @@ describe("client", () => {
     it("should return parsed JSON response", async () => {
       const mockData = { id: 123, name: "John Doe" };
 
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockData,
-      });
+      (global.fetch as any).mockResolvedValueOnce(createMockResponse(mockData));
 
       const result = await customInstance({
         url: "/users/123",
@@ -350,10 +320,7 @@ describe("client", () => {
     });
 
     it("should pass abort signal to fetch", async () => {
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: "test" }),
-      });
+      (global.fetch as any).mockResolvedValueOnce(createMockResponse());
 
       const controller = new AbortController();
 
