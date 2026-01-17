@@ -890,13 +890,6 @@ export class SessionsController {
   /**
    * POST /sessions/:id/feedback
    * Enqueue feedback generation job for a completed session
-   * Returns immediately with job ID for status polling
-   *
-   * This endpoint:
-   * 1. Validates session ownership
-   * 2. Completes the session if not already completed
-   * 3. Enqueues a background job for feedback generation
-   * 4. Returns job ID for status checking
    *
    * Note: Feedback generation now happens asynchronously to avoid blocking HTTP requests
    */
