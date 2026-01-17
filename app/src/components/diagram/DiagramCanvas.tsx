@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect } from "react";
 import {
   ReactFlow,
   Background,
@@ -8,20 +8,20 @@ import {
   type Edge,
   type Connection,
   type OnConnect,
-} from '@xyflow/react';
-import { ComponentPalette } from './ComponentPalette';
-import { SaveIndicator } from './SaveIndicator';
-import { useDiagramAutoSave } from '@/hooks/useDiagramAutoSave';
-import { useSessionsControllerGetDiagram } from '@/api/hooks.gen';
-import { useDiagramStore } from '@/stores';
+} from "@xyflow/react";
+import { ComponentPalette } from "./ComponentPalette";
+import { SaveIndicator } from "./SaveIndicator";
+import { useDiagramAutoSave } from "@/hooks/useDiagramAutoSave";
+import { useSessionsControllerGetDiagram } from "@/api/hooks.gen";
+import { useDiagramStore } from "@/stores";
 
-import { DatabaseNode } from './nodes/DatabaseNode';
-import { CacheNode } from './nodes/CacheNode';
-import { LoadBalancerNode } from './nodes/LoadBalancerNode';
-import { ApiServerNode } from './nodes/ApiServerNode';
-import { QueueNode } from './nodes/QueueNode';
-import { ClientNode } from './nodes/ClientNode';
-import { StorageNode } from './nodes/StorageNode';
+import { DatabaseNode } from "./nodes/DatabaseNode";
+import { CacheNode } from "./nodes/CacheNode";
+import { LoadBalancerNode } from "./nodes/LoadBalancerNode";
+import { ApiServerNode } from "./nodes/ApiServerNode";
+import { QueueNode } from "./nodes/QueueNode";
+import { ClientNode } from "./nodes/ClientNode";
+import { StorageNode } from "./nodes/StorageNode";
 
 const nodeTypes = {
   database: DatabaseNode,
@@ -43,16 +43,20 @@ interface DiagramCanvasProps {
 
 export function DiagramCanvas({
   sessionId,
-  isReadOnly = false
+  isReadOnly = false,
 }: DiagramCanvasProps) {
-  const nodes = useDiagramStore((state) => state.getDiagram(sessionId)?.nodes ?? EMPTY_NODES);
-  const rawEdges = useDiagramStore((state) => state.getDiagram(sessionId)?.edges ?? EMPTY_EDGES);
+  const nodes = useDiagramStore(
+    (state) => state.getDiagram(sessionId)?.nodes ?? EMPTY_NODES,
+  );
+  const rawEdges = useDiagramStore(
+    (state) => state.getDiagram(sessionId)?.edges ?? EMPTY_EDGES,
+  );
 
   // Apply visual styling to edges based on selection state
-  const edges: Edge[] = rawEdges.map(edge => ({
+  const edges: Edge[] = rawEdges.map((edge) => ({
     ...edge,
     style: {
-      stroke: edge.selected ? '#3b82f6' : '#333333',
+      stroke: edge.selected ? "#3b82f6" : "#333333",
       strokeWidth: edge.selected ? 3 : 2,
     },
     animated: edge.selected,
@@ -61,7 +65,8 @@ export function DiagramCanvas({
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
   // Load existing diagram on mount
-  const { data: diagramData, isLoading } = useSessionsControllerGetDiagram(sessionId);
+  const { data: diagramData, isLoading } =
+    useSessionsControllerGetDiagram(sessionId);
 
   // Auto-save hook
   const { saveStatus } = useDiagramAutoSave({
@@ -72,8 +77,12 @@ export function DiagramCanvas({
   // Initialize diagram from backend
   useEffect(() => {
     if (diagramData?.data && diagramData.data.nodes) {
-      useDiagramStore.getState().setNodes(sessionId, diagramData.data.nodes as Node[]);
-      useDiagramStore.getState().setEdges(sessionId, (diagramData.data.edges || []) as Edge[]);
+      useDiagramStore
+        .getState()
+        .setNodes(sessionId, diagramData.data.nodes as Node[]);
+      useDiagramStore
+        .getState()
+        .setEdges(sessionId, (diagramData.data.edges || []) as Edge[]);
     }
   }, [diagramData, sessionId]);
 
@@ -81,29 +90,31 @@ export function DiagramCanvas({
     (connection: Connection) => {
       const newEdge: Edge = {
         id: `e${connection.source}-${connection.target}`,
-        source: connection.source || '',
-        target: connection.target || '',
+        source: connection.source || "",
+        target: connection.target || "",
         sourceHandle: connection.sourceHandle,
         targetHandle: connection.targetHandle,
       };
       useDiagramStore.getState().addEdge(sessionId, newEdge);
     },
-    [sessionId]
+    [sessionId],
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = "move";
   }, []);
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
 
-      const type = event.dataTransfer.getData('application/reactflow');
-      const label = event.dataTransfer.getData('application/reactflow-label');
+      const type = event.dataTransfer.getData("application/reactflow");
+      const label = event.dataTransfer.getData("application/reactflow-label");
 
-      const reactFlowInstance = useDiagramStore.getState().getReactFlowInstance(sessionId);
+      const reactFlowInstance = useDiagramStore
+        .getState()
+        .getReactFlowInstance(sessionId);
       if (!type || !reactFlowInstance) return;
 
       const position = reactFlowInstance.screenToFlowPosition({
@@ -120,7 +131,7 @@ export function DiagramCanvas({
 
       useDiagramStore.getState().addNode(sessionId, newNode);
     },
-    [sessionId]
+    [sessionId],
   );
 
   if (isLoading) {
@@ -150,18 +161,22 @@ export function DiagramCanvas({
           onNodesChange={
             isReadOnly
               ? undefined
-              : (changes) => useDiagramStore.getState().onNodesChange(sessionId, changes)
+              : (changes) =>
+                  useDiagramStore.getState().onNodesChange(sessionId, changes)
           }
           onEdgesChange={
             isReadOnly
               ? undefined
-              : (changes) => useDiagramStore.getState().onEdgesChange(sessionId, changes)
+              : (changes) =>
+                  useDiagramStore.getState().onEdgesChange(sessionId, changes)
           }
           onConnect={isReadOnly ? undefined : onConnect}
-          onInit={(instance) => useDiagramStore.getState().setReactFlowInstance(sessionId, instance)}
+          onInit={(instance) =>
+            useDiagramStore.getState().setReactFlowInstance(sessionId, instance)
+          }
           nodeTypes={nodeTypes}
           defaultEdgeOptions={{
-            type: 'default',
+            type: "default",
           }}
           fitView
           nodesDraggable={!isReadOnly}

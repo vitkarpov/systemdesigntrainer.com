@@ -1,9 +1,16 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
@@ -11,9 +18,9 @@ export default function PaymentSuccess() {
 
   useEffect(() => {
     // Invalidate queries to refetch updated interview count
-    queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/sessions/dashboard'] });
-    console.log('Payment successful! Refreshing user data...');
+    queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/sessions/dashboard"] });
+    console.log("Payment successful! Refreshing user data...");
   }, [queryClient]);
 
   return (
@@ -32,24 +39,20 @@ export default function PaymentSuccess() {
         <CardContent className="space-y-4">
           <div className="bg-muted p-4 rounded-lg">
             <p className="text-sm text-center text-muted-foreground">
-              You can now start practicing your system design interviews.
-              Your credits are ready to use!
+              You can now start practicing your system design interviews. Your
+              credits are ready to use!
             </p>
           </div>
         </CardContent>
 
         <CardFooter className="flex flex-col gap-2">
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={() => navigate('/')}
-          >
+          <Button className="w-full" size="lg" onClick={() => navigate("/")}>
             Go to Dashboard
           </Button>
           <Button
             className="w-full"
             variant="outline"
-            onClick={() => navigate('/home')}
+            onClick={() => navigate("/home")}
           >
             Start New Interview
           </Button>

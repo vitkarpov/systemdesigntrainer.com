@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from "@storybook/react";
 import {
   Branch,
   BranchMessages,
@@ -6,31 +6,31 @@ import {
   BranchPrevious,
   BranchNext,
   BranchPage,
-} from './branch';
-import { Message, MessageContent, MessageAvatar } from './message';
-import { createMockBranches, MOCK_AVATAR_URLS } from './__stories__/mock-data';
+} from "./branch";
+import { Message, MessageContent, MessageAvatar } from "./message";
+import { createMockBranches, MOCK_AVATAR_URLS } from "./__stories__/mock-data";
 
 const meta: Meta<typeof Branch> = {
-  title: 'AI Components/Interactive/Branch',
+  title: "AI Components/Interactive/Branch",
   component: Branch,
   parameters: {
-    layout: 'padded',
+    layout: "padded",
     docs: {
       description: {
         component:
-          'Branch component for displaying and navigating between alternative message threads. Provides context-based navigation with previous/next buttons and page indicator. Automatically hides selector when only one branch exists.',
+          "Branch component for displaying and navigating between alternative message threads. Provides context-based navigation with previous/next buttons and page indicator. Automatically hides selector when only one branch exists.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     defaultBranch: {
-      control: { type: 'number', min: 0 },
-      description: 'Initial branch to display (0-indexed)',
+      control: { type: "number", min: 0 },
+      description: "Initial branch to display (0-indexed)",
     },
     onBranchChange: {
-      action: 'branchChanged',
-      description: 'Callback when branch changes',
+      action: "branchChanged",
+      description: "Callback when branch changes",
     },
   },
 };
@@ -42,16 +42,16 @@ type Story = StoryObj<typeof Branch>;
 const MessageBranch = ({ messages }: { messages: any[] }) => (
   <>
     {messages.map((msg, idx) => (
-      <Message key={idx} from={msg.role as 'user' | 'assistant'}>
+      <Message key={idx} from={msg.role as "user" | "assistant"}>
         <MessageAvatar
           src={
-            msg.role === 'user'
+            msg.role === "user"
               ? MOCK_AVATAR_URLS.user
               : MOCK_AVATAR_URLS.assistant
           }
-          name={msg.role === 'user' ? 'User' : 'AI'}
+          name={msg.role === "user" ? "User" : "AI"}
         />
-        <MessageContent>{String(msg.content || '')}</MessageContent>
+        <MessageContent>{String(msg.content || "")}</MessageContent>
       </Message>
     ))}
   </>
@@ -83,7 +83,7 @@ export const Default: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Default branch navigation with 3 alternative responses.',
+        story: "Default branch navigation with 3 alternative responses.",
       },
     },
   },
@@ -115,7 +115,8 @@ export const SingleBranch: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'When only one branch exists, the selector is automatically hidden.',
+        story:
+          "When only one branch exists, the selector is automatically hidden.",
       },
     },
   },
@@ -147,7 +148,8 @@ export const ManyBranches: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Branch navigation with many alternative responses (7 branches).',
+        story:
+          "Branch navigation with many alternative responses (7 branches).",
       },
     },
   },
@@ -179,7 +181,8 @@ export const StartAtSecondBranch: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Branch starting at index 1 (second branch). Page indicator shows "2 of 3".',
+        story:
+          'Branch starting at index 1 (second branch). Page indicator shows "2 of 3".',
       },
     },
   },
@@ -211,7 +214,8 @@ export const UserSideBranchSelector: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Branch selector aligned for user messages (right-aligned instead of left-aligned).',
+        story:
+          "Branch selector aligned for user messages (right-aligned instead of left-aligned).",
       },
     },
   },
@@ -252,7 +256,7 @@ export const WithDifferentMessageLengths: Story = {
     docs: {
       description: {
         story:
-          'Branches with different message counts to test layout flexibility and transitions.',
+          "Branches with different message counts to test layout flexibility and transitions.",
       },
     },
   },
@@ -285,7 +289,7 @@ export const Interactive: Story = {
     docs: {
       description: {
         story:
-          'Interactive demonstration of branch navigation. Click next/previous to cycle through branches.',
+          "Interactive demonstration of branch navigation. Click next/previous to cycle through branches.",
       },
     },
   },
@@ -327,7 +331,7 @@ export const InConversationContext: Story = {
     docs: {
       description: {
         story:
-          'Branch component shown in a conversation context, demonstrating how it integrates with messages.',
+          "Branch component shown in a conversation context, demonstrating how it integrates with messages.",
       },
     },
   },

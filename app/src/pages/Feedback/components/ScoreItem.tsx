@@ -1,4 +1,4 @@
-import { getScoreBarColor } from '../utils';
+import { getScoreBarColor } from "../utils";
 
 interface ScoreItemProps {
   label: string;

@@ -1,25 +1,32 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Check, Loader2 } from 'lucide-react';
-import { PageHeader } from '@/components/PageHeader';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useAuthControllerGetUser } from '@/api/hooks.gen';
-import { getApiBaseUrl } from '@/api/client';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Check, Loader2 } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useAuthControllerGetUser } from "@/api/hooks.gen";
+import { getApiBaseUrl } from "@/api/client";
+import { toast } from "sonner";
 
 /**
  * Product tier enum matching backend
  * Frontend uses these tier names instead of knowing actual Stripe price IDs
  */
 const ProductTier = {
-  THREE_INTERVIEWS: 'THREE_INTERVIEWS',
-  FIVE_INTERVIEWS: 'FIVE_INTERVIEWS',
-  UNLIMITED: 'UNLIMITED',
+  THREE_INTERVIEWS: "THREE_INTERVIEWS",
+  FIVE_INTERVIEWS: "FIVE_INTERVIEWS",
+  UNLIMITED: "UNLIMITED",
 } as const;
 
-type ProductTier = typeof ProductTier[keyof typeof ProductTier];
+type ProductTier = (typeof ProductTier)[keyof typeof ProductTier];
 
 interface PricingTier {
   id: string;
@@ -34,50 +41,50 @@ interface PricingTier {
 
 const tiers: PricingTier[] = [
   {
-    id: 'starter',
-    name: 'Starter Pack',
-    price: '$9',
+    id: "starter",
+    name: "Starter Pack",
+    price: "$9",
     productTier: ProductTier.THREE_INTERVIEWS,
-    pricePerInterview: '$3 per interview',
-    description: 'Perfect for trying out the platform',
+    pricePerInterview: "$3 per interview",
+    description: "Perfect for trying out the platform",
     features: [
-      '3 interview simulations',
-      'AI-powered interviewer',
-      'Real-time feedback',
-      'Detailed performance report',
-      'Credits never expire',
+      "3 interview simulations",
+      "AI-powered interviewer",
+      "Real-time feedback",
+      "Detailed performance report",
+      "Credits never expire",
     ],
   },
   {
-    id: 'power',
-    name: 'Power Pack',
-    price: '$12',
+    id: "power",
+    name: "Power Pack",
+    price: "$12",
     productTier: ProductTier.FIVE_INTERVIEWS,
-    pricePerInterview: '$2.40 per interview',
-    description: 'Best value for comprehensive prep',
+    pricePerInterview: "$2.40 per interview",
+    description: "Best value for comprehensive prep",
     features: [
-      '5 interview simulations',
-      'AI-powered interviewer',
-      'Real-time feedback',
-      'Detailed performance report',
-      'Credits never expire',
-      'Best value per interview',
+      "5 interview simulations",
+      "AI-powered interviewer",
+      "Real-time feedback",
+      "Detailed performance report",
+      "Credits never expire",
+      "Best value per interview",
     ],
     popular: true,
   },
   {
-    id: 'unlimited',
-    name: 'Pro Unlimited',
-    price: '$49',
+    id: "unlimited",
+    name: "Pro Unlimited",
+    price: "$49",
     productTier: ProductTier.UNLIMITED,
-    description: 'Unlimited practice for serious prep',
+    description: "Unlimited practice for serious prep",
     features: [
-      'Unlimited interviews',
-      'AI-powered interviewer',
-      'Real-time feedback',
-      'Detailed performance reports',
-      'Cancel anytime',
-      'Perfect for intensive preparation',
+      "Unlimited interviews",
+      "AI-powered interviewer",
+      "Real-time feedback",
+      "Detailed performance reports",
+      "Cancel anytime",
+      "Perfect for intensive preparation",
     ],
   },
 ];
@@ -93,11 +100,11 @@ export default function Pricing() {
     try {
       const baseUrl = getApiBaseUrl();
       const response = await fetch(`${baseUrl}/payments/checkout`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({
           productTier,
           successUrl: `${window.location.origin}/payment/success`,
@@ -106,7 +113,7 @@ export default function Pricing() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create checkout session');
+        throw new Error("Failed to create checkout session");
       }
 
       const data = await response.json();
@@ -115,10 +122,10 @@ export default function Pricing() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        throw new Error('No checkout URL returned');
+        throw new Error("No checkout URL returned");
       }
     } catch (error) {
-      console.error('Purchase error:', error);
+      console.error("Purchase error:", error);
       toast.error(`Failed to start checkout for ${tierName}`);
       setLoading(null);
     }
@@ -126,10 +133,7 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader
-        onBack={() => navigate('/')}
-        backLabel="Dashboard"
-      />
+      <PageHeader onBack={() => navigate("/")} backLabel="Dashboard" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
@@ -138,14 +142,14 @@ export default function Pricing() {
             Choose Your Practice Plan
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            {user?.subscriptionStatus === 'unlimited' ? (
+            {user?.subscriptionStatus === "unlimited" ? (
               <>You have unlimited interviews. No need to purchase more!</>
             ) : (
               <>
-                You have{' '}
+                You have{" "}
                 <span className="font-semibold text-foreground">
                   {user?.interviewsRemaining || 0} interviews
-                </span>{' '}
+                </span>{" "}
                 remaining. Purchase more to continue practicing.
               </>
             )}
@@ -158,7 +162,7 @@ export default function Pricing() {
             <Card
               key={tier.id}
               className={`relative flex flex-col ${
-                tier.popular ? 'border-primary shadow-lg scale-105' : ''
+                tier.popular ? "border-primary shadow-lg scale-105" : ""
               }`}
             >
               {tier.popular && (
@@ -177,7 +181,7 @@ export default function Pricing() {
                       {tier.pricePerInterview}
                     </p>
                   )}
-                  {tier.id === 'unlimited' && (
+                  {tier.id === "unlimited" && (
                     <p className="text-sm text-muted-foreground mt-1">/month</p>
                   )}
                 </div>
@@ -197,20 +201,22 @@ export default function Pricing() {
               <CardFooter>
                 <Button
                   className="w-full"
-                  variant={tier.popular ? 'default' : 'outline'}
+                  variant={tier.popular ? "default" : "outline"}
                   size="lg"
                   onClick={() => handlePurchase(tier.productTier, tier.name)}
-                  disabled={loading !== null || user?.subscriptionStatus === 'unlimited'}
+                  disabled={
+                    loading !== null || user?.subscriptionStatus === "unlimited"
+                  }
                 >
                   {loading === tier.productTier ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Loading...
                     </>
-                  ) : user?.subscriptionStatus === 'unlimited' ? (
-                    'Already Subscribed'
+                  ) : user?.subscriptionStatus === "unlimited" ? (
+                    "Already Subscribed"
                   ) : (
-                    'Get Started'
+                    "Get Started"
                   )}
                 </Button>
               </CardFooter>
@@ -227,19 +233,26 @@ export default function Pricing() {
             <div className="bg-card p-4 rounded-lg">
               <h4 className="font-medium mb-2">Do interview packs expire?</h4>
               <p className="text-sm text-muted-foreground">
-                No! Your interview credits never expire. Use them whenever you're ready.
+                No! Your interview credits never expire. Use them whenever
+                you're ready.
               </p>
             </div>
             <div className="bg-card p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Can I cancel the Pro Unlimited subscription?</h4>
+              <h4 className="font-medium mb-2">
+                Can I cancel the Pro Unlimited subscription?
+              </h4>
               <p className="text-sm text-muted-foreground">
-                Yes, you can cancel anytime. You'll retain access until the end of your billing period.
+                Yes, you can cancel anytime. You'll retain access until the end
+                of your billing period.
               </p>
             </div>
             <div className="bg-card p-4 rounded-lg">
-              <h4 className="font-medium mb-2">What payment methods do you accept?</h4>
+              <h4 className="font-medium mb-2">
+                What payment methods do you accept?
+              </h4>
               <p className="text-sm text-muted-foreground">
-                We accept all major credit cards through Stripe's secure payment processing.
+                We accept all major credit cards through Stripe's secure payment
+                processing.
               </p>
             </div>
           </div>

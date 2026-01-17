@@ -1,31 +1,31 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Reasoning, ReasoningTrigger, ReasoningContent } from './reasoning';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Reasoning, ReasoningTrigger, ReasoningContent } from "./reasoning";
 
 const meta: Meta<typeof Reasoning> = {
-  title: 'AI Components/Advanced Features/Reasoning',
+  title: "AI Components/Advanced Features/Reasoning",
   component: Reasoning,
   parameters: {
-    layout: 'padded',
+    layout: "padded",
     docs: {
       description: {
         component:
-          'Displays AI thinking/reasoning process with streaming support. Auto-opens when streaming starts and shows duration. Supports markdown content for detailed reasoning steps.',
+          "Displays AI thinking/reasoning process with streaming support. Auto-opens when streaming starts and shows duration. Supports markdown content for detailed reasoning steps.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     isStreaming: {
-      control: 'boolean',
-      description: 'Whether content is currently streaming',
+      control: "boolean",
+      description: "Whether content is currently streaming",
     },
     defaultOpen: {
-      control: 'boolean',
-      description: 'Whether initially expanded',
+      control: "boolean",
+      description: "Whether initially expanded",
     },
     duration: {
-      control: 'number',
-      description: 'Thinking duration in seconds',
+      control: "number",
+      description: "Thinking duration in seconds",
     },
   },
 };
@@ -52,7 +52,8 @@ export const Default: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Default reasoning component showing completed thinking (3 seconds).',
+        story:
+          "Default reasoning component showing completed thinking (3 seconds).",
       },
     },
   },
@@ -63,11 +64,9 @@ export const Streaming: Story = {
     <Reasoning {...args}>
       <ReasoningTrigger />
       <ReasoningContent>
-        Let me think about this step by step:
-
-1. First, I need to understand the scale requirements
-2. Then consider the data consistency model
-3. Finally, design the architecture with appropriate trade-offs
+        Let me think about this step by step: 1. First, I need to understand the
+        scale requirements 2. Then consider the data consistency model 3.
+        Finally, design the architecture with appropriate trade-offs
       </ReasoningContent>
     </Reasoning>
   ),
@@ -78,7 +77,8 @@ export const Streaming: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Reasoning in streaming state, showing "Thinking..." with auto-opened content.',
+        story:
+          'Reasoning in streaming state, showing "Thinking..." with auto-opened content.',
       },
     },
   },
@@ -124,7 +124,8 @@ This design provides good scalability while maintaining acceptable consistency g
   parameters: {
     docs: {
       description: {
-        story: 'Reasoning with detailed markdown content showing structured thinking process.',
+        story:
+          "Reasoning with detailed markdown content showing structured thinking process.",
       },
     },
   },
@@ -148,7 +149,7 @@ export const ShortThinking: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Quick reasoning that took only 1 second.',
+        story: "Quick reasoning that took only 1 second.",
       },
     },
   },
@@ -175,7 +176,7 @@ export const InitiallyOpen: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Reasoning component that starts expanded.',
+        story: "Reasoning component that starts expanded.",
       },
     },
   },
@@ -209,7 +210,8 @@ Based on this analysis, I recommend starting with the caching layer as it provid
   parameters: {
     docs: {
       description: {
-        story: 'Reasoning displayed within a message context, showing how AI thought through the problem.',
+        story:
+          "Reasoning displayed within a message context, showing how AI thought through the problem.",
       },
     },
   },

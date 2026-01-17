@@ -1,29 +1,33 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from "@storybook/react";
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from './conversation';
-import { Message, MessageContent, MessageAvatar } from './message';
-import { createMockConversation, MOCK_AVATAR_URLS, getMessageText } from './__stories__/mock-data';
+} from "./conversation";
+import { Message, MessageContent, MessageAvatar } from "./message";
+import {
+  createMockConversation,
+  MOCK_AVATAR_URLS,
+  getMessageText,
+} from "./__stories__/mock-data";
 
 const meta: Meta<typeof Conversation> = {
-  title: 'AI Components/Layout/Conversation',
+  title: "AI Components/Layout/Conversation",
   component: Conversation,
   parameters: {
-    layout: 'padded',
+    layout: "padded",
     docs: {
       description: {
         component:
-          'Scrollable chat container with sticky-to-bottom behavior. Automatically scrolls to bottom when new messages arrive and provides a scroll button to jump to bottom when user has scrolled up.',
+          "Scrollable chat container with sticky-to-bottom behavior. Automatically scrolls to bottom when new messages arrive and provides a scroll button to jump to bottom when user has scrolled up.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     className: {
-      control: 'text',
-      description: 'Additional CSS classes',
+      control: "text",
+      description: "Additional CSS classes",
     },
   },
 };
@@ -39,14 +43,14 @@ export const Default: Story = {
         <Conversation>
           <ConversationContent>
             {messages.map((msg, idx) => (
-              <Message key={idx} from={msg.role as 'user' | 'assistant'}>
+              <Message key={idx} from={msg.role as "user" | "assistant"}>
                 <MessageAvatar
                   src={
-                    msg.role === 'user'
+                    msg.role === "user"
                       ? MOCK_AVATAR_URLS.user
                       : MOCK_AVATAR_URLS.assistant
                   }
-                  name={msg.role === 'user' ? 'User' : 'AI'}
+                  name={msg.role === "user" ? "User" : "AI"}
                 />
                 <MessageContent>{getMessageText(msg)}</MessageContent>
               </Message>
@@ -60,7 +64,7 @@ export const Default: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Default conversation with a few messages.',
+        story: "Default conversation with a few messages.",
       },
     },
   },
@@ -74,14 +78,14 @@ export const ManyMessages: Story = {
         <Conversation>
           <ConversationContent>
             {messages.map((msg, idx) => (
-              <Message key={idx} from={msg.role as 'user' | 'assistant'}>
+              <Message key={idx} from={msg.role as "user" | "assistant"}>
                 <MessageAvatar
                   src={
-                    msg.role === 'user'
+                    msg.role === "user"
                       ? MOCK_AVATAR_URLS.user
                       : MOCK_AVATAR_URLS.assistant
                   }
-                  name={msg.role === 'user' ? 'User' : 'AI'}
+                  name={msg.role === "user" ? "User" : "AI"}
                 />
                 <MessageContent>{getMessageText(msg)}</MessageContent>
               </Message>
@@ -96,7 +100,7 @@ export const ManyMessages: Story = {
     docs: {
       description: {
         story:
-          'Conversation with many messages requiring scrolling. Scroll up to see the floating scroll-to-bottom button appear.',
+          "Conversation with many messages requiring scrolling. Scroll up to see the floating scroll-to-bottom button appear.",
       },
     },
   },
@@ -114,14 +118,14 @@ export const WithScrollButton: Story = {
                 Scroll up to see the "Scroll to bottom" button appear
               </div>
               {messages.map((msg, idx) => (
-                <Message key={idx} from={msg.role as 'user' | 'assistant'}>
+                <Message key={idx} from={msg.role as "user" | "assistant"}>
                   <MessageAvatar
                     src={
-                      msg.role === 'user'
+                      msg.role === "user"
                         ? MOCK_AVATAR_URLS.user
                         : MOCK_AVATAR_URLS.assistant
                     }
-                    name={msg.role === 'user' ? 'User' : 'AI'}
+                    name={msg.role === "user" ? "User" : "AI"}
                   />
                   <MessageContent>{getMessageText(msg)}</MessageContent>
                 </Message>
@@ -137,7 +141,7 @@ export const WithScrollButton: Story = {
     docs: {
       description: {
         story:
-          'Demonstration of the scroll-to-bottom button. Scroll up to make it visible, click to return to bottom.',
+          "Demonstration of the scroll-to-bottom button. Scroll up to make it visible, click to return to bottom.",
       },
     },
   },
@@ -159,7 +163,7 @@ export const EmptyConversation: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Empty conversation state before any messages are sent.',
+        story: "Empty conversation state before any messages are sent.",
       },
     },
   },
@@ -169,22 +173,22 @@ export const WithLongMessages: Story = {
   render: () => {
     const messages = [
       {
-        id: '1',
-        role: 'user' as const,
+        id: "1",
+        role: "user" as const,
         parts: [
           {
-            type: 'text' as const,
-            text: 'Can you explain distributed systems architecture in detail?',
+            type: "text" as const,
+            text: "Can you explain distributed systems architecture in detail?",
           },
         ],
         createdAt: new Date(),
       },
       {
-        id: '2',
-        role: 'assistant' as const,
+        id: "2",
+        role: "assistant" as const,
         parts: [
           {
-            type: 'text' as const,
+            type: "text" as const,
             text: `Distributed systems architecture involves multiple interconnected components working together to achieve a common goal. Here are the key principles:
 
 ## Core Components
@@ -222,14 +226,14 @@ Each pattern has specific use cases and trade-offs that must be considered based
         <Conversation>
           <ConversationContent>
             {messages.map((msg, idx) => (
-              <Message key={idx} from={msg.role as 'user' | 'assistant'}>
+              <Message key={idx} from={msg.role as "user" | "assistant"}>
                 <MessageAvatar
                   src={
-                    msg.role === 'user'
+                    msg.role === "user"
                       ? MOCK_AVATAR_URLS.user
                       : MOCK_AVATAR_URLS.assistant
                   }
-                  name={msg.role === 'user' ? 'User' : 'AI'}
+                  name={msg.role === "user" ? "User" : "AI"}
                 />
                 <MessageContent>{getMessageText(msg as any)}</MessageContent>
               </Message>
@@ -243,7 +247,8 @@ Each pattern has specific use cases and trade-offs that must be considered based
   parameters: {
     docs: {
       description: {
-        story: 'Conversation with longer, more detailed messages including markdown.',
+        story:
+          "Conversation with longer, more detailed messages including markdown.",
       },
     },
   },
@@ -264,14 +269,14 @@ export const InChatInterface: Story = {
         <Conversation className="flex-1">
           <ConversationContent>
             {messages.map((msg, idx) => (
-              <Message key={idx} from={msg.role as 'user' | 'assistant'}>
+              <Message key={idx} from={msg.role as "user" | "assistant"}>
                 <MessageAvatar
                   src={
-                    msg.role === 'user'
+                    msg.role === "user"
                       ? MOCK_AVATAR_URLS.user
                       : MOCK_AVATAR_URLS.assistant
                   }
-                  name={msg.role === 'user' ? 'User' : 'AI'}
+                  name={msg.role === "user" ? "User" : "AI"}
                 />
                 <MessageContent>{getMessageText(msg)}</MessageContent>
               </Message>
@@ -299,9 +304,9 @@ export const InChatInterface: Story = {
     docs: {
       description: {
         story:
-          'Conversation component integrated into a complete chat interface with header and input.',
+          "Conversation component integrated into a complete chat interface with header and input.",
       },
     },
-    layout: 'centered',
+    layout: "centered",
   },
 };

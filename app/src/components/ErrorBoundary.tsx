@@ -1,14 +1,14 @@
-import { Component, type ReactNode } from 'react';
-import { ApiError } from '@/api/client';
-import { ForbiddenState } from '@/pages/shared/ForbiddenState';
-import { NotFoundState } from '@/pages/shared/NotFoundState';
-import { ErrorState } from '@/pages/shared/ErrorState';
+import { Component, type ReactNode } from "react";
+import { ApiError } from "@/api/client";
+import { ForbiddenState } from "@/pages/shared/ForbiddenState";
+import { NotFoundState } from "@/pages/shared/NotFoundState";
+import { ErrorState } from "@/pages/shared/ErrorState";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
   onReset?: () => void;
   onBackToHome: () => void;
-  context?: 'interview' | 'feedback';
+  context?: "interview" | "feedback";
 }
 
 interface ErrorBoundaryState {
@@ -16,7 +16,10 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -27,7 +30,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
   handleRetry = () => {
@@ -49,13 +52,22 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
         // 404 Not Found
         if (error.status === 404) {
-          const title = context === 'interview' ? 'Interview Not Found' : 'Feedback Not Found';
+          const title =
+            context === "interview"
+              ? "Interview Not Found"
+              : "Feedback Not Found";
           const message =
-            context === 'interview'
+            context === "interview"
               ? "The interview you're looking for doesn't exist or has been removed."
               : "The feedback you're looking for doesn't exist or hasn't been generated yet.";
 
-          return <NotFoundState onBackToHome={onBackToHome} title={title} message={message} />;
+          return (
+            <NotFoundState
+              onBackToHome={onBackToHome}
+              title={title}
+              message={message}
+            />
+          );
         }
       }
 

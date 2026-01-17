@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from "@storybook/react";
 import {
   PromptInput,
   PromptInputTextarea,
@@ -11,30 +11,30 @@ import {
   PromptInputModelSelectContent,
   PromptInputModelSelectItem,
   PromptInputModelSelectValue,
-} from './prompt-input';
-import { PaperclipIcon, MicIcon } from 'lucide-react';
+} from "./prompt-input";
+import { PaperclipIcon, MicIcon } from "lucide-react";
 
 const meta: Meta<typeof PromptInput> = {
-  title: 'AI Components/Interactive/PromptInput',
+  title: "AI Components/Interactive/PromptInput",
   component: PromptInput,
   parameters: {
-    layout: 'padded',
+    layout: "padded",
     docs: {
       description: {
         component:
-          'A comprehensive form input component for chat interfaces. Supports textarea input, toolbar with actions, model selection, and various submission states (idle, submitting, streaming, error).',
+          "A comprehensive form input component for chat interfaces. Supports textarea input, toolbar with actions, model selection, and various submission states (idle, submitting, streaming, error).",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     onSubmit: {
-      action: 'submitted',
-      description: 'Form submission handler',
+      action: "submitted",
+      description: "Form submission handler",
     },
     className: {
-      control: 'text',
-      description: 'Additional CSS classes',
+      control: "text",
+      description: "Additional CSS classes",
     },
   },
 };
@@ -67,7 +67,7 @@ export const WithPlaceholder: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Input with custom placeholder text.',
+        story: "Input with custom placeholder text.",
       },
     },
   },
@@ -89,7 +89,7 @@ export const Submitting: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Input in submitting state with spinner icon.',
+        story: "Input in submitting state with spinner icon.",
       },
     },
   },
@@ -112,7 +112,7 @@ export const Streaming: Story = {
     docs: {
       description: {
         story:
-          'Input in streaming state showing stop square icon to cancel streaming.',
+          "Input in streaming state showing stop square icon to cancel streaming.",
       },
     },
   },
@@ -134,7 +134,7 @@ export const ErrorState: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Input in error state showing X icon.',
+        story: "Input in error state showing X icon.",
       },
     },
   },
@@ -146,11 +146,11 @@ export const WithToolbar: Story = {
       <PromptInputTextarea placeholder="What would you like to know?" />
       <PromptInputToolbar>
         <PromptInputTools>
-          <PromptInputButton onClick={() => console.log('Attach file')}>
+          <PromptInputButton onClick={() => console.log("Attach file")}>
             <PaperclipIcon className="size-4" />
             Attach
           </PromptInputButton>
-          <PromptInputButton onClick={() => console.log('Voice input')}>
+          <PromptInputButton onClick={() => console.log("Voice input")}>
             <MicIcon className="size-4" />
           </PromptInputButton>
         </PromptInputTools>
@@ -161,7 +161,7 @@ export const WithToolbar: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Input with toolbar buttons for attachments and voice input.',
+        story: "Input with toolbar buttons for attachments and voice input.",
       },
     },
   },
@@ -197,7 +197,7 @@ export const WithModelSelect: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Input with model selector dropdown in toolbar.',
+        story: "Input with model selector dropdown in toolbar.",
       },
     },
   },
@@ -222,10 +222,10 @@ export const WithFullToolbar: Story = {
               </PromptInputModelSelectItem>
             </PromptInputModelSelectContent>
           </PromptInputModelSelect>
-          <PromptInputButton onClick={() => console.log('Attach')}>
+          <PromptInputButton onClick={() => console.log("Attach")}>
             <PaperclipIcon className="size-4" />
           </PromptInputButton>
-          <PromptInputButton onClick={() => console.log('Voice')}>
+          <PromptInputButton onClick={() => console.log("Voice")}>
             <MicIcon className="size-4" />
           </PromptInputButton>
         </PromptInputTools>
@@ -237,7 +237,7 @@ export const WithFullToolbar: Story = {
     docs: {
       description: {
         story:
-          'Complete toolbar with model selector, attachment, and voice input buttons.',
+          "Complete toolbar with model selector, attachment, and voice input buttons.",
       },
     },
   },
@@ -246,10 +246,7 @@ export const WithFullToolbar: Story = {
 export const Disabled: Story = {
   render: () => (
     <PromptInput onSubmit={(e) => e.preventDefault()}>
-      <PromptInputTextarea
-        placeholder="Chat is disabled"
-        disabled
-      />
+      <PromptInputTextarea placeholder="Chat is disabled" disabled />
       <PromptInputToolbar>
         <PromptInputTools />
         <PromptInputSubmit disabled />
@@ -259,7 +256,7 @@ export const Disabled: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Disabled input state (e.g., when interview is completed).',
+        story: "Disabled input state (e.g., when interview is completed).",
       },
     },
   },
@@ -271,7 +268,7 @@ export const Interactive: Story = {
       onSubmit={(e) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
-        alert(`Submitted: ${formData.get('message')}`);
+        alert(`Submitted: ${formData.get("message")}`);
       }}
     >
       <PromptInputTextarea placeholder="Type your message and press Enter..." />
@@ -285,7 +282,7 @@ export const Interactive: Story = {
     docs: {
       description: {
         story:
-          'Interactive demonstration with form submission. Type text and submit using Enter or button click.',
+          "Interactive demonstration with form submission. Type text and submit using Enter or button click.",
       },
     },
   },
@@ -326,9 +323,9 @@ export const InChatContext: Story = {
     docs: {
       description: {
         story:
-          'PromptInput shown in a complete chat interface context, demonstrating typical usage at the bottom of a conversation.',
+          "PromptInput shown in a complete chat interface context, demonstrating typical usage at the bottom of a conversation.",
       },
     },
-    layout: 'centered',
+    layout: "centered",
   },
 };

@@ -1,6 +1,12 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShieldOff } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ShieldOff } from "lucide-react";
 
 interface ForbiddenStateProps {
   onBackToHome: () => void;
@@ -9,7 +15,7 @@ interface ForbiddenStateProps {
 
 export function ForbiddenState({
   onBackToHome,
-  message = "You don't have permission to access this interview."
+  message = "You don't have permission to access this interview.",
 }: ForbiddenStateProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
@@ -19,9 +25,7 @@ export function ForbiddenState({
             <ShieldOff className="h-full w-full" />
           </div>
           <CardTitle className="text-center">Access Denied</CardTitle>
-          <CardDescription className="text-center">
-            {message}
-          </CardDescription>
+          <CardDescription className="text-center">{message}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button onClick={onBackToHome} className="w-full">

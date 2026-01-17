@@ -1,5 +1,5 @@
-import type { Decorator } from '@storybook/react';
-import { StickToBottom } from 'use-stick-to-bottom';
+import type { Decorator } from "@storybook/react";
+import { StickToBottom } from "use-stick-to-bottom";
 
 /**
  * Decorator that adds padding around the story

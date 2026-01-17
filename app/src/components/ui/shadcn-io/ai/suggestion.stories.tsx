@@ -1,38 +1,38 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Suggestions, Suggestion } from './suggestion';
-import { MOCK_SUGGESTIONS } from './__stories__/mock-data';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Suggestions, Suggestion } from "./suggestion";
+import { MOCK_SUGGESTIONS } from "./__stories__/mock-data";
 
 const meta: Meta<typeof Suggestion> = {
-  title: 'AI Components/Interactive/Suggestion',
+  title: "AI Components/Interactive/Suggestion",
   component: Suggestion,
   parameters: {
-    layout: 'padded',
+    layout: "padded",
     docs: {
       description: {
         component:
-          'Displays suggested follow-up prompts or questions that users can click to continue the conversation. Typically shown in a horizontal scrollable container.',
+          "Displays suggested follow-up prompts or questions that users can click to continue the conversation. Typically shown in a horizontal scrollable container.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     suggestion: {
-      control: 'text',
-      description: 'The suggestion text to display',
+      control: "text",
+      description: "The suggestion text to display",
     },
     variant: {
-      control: 'select',
-      options: ['default', 'outline', 'secondary', 'ghost'],
-      description: 'Button variant style',
+      control: "select",
+      options: ["default", "outline", "secondary", "ghost"],
+      description: "Button variant style",
     },
     size: {
-      control: 'select',
-      options: ['sm', 'default', 'lg'],
-      description: 'Button size',
+      control: "select",
+      options: ["sm", "default", "lg"],
+      description: "Button size",
     },
     onClick: {
-      action: 'clicked',
-      description: 'Callback function when suggestion is clicked',
+      action: "clicked",
+      description: "Callback function when suggestion is clicked",
     },
   },
 };
@@ -42,8 +42,8 @@ type Story = StoryObj<typeof Suggestion>;
 
 export const Default: Story = {
   args: {
-    suggestion: 'How does caching improve performance?',
-    onClick: (suggestion) => console.log('Clicked:', suggestion),
+    suggestion: "How does caching improve performance?",
+    onClick: (suggestion) => console.log("Clicked:", suggestion),
   },
 };
 
@@ -54,7 +54,7 @@ export const MultipleSuggestions: Story = {
         <Suggestion
           key={index}
           suggestion={suggestion}
-          onClick={(s) => console.log('Clicked:', s)}
+          onClick={(s) => console.log("Clicked:", s)}
         />
       ))}
     </Suggestions>
@@ -63,7 +63,7 @@ export const MultipleSuggestions: Story = {
     docs: {
       description: {
         story:
-          'Multiple suggestions displayed in a horizontally scrollable container.',
+          "Multiple suggestions displayed in a horizontally scrollable container.",
       },
     },
   },
@@ -74,15 +74,15 @@ export const WithLongText: Story = {
     <Suggestions>
       <Suggestion
         suggestion="Can you explain in detail how the CAP theorem affects distributed system design?"
-        onClick={(s) => console.log('Clicked:', s)}
+        onClick={(s) => console.log("Clicked:", s)}
       />
       <Suggestion
         suggestion="What are the trade-offs?"
-        onClick={(s) => console.log('Clicked:', s)}
+        onClick={(s) => console.log("Clicked:", s)}
       />
       <Suggestion
         suggestion="Tell me more about consistency models in distributed databases"
-        onClick={(s) => console.log('Clicked:', s)}
+        onClick={(s) => console.log("Clicked:", s)}
       />
     </Suggestions>
   ),
@@ -90,7 +90,7 @@ export const WithLongText: Story = {
     docs: {
       description: {
         story:
-          'Suggestions with varying text lengths, demonstrating how the component handles long and short text.',
+          "Suggestions with varying text lengths, demonstrating how the component handles long and short text.",
       },
     },
   },
@@ -100,7 +100,9 @@ export const WithCustomVariant: Story = {
   render: () => (
     <div className="space-y-4">
       <div>
-        <div className="text-sm text-muted-foreground mb-2">Outline (default)</div>
+        <div className="text-sm text-muted-foreground mb-2">
+          Outline (default)
+        </div>
         <Suggestions>
           <Suggestion suggestion="Outline variant" variant="outline" />
           <Suggestion suggestion="Another suggestion" variant="outline" />
@@ -135,7 +137,7 @@ export const WithCustomVariant: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Suggestions with different button variants.',
+        story: "Suggestions with different button variants.",
       },
     },
   },
@@ -162,7 +164,7 @@ export const Interactive: Story = {
     docs: {
       description: {
         story:
-          'Interactive demonstration of suggestion clicks. Each button shows an alert when clicked.',
+          "Interactive demonstration of suggestion clicks. Each button shows an alert when clicked.",
       },
     },
   },
@@ -187,7 +189,7 @@ export const InChatContext: Story = {
             <Suggestion
               key={index}
               suggestion={suggestion}
-              onClick={(s) => console.log('Selected suggestion:', s)}
+              onClick={(s) => console.log("Selected suggestion:", s)}
             />
           ))}
         </Suggestions>
@@ -198,7 +200,7 @@ export const InChatContext: Story = {
     docs: {
       description: {
         story:
-          'Suggestions displayed in a chat context, showing typical placement after an AI message.',
+          "Suggestions displayed in a chat context, showing typical placement after an AI message.",
       },
     },
   },

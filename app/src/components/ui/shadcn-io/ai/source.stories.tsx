@@ -1,19 +1,19 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Sources, SourcesTrigger, SourcesContent, Source } from './source';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Sources, SourcesTrigger, SourcesContent, Source } from "./source";
 
 const meta: Meta<typeof Sources> = {
-  title: 'AI Components/Content Display/Source',
+  title: "AI Components/Content Display/Source",
   component: Sources,
   parameters: {
-    layout: 'padded',
+    layout: "padded",
     docs: {
       description: {
         component:
-          'Collapsible component for displaying source citations and references. Shows a count of sources used and expands to reveal links to each source.',
+          "Collapsible component for displaying source citations and references. Shows a count of sources used and expands to reveal links to each source.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 };
 
 export default meta;
@@ -42,7 +42,7 @@ export const Default: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Default sources component with 3 source links.',
+        story: "Default sources component with 3 source links.",
       },
     },
   },
@@ -63,7 +63,7 @@ export const SingleSource: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Sources with a single reference.',
+        story: "Sources with a single reference.",
       },
     },
   },
@@ -74,20 +74,26 @@ export const ManySources: Story = {
     <Sources>
       <SourcesTrigger count={7} />
       <SourcesContent>
-        <Source href="https://example.com/1" title="Microservices Architecture" />
+        <Source
+          href="https://example.com/1"
+          title="Microservices Architecture"
+        />
         <Source href="https://example.com/2" title="Event Sourcing" />
         <Source href="https://example.com/3" title="CQRS Pattern" />
         <Source href="https://example.com/4" title="API Gateway Design" />
         <Source href="https://example.com/5" title="Service Mesh" />
         <Source href="https://example.com/6" title="Circuit Breaker Pattern" />
-        <Source href="https://example.com/7" title="Load Balancing Strategies" />
+        <Source
+          href="https://example.com/7"
+          title="Load Balancing Strategies"
+        />
       </SourcesContent>
     </Sources>
   ),
   parameters: {
     docs: {
       description: {
-        story: 'Sources with many references.',
+        story: "Sources with many references.",
       },
     },
   },
@@ -109,7 +115,7 @@ export const CustomTrigger: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Sources with custom trigger content.',
+        story: "Sources with custom trigger content.",
       },
     },
   },
@@ -144,7 +150,7 @@ export const InMessageContext: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Sources displayed within a message context.',
+        story: "Sources displayed within a message context.",
       },
     },
   },

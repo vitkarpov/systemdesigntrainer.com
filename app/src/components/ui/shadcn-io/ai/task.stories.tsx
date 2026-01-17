@@ -1,23 +1,23 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Task, TaskTrigger, TaskContent, TaskItem, TaskItemFile } from './task';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Task, TaskTrigger, TaskContent, TaskItem, TaskItemFile } from "./task";
 
 const meta: Meta<typeof Task> = {
-  title: 'AI Components/Advanced Features/Task',
+  title: "AI Components/Advanced Features/Task",
   component: Task,
   parameters: {
-    layout: 'padded',
+    layout: "padded",
     docs: {
       description: {
         component:
-          'Collapsible task tracker component showing progress on AI operations. Displays task title, status, and details with file references.',
+          "Collapsible task tracker component showing progress on AI operations. Displays task title, status, and details with file references.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     defaultOpen: {
-      control: 'boolean',
-      description: 'Whether the task is initially expanded',
+      control: "boolean",
+      description: "Whether the task is initially expanded",
     },
   },
 };
@@ -32,7 +32,7 @@ export const Default: Story = {
       <TaskContent>
         <TaskItem>Found 5 files with authentication code</TaskItem>
         <TaskItem>
-          Main authentication handler:{' '}
+          Main authentication handler:{" "}
           <TaskItemFile>src/auth/handler.ts</TaskItemFile>
         </TaskItem>
         <TaskItem>
@@ -44,7 +44,7 @@ export const Default: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Default task with search results and file references.',
+        story: "Default task with search results and file references.",
       },
     },
   },
@@ -64,7 +64,7 @@ export const InitiallyOpen: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Task that is initially expanded.',
+        story: "Task that is initially expanded.",
       },
     },
   },
@@ -77,15 +77,15 @@ export const WithMultipleFiles: Story = {
       <TaskContent>
         <TaskItem>Located 12 database query files</TaskItem>
         <TaskItem>
-          User queries: <TaskItemFile>db/users.ts</TaskItemFile>{' '}
+          User queries: <TaskItemFile>db/users.ts</TaskItemFile>{" "}
           <TaskItemFile>db/auth.ts</TaskItemFile>
         </TaskItem>
         <TaskItem>
-          Product queries: <TaskItemFile>db/products.ts</TaskItemFile>{' '}
+          Product queries: <TaskItemFile>db/products.ts</TaskItemFile>{" "}
           <TaskItemFile>db/inventory.ts</TaskItemFile>
         </TaskItem>
         <TaskItem>
-          Order queries: <TaskItemFile>db/orders.ts</TaskItemFile>{' '}
+          Order queries: <TaskItemFile>db/orders.ts</TaskItemFile>{" "}
           <TaskItemFile>db/payments.ts</TaskItemFile>
         </TaskItem>
       </TaskContent>
@@ -94,7 +94,7 @@ export const WithMultipleFiles: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Task with multiple file references per item.',
+        story: "Task with multiple file references per item.",
       },
     },
   },
@@ -139,7 +139,7 @@ export const MultipleTasks: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Multiple tasks showing different operations and statuses.',
+        story: "Multiple tasks showing different operations and statuses.",
       },
     },
   },
@@ -178,7 +178,7 @@ export const InMessageContext: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Task displayed within an AI message context.',
+        story: "Task displayed within an AI message context.",
       },
     },
   },
