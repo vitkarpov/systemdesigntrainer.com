@@ -122,6 +122,48 @@ const formattedDate = publishDate ? new Date(publishDate + 'T00:00:00').toLocale
     font-style: italic;
     color: rgb(226, 232, 240);
   }
+
+  .blog-content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    background-color: rgba(30, 41, 59, 0.5);
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
+  .blog-content :global(thead) {
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+
+  .blog-content :global(th) {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    text-align: left;
+    padding: 1rem;
+    border-bottom: 2px solid rgb(51, 65, 85);
+  }
+
+  .blog-content :global(td) {
+    font-size: 1rem;
+    color: rgb(226, 232, 240);
+    padding: 1rem;
+    border-bottom: 1px solid rgb(51, 65, 85);
+  }
+
+  .blog-content :global(tbody tr:hover) {
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+
+  .blog-content :global(tbody tr:last-child td) {
+    border-bottom: none;
+  }
+
+  .blog-content :global(td strong) {
+    color: white;
+  }
 </style>
 
 <Layout title={title} description={description}>

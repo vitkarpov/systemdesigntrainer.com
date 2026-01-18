@@ -1,0 +1,777 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Layout
+  title="System Design Interview Questions - Complete Resource Guide"
+  description="Comprehensive collection of 20+ system design interview questions from FAANG companies. Includes approach strategies, key concepts, trade-offs, and practice tips for each question."
+>
+  <main class="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+    <!-- Navigation -->
+    <nav class="border-b border-slate-200">
+      <div class="max-w-5xl mx-auto px-4 py-4">
+        <a href="/" class="text-blue-600 hover:text-blue-700 transition-colors font-medium">
+          ← Back to Home
+        </a>
+      </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="max-w-5xl mx-auto px-4 py-12">
+      <h1 class="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+        System Design Interview Questions
+      </h1>
+      <p class="text-xl text-slate-600 max-w-3xl leading-relaxed">
+        A comprehensive resource of the most frequently asked system design interview questions at Google, Meta, Amazon, Netflix, and other top tech companies. Each question includes difficulty level, approach strategies, key concepts, and what interviewers are looking for.
+      </p>
+      <div class="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+        <p class="text-slate-700 mb-4">
+          <strong>How to use this resource:</strong> Start with questions in your target difficulty level. Read the approach outline, understand the key concepts, then practice designing the system out loud. The best preparation comes from doing realistic mock interviews where you explain your design under time pressure.
+        </p>
+        <a
+          href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=questions&utm_campaign=practice"
+          class="inline-flex items-center justify-center px-6 py-3 text-base font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+        >
+          Practice with AI Mock Interviews →
+        </a>
+      </div>
+    </header>
+
+    <!-- Table of Contents -->
+    <section class="max-w-5xl mx-auto px-4 py-8">
+      <div class="bg-slate-100 border border-slate-200 rounded-lg p-6">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Table of Contents</h2>
+        <div class="grid md:grid-cols-2 gap-4 text-slate-700">
+          <div>
+            <a href="#social-networks" class="block hover:text-blue-600 transition-colors mb-2">
+              <strong>Social Networks</strong> (6 questions)
+            </a>
+            <a href="#infrastructure" class="block hover:text-blue-600 transition-colors mb-2">
+              <strong>Infrastructure</strong> (6 questions)
+            </a>
+          </div>
+          <div>
+            <a href="#communication" class="block hover:text-blue-600 transition-colors mb-2">
+              <strong>Communication</strong> (4 questions)
+            </a>
+            <a href="#ecommerce" class="block hover:text-blue-600 transition-colors mb-2">
+              <strong>E-commerce</strong> (4 questions)
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Social Networks Category -->
+    <section id="social-networks" class="max-w-5xl mx-auto px-4 py-12">
+      <h2 class="text-3xl font-bold text-slate-900 mb-8 border-b-4 border-blue-600 pb-2">
+        Social Networks
+      </h2>
+
+      <!-- Twitter -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design Twitter</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium</span>
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">Very High Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Meta, Google, Netflix, Amazon, Uber, most FAANG companies
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Timeline generation, fanout strategies (push vs pull), caching, database sharding, celebrity problem, news feed ranking
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <h4 class="text-lg font-semibold text-slate-900 mt-6 mb-3">Approach Outline</h4>
+
+          <p class="mb-4">
+            Start by clarifying functional requirements: posting tweets (280 chars), following users, timeline viewing, likes/retweets. For non-functional requirements, assume 300M daily active users, high read-to-write ratio (100:1), and real-time timeline updates within seconds.
+          </p>
+
+          <p class="mb-4">
+            The core challenge is timeline generation. For posting, store tweets in a distributed database (Cassandra/DynamoDB) and decide between fanout-on-write (push) or fanout-on-read (pull). Most designs use hybrid: fanout-on-write for regular users (pre-compute timelines and push to followers' feeds) but fanout-on-read for celebrities (too many followers to fanout). This solves the "celebrity problem" where a user with 50M followers would trigger 50M writes per tweet.
+          </p>
+
+          <p class="mb-4">
+            For timeline retrieval, check Redis cache first for pre-computed timelines. Cache hit means instant response. Cache miss means aggregate recent tweets from followed users, merge by timestamp, and cache the result. Use a CDN for media content (images/videos). Shard the database by user ID to distribute load. Implement pagination for timelines to avoid loading millions of tweets at once.
+          </p>
+
+          <p>
+            The tweet posting flow: User posts → Store in tweets DB → Fanout service reads user's followers → Write to followers' timeline cache → Send push notifications. Timeline retrieval: User requests timeline → Check Redis cache → Return cached timeline or fetch and merge from followed users' recent tweets → Cache result.
+          </p>
+
+          <h4 class="text-lg font-semibold text-slate-900 mt-6 mb-3">Critical Trade-offs</h4>
+          <ul class="list-disc pl-6 mb-4">
+            <li><strong>Fanout-on-write vs fanout-on-read:</strong> Write amplification vs read complexity. Hybrid approach balances both.</li>
+            <li><strong>Eventual consistency:</strong> Accept slight delays in timeline updates for better scalability and availability.</li>
+            <li><strong>Cache eviction:</strong> LRU policy for timeline cache, but keep active users' timelines hot.</li>
+          </ul>
+
+          <h4 class="text-lg font-semibold text-slate-900 mt-6 mb-3">Common Mistakes</h4>
+          <ul class="list-disc pl-6 mb-4">
+            <li>Not discussing the celebrity problem and using only fanout-on-write</li>
+            <li>Forgetting to mention caching strategy for timelines</li>
+            <li>Ignoring media storage and CDN for images/videos</li>
+            <li>Not considering database sharding at scale</li>
+          </ul>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=twitter&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing Twitter with AI →
+        </a>
+      </article>
+
+      <!-- Instagram -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design Instagram</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium</span>
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">Very High Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Meta, Pinterest, Snapchat, TikTok, ByteDance
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Image storage and processing, feed ranking algorithms, CDN strategy, news feed generation, engagement tracking
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <h4 class="text-lg font-semibold text-slate-900 mt-6 mb-3">Approach Outline</h4>
+
+          <p class="mb-4">
+            Instagram is similar to Twitter but image-heavy with feed ranking. Start with requirements: posting photos (up to 10 per post), following users, feed viewing, likes/comments, stories (24-hour expiry), and explore page. For scale, assume 500M daily active users, heavily read-focused, with strict latency requirements for image loading.
+          </p>
+
+          <p class="mb-4">
+            The critical difference from Twitter is the image processing pipeline. When a user uploads a photo, store the original in blob storage (S3), then trigger an async job to generate multiple resolutions (thumbnail 150x150, medium 640x640, full 1080x1080) for different use cases (feed thumbnail vs full view). Use a CDN aggressively since images are static and cacheable. Consider serving images from the CDN edge closest to the user for minimal latency.
+          </p>
+
+          <p class="mb-4">
+            For the feed, implement a ranking algorithm instead of pure chronological order. Factors include: recency (newer posts rank higher), relationship strength (close friends rank higher), engagement likelihood (predict based on past behavior), and content type (user prefers photos vs videos). Use a machine learning model trained on user engagement data. Cache ranked feeds in Redis, pre-compute for active users. Separate feed generation service from image serving for independent scaling.
+          </p>
+
+          <p>
+            Stories require different architecture: 24-hour TTL, priority on latest stories, separate storage with expiration. Explore page uses a recommendation engine analyzing user interests, trending content, and collaborative filtering. Track all engagement events (likes, comments, saves, shares) in a separate analytics pipeline (Kafka + data warehouse) for feed ranking and recommendations.
+          </p>
+
+          <h4 class="text-lg font-semibold text-slate-900 mt-6 mb-3">Critical Trade-offs</h4>
+          <ul class="list-disc pl-6 mb-4">
+            <li><strong>Storage costs vs image quality:</strong> Multiple resolutions increase storage but improve UX and reduce bandwidth.</li>
+            <li><strong>Chronological vs ranked feed:</strong> Ranked feed improves engagement but adds complexity and may create filter bubbles.</li>
+            <li><strong>CDN costs vs latency:</strong> Aggressive CDN caching costs more but provides better user experience globally.</li>
+          </ul>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=instagram&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing Instagram with AI →
+        </a>
+      </article>
+
+      <!-- Facebook Feed -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design Facebook News Feed</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-orange-100 text-orange-800 text-sm font-semibold rounded">Medium-Hard</span>
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">High Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Meta, LinkedIn, Reddit, Twitter, Pinterest
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Feed ranking, personalization, ML models, content diversity, real-time updates, ad integration
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Facebook News Feed is more complex than Twitter due to diverse content types (posts, photos, videos, shared articles, ads) and sophisticated ranking. Use hybrid fanout with heavy emphasis on personalized ranking. Feed generation service aggregates potential posts, then ranking service scores each post using ML model considering engagement probability, content freshness, relationship strength, content diversity, and ad placement. Prefetch and pre-rank feeds for active users. Handle ads separately with targeting criteria and frequency caps.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=facebook&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing Facebook Feed with AI →
+        </a>
+      </article>
+
+      <!-- TikTok -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design TikTok</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">Hard</span>
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> TikTok, Instagram (Reels), YouTube (Shorts), Snapchat
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Short video streaming, recommendation algorithm, content moderation, viral content detection, video transcoding
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            TikTok combines video streaming with highly personalized recommendations. Video upload triggers transcoding to multiple formats and resolutions. The "For You" feed is the core feature—ML-based recommendation using collaborative filtering, content-based filtering, and real-time signals (watch time, completion rate, likes, shares). Prefetch next 3-5 videos for seamless swipe experience. Track engagement metrics aggressively to feed recommendation model. Implement content moderation (ML + human review) to filter inappropriate content. Handle viral detection to scale infrastructure proactively when videos explode in popularity.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=tiktok&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing TikTok with AI →
+        </a>
+      </article>
+
+      <!-- Reddit -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design Reddit</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium</span>
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Reddit, Hacker News, Stack Overflow, Discord
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Voting system, ranking algorithm (hot/top/controversial), threaded comments, subreddit isolation, moderation
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Reddit's unique challenge is the voting-based ranking system. Posts have upvotes/downvotes that determine visibility. Implement ranking algorithms: "Hot" (upvotes with time decay), "Top" (net upvotes in time period), "Controversial" (high upvotes AND downvotes). Store posts in database with vote counts, update rankings periodically (not real-time to prevent gaming). Threaded comments require parent-child relationships in data model—use nested sets or path enumeration for efficient retrieval. Isolate subreddits as separate namespaces. Cache hot posts per subreddit. Implement moderation tools and spam detection.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=reddit&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing Reddit with AI →
+        </a>
+      </article>
+
+      <!-- LinkedIn -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design LinkedIn Feed</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium</span>
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> LinkedIn, Twitter, Meta
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Professional network graph, connection recommendations, job recommendations, feed ranking by professional relevance
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            LinkedIn combines social feed with job search and professional networking. Feed ranking prioritizes professional content—industry news, career updates, thought leadership. Use graph database for connection network and "People You May Know" recommendations (mutual connections, shared employers/schools). Job recommendation engine matches user profile (skills, experience, location) with job postings. Search functionality for people, companies, and jobs using Elasticsearch. Feed includes posts from connections, company pages, and sponsored content. Track engagement differently than consumer social—article reads and thoughtful comments weight higher than likes.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=linkedin&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing LinkedIn with AI →
+        </a>
+      </article>
+    </section>
+
+    <!-- Infrastructure Category -->
+    <section id="infrastructure" class="max-w-5xl mx-auto px-4 py-12 bg-slate-50">
+      <h2 class="text-3xl font-bold text-slate-900 mb-8 border-b-4 border-green-600 pb-2">
+        Infrastructure & Core Systems
+      </h2>
+
+      <!-- URL Shortener -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design a URL Shortener</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded">Easy</span>
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">Very High Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Google, Meta, Amazon, Microsoft, most companies
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Hashing, base62 encoding, key-value storage, collision handling, analytics tracking
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            URL shortener is the perfect starter question testing fundamental concepts. Generate short URLs using base62 encoding (0-9, a-z, A-Z) of auto-incrementing IDs or hash of long URL. Auto-incrementing IDs are simpler (no collisions) but reveal sequential nature. Hash-based needs collision handling but provides randomness. Store mappings in key-value store (Redis/DynamoDB) for fast lookups. Use load balancer and stateless API servers for scalability. Add analytics service to track clicks, referrers, geographic data. Consider URL expiration policy and cleanup job. For high scale, shard database and use distributed ID generator.
+          </p>
+        </div>
+
+        <a href="/blog/design-url-shortener-complete-walkthrough" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Read complete walkthrough →
+        </a>
+      </article>
+
+      <!-- Rate Limiter -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design a Rate Limiter</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Easy-Medium</span>
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">Very High Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Meta, Google, Stripe, Shopify, Twitter, AWS
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Token bucket algorithm, sliding window counter, Redis counters, distributed rate limiting
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Choose between algorithms: Token Bucket (flexible, allows bursts), Fixed Window Counter (simple but allows burst at boundaries), Sliding Window Log (accurate but memory-intensive), or Sliding Window Counter (good balance). Implement in Redis for speed—store counters with TTL. For each request, check if user/IP has remaining quota. If yes, decrement and allow. If no, reject with 429 status. In distributed systems, use centralized Redis or accept slight inaccuracy with local counters + periodic sync. Support different rate limits per API endpoint and user tier (free vs paid). Return rate limit info in response headers (X-RateLimit-Remaining, X-RateLimit-Reset).
+          </p>
+        </div>
+
+        <a href="/blog/design-rate-limiter-system-design" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Read complete walkthrough →
+        </a>
+      </article>
+
+      <!-- Cache System -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design a Distributed Cache</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-orange-100 text-orange-800 text-sm font-semibold rounded">Medium-Hard</span>
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Meta, Amazon, Microsoft, Google
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Consistent hashing, LRU/LFU eviction, cache invalidation, replication, hot keys
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Implement distributed hash table using consistent hashing to map keys to cache nodes—minimizes key redistribution when nodes added/removed. Each cache node stores subset of data with LRU or LFU eviction policy when memory full. Replicate data across multiple nodes for fault tolerance (typically 2-3 replicas). Client library implements hash ring logic to route requests to correct node. Handle cache invalidation with TTL (time-based expiry) or write-through/write-back strategies. Address hot key problem (celebrity's profile cached everywhere) with replication to multiple nodes. Monitor cache hit ratio and adjust capacity accordingly.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=cache&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing distributed cache with AI →
+        </a>
+      </article>
+
+      <!-- Key-Value Store -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design a Key-Value Store</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">Hard</span>
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Amazon (DynamoDB), Google, Meta, Microsoft
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> CAP theorem, eventual consistency, partitioning, replication, vector clocks, gossip protocol
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Design inspired by Amazon's Dynamo. Use consistent hashing for partitioning data across nodes. Each key replicated to N nodes (typically 3). Accept writes even during network partitions (AP in CAP theorem)—use vector clocks to track causality and resolve conflicts. Gossip protocol for node discovery and failure detection. Merkle trees for efficient replica synchronization. Quorum-based reads/writes: W + R > N for strong consistency, or W=1, R=1 for high availability with eventual consistency. Handle read repairs and hinted handoff when nodes temporarily unavailable. This question tests deep understanding of distributed systems trade-offs.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=kvstore&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing key-value store with AI →
+        </a>
+      </article>
+
+      <!-- Load Balancer -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design a Load Balancer</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium</span>
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Netflix, Amazon, Google, Cloudflare
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Load balancing algorithms (round robin, least connections, consistent hashing), health checks, session persistence
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Load balancer distributes incoming requests across multiple backend servers. Implement at Layer 4 (transport - TCP/UDP) or Layer 7 (application - HTTP). Algorithms include: Round Robin (simple, even distribution), Least Connections (route to server with fewest active connections), Weighted Round Robin (assign weights based on server capacity), or IP Hash (consistent routing per client). Health checks (HTTP polls or TCP checks) detect failed servers and remove from pool. Session persistence via sticky sessions (same client to same server) using cookies or IP hashing—needed for stateful applications. Support SSL termination to offload crypto from backends.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=loadbalancer&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing load balancer with AI →
+        </a>
+      </article>
+
+      <!-- CDN -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design a Content Delivery Network (CDN)</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-orange-100 text-orange-800 text-sm font-semibold rounded">Medium-Hard</span>
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Cloudflare, Akamai, AWS (CloudFront), Netflix
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Edge servers, origin servers, cache invalidation, geographic routing, pull vs push CDN
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            CDN caches static content at edge locations globally to reduce latency and origin load. When user requests content, DNS routes to nearest edge server. If cached (cache hit), serve immediately. If not (cache miss), fetch from origin, cache at edge, and serve. Use pull CDN (fetch on first request) for less frequently accessed content, or push CDN (proactively push content to edges) for popular content. Cache invalidation via TTL or purge API. Implement cache hierarchy: edge caches → regional caches → origin. Use consistent hashing to distribute content across edge servers. Monitor cache hit ratio, origin load, and latency metrics.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=cdn&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing CDN with AI →
+        </a>
+      </article>
+    </section>
+
+    <!-- Communication Category -->
+    <section id="communication" class="max-w-5xl mx-auto px-4 py-12">
+      <h2 class="text-3xl font-bold text-slate-900 mb-8 border-b-4 border-purple-600 pb-2">
+        Communication Systems
+      </h2>
+
+      <!-- WhatsApp -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design WhatsApp / Messenger</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-orange-100 text-orange-800 text-sm font-semibold rounded">Medium-Hard</span>
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">High Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Meta, Slack, Discord, Telegram, Signal
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> WebSocket for real-time, message queues, read receipts, end-to-end encryption, offline message delivery
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Real-time chat requires persistent connections—use WebSocket for bidirectional communication. When user sends message, server receives via WebSocket, stores in Cassandra (sharded by conversation ID), and delivers to recipient's WebSocket if online. If recipient offline, queue message in Kafka for delivery when they reconnect. Store messages with metadata: timestamp, sender, conversation_id, status (sent/delivered/read). Read receipts via separate events through WebSocket. For group chats, fanout message to all participants. Handle media separately—upload to blob storage, send reference in message. Implement presence service (online/offline/typing) using Redis. Consider end-to-end encryption (keys never stored on server).
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=whatsapp&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing WhatsApp with AI →
+        </a>
+      </article>
+
+      <!-- Slack -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design Slack</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">Hard</span>
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Slack, Discord, Microsoft Teams, Atlassian
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Workspace isolation, channels, message threading, search, integrations, presence at scale
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Slack is WhatsApp + workspaces + channels + search + integrations. Use WebSocket for real-time messaging. Store messages in Cassandra partitioned by channel_id. Each workspace is isolated tenant—separate data, billing, permissions. Elasticsearch for message search across channels (full-text search with filters). Threaded conversations require parent-child message relationships. Presence service tracks online status per workspace. File uploads to blob storage with virus scanning. Integration platform for bots and apps—webhook endpoints, slash commands, OAuth for third-party apps. Very active channels (1000+ msg/min) need optimizations: batching, backpressure, fan-out limits.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=slack&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing Slack with AI →
+        </a>
+      </article>
+
+      <!-- Zoom -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design Zoom</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">Hard</span>
+            <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded">Low Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Zoom, Google Meet, Microsoft Teams, Amazon Chime
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> WebRTC, SFU architecture, audio/video codecs, bandwidth adaptation, recording, screen sharing
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Video conferencing uses WebRTC for peer-to-peer or Selective Forwarding Unit (SFU) architecture where server forwards streams without transcoding. Each participant sends video/audio to SFU, which forwards to other participants. Implement bandwidth adaptation—reduce quality when network poor. Audio mixing on server for large meetings. Support screen sharing as additional video stream. Recording requires capturing all streams and encoding to video file in cloud. Implement waiting room, breakout rooms, chat (like WhatsApp). Handle tens of thousands in webinar mode (few senders, many viewers—different architecture from meetings). This question tests real-time systems and media streaming knowledge.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=zoom&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing Zoom with AI →
+        </a>
+      </article>
+
+      <!-- Email Service -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design an Email Service</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium</span>
+            <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded">Low Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Gmail, Outlook, Yahoo, Superhuman
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> SMTP/IMAP protocols, email storage, spam filtering, search, attachments, labels/folders
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Email system has sending and receiving paths. Sending: User composes → SMTP server sends to recipient's domain → Recipient's SMTP server receives. Receiving: Store in user's mailbox, index for search. Use blob storage for attachments. Implement spam filter using ML (Bayesian classifier) on email content. Search via Elasticsearch on subject, sender, body. Support labels (Gmail) or folders (Outlook) as tags on messages. Handle read/unread status, starring, archiving. Email storage is write-once-read-many—optimize for storage efficiency with compression. Sync across devices using IMAP. This is less common but tests email protocols and storage optimization.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=email&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing email service with AI →
+        </a>
+      </article>
+    </section>
+
+    <!-- E-commerce Category -->
+    <section id="ecommerce" class="max-w-5xl mx-auto px-4 py-12 bg-slate-50">
+      <h2 class="text-3xl font-bold text-slate-900 mb-8 border-b-4 border-orange-600 pb-2">
+        E-commerce & Marketplace
+      </h2>
+
+      <!-- Amazon Search -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design Amazon Product Search</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-orange-100 text-orange-800 text-sm font-semibold rounded">Medium-Hard</span>
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Amazon, eBay, Shopify, Etsy, Walmart
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Elasticsearch, ranking algorithms, autocomplete, filters/facets, personalization
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Index products in Elasticsearch with fields: title, description, category, brand, price, rating, reviews. Search query goes to Elasticsearch which returns matching products. Ranking algorithm combines relevance score (TF-IDF), popularity (sales, reviews), price, and personalization (user history). Implement autocomplete using prefix matching in Elasticsearch or separate trie data structure. Faceted search filters (category, price range, brand, rating) using aggregations. Cache popular search queries and their results in Redis. Update search index in near real-time as products added/changed. Personalize results using user's browsing history and purchase patterns.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=amazon-search&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing product search with AI →
+        </a>
+      </article>
+
+      <!-- Netflix -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design Netflix / YouTube</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-orange-100 text-orange-800 text-sm font-semibold rounded">Medium-Hard</span>
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">High Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Netflix, YouTube, Amazon Prime, Hulu, Disney+
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Video transcoding, adaptive bitrate streaming (HLS/DASH), CDN, recommendation system, watch history
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Video streaming combines storage, transcoding, CDN, and recommendations. Upload flow: Video uploaded to blob storage → Transcoding pipeline generates multiple resolutions (480p, 720p, 1080p, 4K) and formats → Chunks stored in blob storage. Streaming: User requests video → CDN serves video chunks → Player uses adaptive bitrate streaming (HLS/DASH) to adjust quality based on bandwidth. Recommendation engine uses collaborative filtering (users with similar tastes) and content-based filtering (genre, actors). Track watch history and use for both recommendations and "continue watching". Search via Elasticsearch. Handle massive bandwidth with aggressive CDN caching and optimal encoding.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=netflix&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing Netflix with AI →
+        </a>
+      </article>
+
+      <!-- Uber -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design Uber / Lyft</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">Hard</span>
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">High Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> Uber, Lyft, DoorDash, Instacart, Grab
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Geospatial indexing (geohash/quadtree), matching algorithms, real-time location tracking, ETA calculation, surge pricing
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Uber's core challenge is matching riders to nearby drivers in real-time. Use geospatial database (PostGIS or Redis Geo) with geohashing/quadtree to index driver locations. When rider requests ride, query for nearby drivers within radius. Matching algorithm considers: distance, driver rating, ETA, car type. Use WebSocket for real-time location updates from driver app (every 4 seconds). Calculate ETA using routing service (Google Maps API or internal). Implement surge pricing based on supply/demand ratio in each zone. Store trip data for analytics and billing. Handle payment processing integration. Notification service for ride status updates. This tests geospatial algorithms and real-time systems.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=uber&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing Uber with AI →
+        </a>
+      </article>
+
+      <!-- Food Delivery -->
+      <article class="mb-12 bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-2xl font-bold text-slate-900">Design Food Delivery System</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded">Hard</span>
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded">Medium Frequency</span>
+          </div>
+        </div>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Companies:</strong> DoorDash, Uber Eats, Instacart, Postmates, Deliveroo
+        </p>
+
+        <p class="text-slate-600 mb-4">
+          <strong>Key Concepts:</strong> Restaurant search, order management, driver assignment, multi-stop routing, real-time tracking
+        </p>
+
+        <div class="prose prose-slate max-w-none mb-6">
+          <p class="mb-4">
+            Similar to Uber but with restaurant and order complexity. Customer flow: Search restaurants (Elasticsearch with filters) → Browse menu → Place order → Payment. Restaurant receives order notification, accepts, and prepares food. Driver assignment: Find nearby available driver, assign pickup (restaurant) and dropoff (customer) locations. Driver picks up order, delivers to customer. Real-time tracking for customer and restaurant. Handle multi-stop routes (driver picking up multiple orders). Implement order state machine (placed → accepted → preparing → ready → picked up → delivered). Rating system for drivers and restaurants. This combines search, matching, routing, and real-time tracking challenges.
+          </p>
+        </div>
+
+        <a href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=food-delivery&utm_campaign=practice" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+          Practice designing food delivery with AI →
+        </a>
+      </article>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="max-w-5xl mx-auto px-4 py-16">
+      <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-12 text-center text-white shadow-xl">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">
+          Ready to Practice These Questions?
+        </h2>
+        <p class="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          The best way to prepare for system design interviews is through realistic mock interviews. Practice these 20+ questions with our AI interviewer, get instant feedback, and build confidence before your real interview.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <a
+            href="https://app.systemdesigntrainer.com/login?utm_source=resources&utm_medium=questions&utm_campaign=final-cta"
+            class="inline-flex items-center justify-center px-8 py-4 text-lg font-bold rounded-xl bg-white text-blue-600 hover:bg-blue-50 transition-colors shadow-lg"
+          >
+            Start Free Mock Interview
+          </a>
+          <a
+            href="/blog/top-20-system-design-interview-questions-2026"
+            class="inline-flex items-center justify-center px-8 py-4 text-lg font-bold rounded-xl border-2 border-white text-white hover:bg-blue-600 transition-colors"
+          >
+            Read Full Blog Post →
+          </a>
+        </div>
+        <p class="text-blue-100 text-sm mt-4">
+          First interview is free. No credit card required.
+        </p>
+      </div>
+    </section>
+
+    <!-- Related Resources -->
+    <section class="max-w-5xl mx-auto px-4 py-12">
+      <h2 class="text-2xl font-bold text-slate-900 mb-6">Related Resources</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <a href="/blog/complete-system-design-interview-prep-guide-2026" class="block p-6 bg-white border border-slate-200 rounded-lg hover:border-blue-500 transition-colors">
+          <h3 class="text-xl font-bold text-slate-900 mb-2">Complete Prep Guide 2026</h3>
+          <p class="text-slate-600">Everything you need to know to prepare for and ace your system design interview at FAANG companies.</p>
+        </a>
+        <a href="/blog/how-ai-is-changing-system-design-interview-prep" class="block p-6 bg-white border border-slate-200 rounded-lg hover:border-blue-500 transition-colors">
+          <h3 class="text-xl font-bold text-slate-900 mb-2">How AI is Changing Interview Prep</h3>
+          <p class="text-slate-600">Learn how AI-powered mock interviews are transforming how engineers prepare and why they're more effective.</p>
+        </a>
+        <a href="/blog/common-system-design-interview-mistakes" class="block p-6 bg-white border border-slate-200 rounded-lg hover:border-blue-500 transition-colors">
+          <h3 class="text-xl font-bold text-slate-900 mb-2">Common Interview Mistakes</h3>
+          <p class="text-slate-600">The critical mistakes that cost engineers their dream offers—and how to avoid them.</p>
+        </a>
+        <a href="/blog/system-design-interview-cost-ai-vs-human" class="block p-6 bg-white border border-slate-200 rounded-lg hover:border-blue-500 transition-colors">
+          <h3 class="text-xl font-bold text-slate-900 mb-2">AI vs Human Mock Interviews</h3>
+          <p class="text-slate-600">Discover the cost difference and learn which approach fits your interview prep strategy.</p>
+        </a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
