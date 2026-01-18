@@ -1,128 +1,55 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Footer from '../../components/Footer.astro';
+import { type CollectionEntry, getCollection } from "astro:content";
+import Layout from "@layouts/BlogLayout.astro";
+import Container from "@components/Container.astro";
+import ArrowCard from "@components/ArrowCard.astro";
+import { BLOG } from "@consts";
 
-const articles = [
-  {
-    title: 'Top 20 System Design Interview Questions for 2026',
-    description: 'The most common system design interview questions asked at Google, Meta, Amazon, and other FAANG companies in 2026. Includes approach strategies and what interviewers are looking for.',
-    slug: 'top-20-system-design-interview-questions-2026',
-    publishDate: '2026-01-20',
-    readTime: '18 min read',
-    category: 'Interview Tips'
-  },
-  {
-    title: 'How AI is Changing System Design Interview Prep',
-    description: 'AI mock interviews are transforming how engineers prepare for system design interviews. Learn how AI-powered practice compares to traditional methods and why it\'s more effective.',
-    slug: 'how-ai-is-changing-system-design-interview-prep',
-    publishDate: '2026-01-18',
-    readTime: '10 min read',
-    category: 'Interview Tips'
-  },
-  {
-    title: 'System Design Mock Interview Cost: AI vs Human',
-    description: 'Discover the dramatic cost difference between AI and human mock interviews - $3-12 vs $200 per session. Learn which approach fits your interview prep strategy.',
-    slug: 'system-design-interview-cost-ai-vs-human',
-    publishDate: '2026-01-13',
-    readTime: '5 min read',
-    category: 'Interview Tips'
-  },
-  {
-    title: 'Design a Rate Limiter: Complete System Design Guide',
-    description: 'Master rate limiter design with token bucket, sliding window algorithms, distributed systems, and real-world implementation strategies.',
-    slug: 'design-rate-limiter-system-design',
-    publishDate: '2026-01-11',
-    readTime: '20 min read',
-    category: 'Case Study'
-  },
-  {
-    title: 'Design Twitter: Complete System Design Interview Walkthrough',
-    description: 'Step-by-step guide to solving the Twitter system design interview question - covering timeline generation, fan-out strategies, and scaling to millions of users.',
-    slug: 'design-twitter-system-design-walkthrough',
-    publishDate: '2026-01-06',
-    readTime: '22 min read',
-    category: 'Case Study'
-  },
-  {
-    title: 'Complete System Design Interview Preparation Guide 2026',
-    description: 'Everything you need to know to prepare for and ace your system design interview at FAANG and top tech companies.',
-    slug: 'complete-system-design-interview-prep-guide-2026',
-    publishDate: '2026-01-04',
-    readTime: '25 min read',
-    category: 'Preparation'
-  },
-  {
-    title: '10 Most Common System Design Interview Mistakes',
-    description: 'Learn the critical mistakes that cost engineers their dream offers - and how to avoid them.',
-    slug: 'common-system-design-interview-mistakes',
-    publishDate: '2026-01-04',
-    readTime: '12 min read',
-    category: 'Interview Tips'
-  },
-  {
-    title: 'Design a URL Shortener: Complete Walkthrough',
-    description: 'Step-by-step guide to solving one of the most popular system design interview questions.',
-    slug: 'design-url-shortener-complete-walkthrough',
-    publishDate: '2026-01-04',
-    readTime: '18 min read',
-    category: 'Case Study'
+const data = (await getCollection("blog"))
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+type Acc = {
+  [year: string]: CollectionEntry<"blog">[];
+};
+
+const posts = data.reduce((acc: Acc, post) => {
+  const year = post.data.date.getFullYear().toString();
+  if (!acc[year]) {
+    acc[year] = [];
   }
-];
+  acc[year].push(post);
+  return acc;
+}, {});
+
+const years = Object.keys(posts).sort((a, b) => parseInt(b) - parseInt(a));
 ---
 
-<Layout
-  title="System Design Interview Guide"
-  description="Expert guides, tips, and walkthroughs to help you master system design interviews at FAANG and top tech companies."
->
-  <main class="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
-    <!-- Navigation -->
-    <nav class="border-b border-slate-700">
-      <div class="max-w-6xl mx-auto px-4 py-4">
-        <a href="/" class="text-blue-400 hover:text-blue-300 transition-colors">
-          ← Back to Home
-        </a>
+<Layout title={BLOG.TITLE} description={BLOG.DESCRIPTION}>
+  <Container>
+    <aside data-pagefind-ignore>
+      <div class="space-y-10">
+        <div class="space-y-4">
+          {
+            years.map((year) => (
+              <section class="animate space-y-4">
+                <div class="font-semibold text-black dark:text-white">
+                  {year}
+                </div>
+                <div>
+                  <ul class="not-prose flex flex-col gap-4">
+                    {posts[year].map((post) => (
+                      <li>
+                        <ArrowCard entry={post} />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            ))
+          }
+        </div>
       </div>
-    </nav>
-
-    <!-- Header -->
-    <header class="max-w-6xl mx-auto px-4 py-16">
-      <h1 class="text-5xl md:text-6xl font-bold text-white mb-6">
-        System Design Interview Guide
-      </h1>
-      <p class="text-xl text-slate-300 max-w-3xl">
-        Expert guides, interview tips, and problem walkthroughs to help you master system design interviews.
-      </p>
-    </header>
-
-    <!-- Articles Grid -->
-    <section class="max-w-6xl mx-auto px-4 pb-16">
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {articles.map((article) => (
-          <article class="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden hover:border-blue-500 transition-colors group">
-            <a href={`/blog/${article.slug}`} class="block p-6">
-              <div class="mb-4">
-                <span class="inline-block px-3 py-1 text-xs font-semibold text-blue-400 bg-blue-400/10 rounded-full">
-                  {article.category}
-                </span>
-              </div>
-              <h2 class="text-2xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors">
-                {article.title}
-              </h2>
-              <p class="text-slate-400 mb-4 line-clamp-3">
-                {article.description}
-              </p>
-              <div class="flex items-center gap-3 text-sm text-slate-500">
-                <time datetime={article.publishDate}>
-                  {new Date(article.publishDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                </time>
-                <span>•</span>
-                <span>{article.readTime}</span>
-              </div>
-            </a>
-          </article>
-        ))}
-      </div>
-    </section>
-  </main>
-  <Footer />
+    </aside>
+  </Container>
 </Layout>
