@@ -9,7 +9,7 @@ interface Props {
 
 const { title, description, ogImage = '/og-image.png' } = Astro.props;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
-const fullTitle = `${title} | System Design Interview Simulator`;
+const fullTitle = `${title} | AI Mock System Design`;
 ---
 
 <!doctype html>
@@ -49,16 +49,48 @@ const fullTitle = `${title} | System Design Interview Simulator`;
       {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "System Design Interview Simulator",
+        "name": "AI Mock System Design",
         "applicationCategory": "EducationalApplication",
-        "description": "AI-powered system design interview practice platform",
+        "description": "AI-powered mock system design interview practice platform with real-time feedback",
         "offers": {
           "@type": "AggregateOffer",
           "lowPrice": "0",
           "highPrice": "149",
           "priceCurrency": "USD"
         },
+        "featureList": [
+          "AI-powered mock interviews",
+          "Real-time feedback",
+          "System design scenarios",
+          "FAANG interview preparation"
+        ],
         "url": "https://systemdesigntrainer.com"
+      }
+    </script>
+
+    <!-- FAQ Schema for featured snippets -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is an AI mock system design interview?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "An AI mock system design interview is a realistic practice session where artificial intelligence simulates an interviewer, asks system design questions, evaluates your architecture decisions, and provides instant feedback - just like a real technical interview at companies like Google, Meta, or Amazon."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does AI mock interview practice work?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our AI interviewer presents system design problems, listens to your approach, asks follow-up questions based on your responses, and evaluates your architecture decisions. You receive detailed feedback on communication, technical choices, and areas for improvement."
+            }
+          }
+        ]
       }
     </script>
 

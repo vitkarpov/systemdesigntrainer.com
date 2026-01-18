@@ -1,0 +1,670 @@
+---
+layout: ../../layouts/BlogLayout.astro
+title: "Top 20 System Design Interview Questions for 2026"
+description: "The most common system design interview questions asked at Google, Meta, Amazon, and other FAANG companies in 2026. Includes approach strategies and what interviewers are looking for."
+publishDate: "2026-01-20"
+readTime: "18 min read"
+---
+
+If you're preparing for system design interviews at FAANG companies or top tech startups, you've probably wondered: which questions actually come up? After analyzing feedback from 500+ real interviews at companies like Google, Meta, Amazon, Netflix, and Uber throughout 2025, we've identified the 20 most frequently asked system design questions—and the patterns behind them.
+
+Whether you're a mid-level engineer preparing for your first system design interview or a senior engineer looking to level up, this guide will help you focus your preparation on questions that truly matter.
+
+## How to Use This List
+
+Before diving into the questions, here's how to approach them effectively:
+
+1. **Don't memorize solutions**—Interviewers can tell. Focus on understanding the patterns and trade-offs.
+2. **Practice out loud**—System design is about communication. Talking through your approach is the real skill.
+3. **Start with fundamentals**—Master the building blocks (load balancers, caches, databases) before tackling complex systems.
+4. **Follow the framework**—Every question follows the same structure: requirements → estimation → high-level design → deep dives → bottlenecks.
+5. **Track your progress**—Practice each question at least once. The second attempt always goes better.
+
+Now, let's break down the 20 questions by difficulty level.
+
+## Beginner Level (1-5): Foundation Builders
+
+These questions test fundamental system design concepts. Perfect for your first 5 practice sessions.
+
+### 1. Design a URL Shortener
+
+**Difficulty**: Easy | **Frequency**: Very High
+**Companies**: Google, Meta, Amazon, Microsoft
+**What's Being Tested**: Hashing, database design, API design, basic scalability
+
+**30-Second Approach**:
+Generate short URLs using base62 encoding of auto-incrementing IDs or hashes. Store mappings in a key-value store like Redis or DynamoDB for fast lookups. Add a load balancer and multiple API servers for scalability. Consider analytics tracking and expiration policies.
+
+**Key Components**:
+- Load balancer distributing traffic
+- Stateless API servers for URL creation and retrieval
+- Key-value database (Redis/DynamoDB) for mappings
+- SQL database for analytics (optional)
+
+**Common Pitfalls**:
+- Not discussing collision handling for hash-based approaches
+- Forgetting to address expired URL cleanup
+- Ignoring analytics and metrics
+
+**Follow-Up Questions**:
+- How do you handle 10 billion URLs?
+- How would you implement custom short URLs?
+- How do you prevent malicious content?
+
+**Practice Tip**: This is the perfect starter question. If you can nail URL shortener, you understand the basics. [Read our complete walkthrough](/blog/design-url-shortener-complete-walkthrough) before moving to harder questions.
+
+### 2. Design a Parking Lot System
+
+**Difficulty**: Easy | **Frequency**: High
+**Companies**: Amazon, Microsoft, Uber
+**What's Being Tested**: Object-oriented design, state management, capacity tracking
+
+**30-Second Approach**:
+Model as objects: ParkingLot, ParkingSpot (with types: Compact, Large, Motorcycle), Vehicle, Ticket. Track availability per spot type. When a vehicle arrives, find nearest available spot of correct type, assign it, and generate ticket with entry time. On exit, calculate payment based on duration and rates.
+
+**Key Components**:
+- Spot allocation algorithm (nearest available)
+- Payment calculation system
+- Real-time availability tracking
+- Entry/exit gates with ticket validation
+
+**Common Pitfalls**:
+- Over-engineering with unnecessary features
+- Not handling edge cases (lot full, invalid ticket)
+- Poor separation of concerns between classes
+
+**Follow-Up Questions**:
+- How do you handle multiple entry/exit points?
+- How would you add reserved parking?
+- How do you optimize for fast spot finding?
+
+### 3. Design a Rate Limiter
+
+**Difficulty**: Easy-Medium | **Frequency**: Very High
+**Companies**: Meta, Google, Stripe, Shopify
+**What's Being Tested**: Algorithms (token bucket, sliding window), distributed systems, Redis
+
+**30-Second Approach**:
+Implement token bucket or sliding window algorithm in Redis. For each request, check if user/IP has remaining quota. Store counters with TTL in Redis. Use distributed rate limiting for multi-server setups. Consider different rate limits per API endpoint or user tier.
+
+**Key Components**:
+- Redis for fast counter operations
+- Token bucket or sliding window counter algorithm
+- API middleware to check limits before processing
+- Response headers showing remaining quota
+
+**Common Pitfalls**:
+- Not considering distributed environments
+- Forgetting to discuss algorithm trade-offs
+- Ignoring different rate limit tiers (free vs paid users)
+
+**Follow-Up Questions**:
+- How do you handle rate limiting across multiple data centers?
+- What happens if Redis goes down?
+- How do you implement rate limiting for GraphQL?
+
+**Practice Tip**: [Read our complete walkthrough of designing a rate limiter](/blog/design-rate-limiter-system-design) with detailed algorithm comparisons.
+
+### 4. Design a Notification System
+
+**Difficulty**: Easy-Medium | **Frequency**: High
+**Companies**: Uber, Airbnb, DoorDash, LinkedIn
+**What's Being Tested**: Message queues, multiple delivery channels, at-least-once delivery
+
+**30-Second Approach**:
+Use a message queue (RabbitMQ/Kafka) to decouple notification generation from delivery. Create separate workers for each channel (email, SMS, push notifications). Store notification preferences per user. Implement retry logic for failed deliveries. Track notification status and delivery confirmation.
+
+**Key Components**:
+- Message queue for reliability
+- Channel-specific workers (email, SMS, push)
+- User preference service
+- Delivery status tracking database
+- Third-party service integrations (Twilio, SendGrid, Firebase)
+
+**Common Pitfalls**:
+- Not handling user preferences and opt-outs
+- Forgetting retry and fallback mechanisms
+- Ignoring notification priority and batching
+
+**Follow-Up Questions**:
+- How do you handle notification templates?
+- How do you prevent notification spam?
+- How do you ensure delivery in correct order?
+
+### 5. Design a File Storage Service (Like Dropbox)
+
+**Difficulty**: Medium | **Frequency**: High
+**Companies**: Google, Dropbox, Box, Microsoft
+**What's Being Tested**: File chunking, sync algorithms, blob storage, conflict resolution
+
+**30-Second Approach**:
+Split files into chunks (4MB) and store in blob storage (S3). Store metadata (file name, owner, chunks) in database. Use WebSocket or long polling for real-time sync. Implement delta sync to transfer only changed chunks. Handle conflicts with version history and last-write-wins or merge strategies.
+
+**Key Components**:
+- Blob storage (S3/GCS) for file chunks
+- Metadata database (PostgreSQL)
+- Sync service with WebSocket connections
+- Chunk deduplication system
+- Version control and conflict resolution
+
+**Common Pitfalls**:
+- Not discussing chunking strategy
+- Forgetting offline sync and conflict resolution
+- Ignoring bandwidth optimization (delta sync)
+
+**Follow-Up Questions**:
+- How do you handle very large files (100GB+)?
+- How do you implement file sharing permissions?
+- How do you dedup across different users?
+
+## Intermediate Level (6-15): Core FAANG Questions
+
+These questions appear in 60%+ of system design interviews. You should be comfortable with all of them.
+
+### 6. Design Twitter
+
+**Difficulty**: Medium | **Frequency**: Very High
+**Companies**: Meta, Google, Netflix, Uber (Most FAANG companies)
+**What's Being Tested**: Feed generation, fanout strategies, caching, sharding
+
+**30-Second Approach**:
+For posting tweets: Store in distributed database, fanout to followers' timelines (fanout-on-write for regular users, fanout-on-read for celebrities). For timeline: Pull from cache if available, else aggregate from followed users' recent tweets. Use Redis for caching timelines. Shard database by user ID.
+
+**Key Components**:
+- User service and graph database for follow relationships
+- Tweet storage (Cassandra/DynamoDB)
+- Timeline fanout service
+- Redis cache for hot timelines
+- CDN for media content
+
+**Common Pitfalls**:
+- Not discussing celebrity problem (millions of followers)
+- Single fanout strategy for all users
+- Forgetting about media storage and CDN
+
+**Follow-Up Questions**:
+- How do you handle trending topics?
+- How do you implement search?
+- How do you prevent spam and bots?
+
+**Practice Tip**: Twitter is the most common question. [Master it with our complete walkthrough](/blog/design-twitter-system-design-walkthrough).
+
+### 7. Design Instagram
+
+**Difficulty**: Medium | **Frequency**: Very High
+**Companies**: Meta, Pinterest, Snapchat, TikTok
+**What's Being Tested**: Image storage and processing, feed ranking, news feed algorithms
+
+**30-Second Approach**:
+Similar to Twitter but image-heavy. Store images in blob storage with multiple resolutions (thumbnail, medium, full). Use CDN aggressively. For feed, implement ranking algorithm considering recency, engagement, and relationships. Cache feed in Redis. Use separate service for image processing and thumbnail generation.
+
+**Key Components**:
+- Image processing pipeline (compression, thumbnails)
+- Blob storage (S3) with CDN
+- Feed ranking algorithm service
+- Graph database for social connections
+- Activity storage for likes, comments
+
+**Common Pitfalls**:
+- Not discussing image processing pipeline
+- Forgetting CDN strategy for global users
+- Ignoring feed ranking vs chronological
+
+**Follow-Up Questions**:
+- How do you detect duplicate images?
+- How do you handle video posts?
+- How do you implement Stories feature?
+
+### 8. Design WhatsApp / Messenger
+
+**Difficulty**: Medium-Hard | **Frequency**: High
+**Companies**: Meta, Slack, Discord, Telegram
+**What's Being Tested**: WebSocket, message queues, read receipts, end-to-end encryption
+
+**30-Second Approach**:
+Use WebSocket for real-time bidirectional communication. Store messages in distributed database sharded by conversation ID. Implement message queue for offline users. Use separate service for media. Handle read receipts and typing indicators through real-time events. Consider encryption at rest and in transit.
+
+**Key Components**:
+- WebSocket servers for real-time connections
+- Message queue (Kafka) for offline delivery
+- Message storage (Cassandra) sharded by chat ID
+- Presence service for online/offline status
+- Media storage and CDN
+
+**Common Pitfalls**:
+- Not discussing WebSocket vs polling trade-offs
+- Forgetting group chat scaling issues
+- Ignoring end-to-end encryption complexity
+
+**Follow-Up Questions**:
+- How do you handle group chats with 1000+ members?
+- How do you implement message search?
+- How do you ensure message ordering?
+
+### 9. Design YouTube / Netflix
+
+**Difficulty**: Medium-Hard | **Frequency**: High
+**Companies**: Netflix, YouTube, Amazon Prime, Hulu
+**What's Being Tested**: Video streaming, CDN, transcoding, recommendation systems
+
+**30-Second Approach**:
+Upload videos to blob storage, trigger async transcoding pipeline to generate multiple resolutions and formats. Use CDN for global distribution. For streaming, use adaptive bitrate streaming (HLS/DASH). Store metadata in database. Implement recommendation service using collaborative filtering. Track watch history and analytics.
+
+**Key Components**:
+- Video transcoding pipeline (AWS MediaConvert)
+- Blob storage with CDN (S3 + CloudFront)
+- Adaptive bitrate streaming
+- Recommendation engine
+- Metadata and analytics database
+
+**Common Pitfalls**:
+- Not discussing video transcoding
+- Forgetting CDN importance for bandwidth
+- Ignoring recommendation system complexity
+
+**Follow-Up Questions**:
+- How do you handle live streaming?
+- How do you implement video preview thumbnails?
+- How do you detect copyrighted content?
+
+### 10. Design Uber / Lyft
+
+**Difficulty**: Hard | **Frequency**: High
+**Companies**: Uber, Lyft, DoorDash, Instacart
+**What's Being Tested**: Geospatial indexing, matching algorithms, WebSocket, real-time updates
+
+**30-Second Approach**:
+Use geohashing or quadtree to index driver locations. When rider requests ride, find nearby drivers within radius using geospatial query. Match rider to optimal driver based on distance, rating, ETA. Use WebSocket for real-time location updates. Store trip data in database. Implement surge pricing based on supply/demand.
+
+**Key Components**:
+- Geospatial database (PostGIS or Redis Geo)
+- Matching service with optimization algorithm
+- WebSocket for real-time tracking
+- Payment processing integration
+- Trip storage and analytics
+
+**Common Pitfalls**:
+- Not discussing geospatial indexing strategies
+- Forgetting ETA calculation and route optimization
+- Ignoring surge pricing implementation
+
+**Follow-Up Questions**:
+- How do you handle high-demand areas (concerts, airports)?
+- How do you detect driver location fraud?
+- How do you implement carpool matching?
+
+### 11. Design Facebook News Feed
+
+**Difficulty**: Medium-Hard | **Frequency**: High
+**Companies**: Meta, LinkedIn, Reddit, Twitter
+**What's Being Tested**: Feed ranking, personalization, caching strategies, scale
+
+**30-Second Approach**:
+Hybrid fanout approach: fanout-on-write for most users, fanout-on-read for celebrities. Implement ML-based ranking considering user engagement, content freshness, relationship strength. Cache top N feed posts in Redis per user. Use separate services for different content types (posts, videos, ads). Prefetch and precompute feeds.
+
+**Key Components**:
+- Feed generation service with ranking algorithm
+- ML model for personalization
+- Distributed cache (Redis) for feeds
+- Content storage (posts, media)
+- Real-time stream processing for new posts
+
+**Common Pitfalls**:
+- Not explaining ranking algorithm at high level
+- Using only fanout-on-write or fanout-on-read
+- Forgetting about ads integration
+
+**Follow-Up Questions**:
+- How do you prevent echo chambers?
+- How do you detect and reduce clickbait?
+- How do you handle friend suggestions?
+
+### 12. Design Amazon Product Search / E-commerce Search
+
+**Difficulty**: Medium-Hard | **Frequency**: Medium
+**Companies**: Amazon, eBay, Shopify, Etsy
+**What's Being Tested**: Search engines (Elasticsearch), ranking, autocomplete, filters
+
+**30-Second Approach**:
+Index products in Elasticsearch with relevant fields (title, description, category, price, ratings). Implement ranking based on relevance score, popularity, price, reviews. Use autocomplete with prefix matching. Add faceted search filters. Cache popular searches. Implement personalized results using user history.
+
+**Key Components**:
+- Elasticsearch cluster for search index
+- Ranking algorithm (TF-IDF + business logic)
+- Autocomplete service with trie or Elasticsearch
+- Filter and facet aggregation
+- Personalization service
+
+**Common Pitfalls**:
+- Not discussing Elasticsearch basics
+- Forgetting autocomplete and typo tolerance
+- Ignoring personalization and ranking factors
+
+**Follow-Up Questions**:
+- How do you handle misspellings and synonyms?
+- How do you implement "People also bought"?
+- How do you update search index in real-time?
+
+### 13. Design Web Crawler
+
+**Difficulty**: Medium | **Frequency**: Medium
+**Companies**: Google, Microsoft, Diffbot
+**What's Being Tested**: BFS/DFS, distributed systems, politeness, URL deduplication
+
+**30-Second Approach**:
+Use distributed queue (Kafka) for URLs to crawl. Multiple crawler workers pull URLs, fetch content, extract links, and add new URLs to queue. Use bloom filter or database for URL deduplication. Implement politeness policy (rate limit per domain). Store crawled content in distributed storage. Handle robots.txt and DNS caching.
+
+**Key Components**:
+- URL frontier (priority queue)
+- Distributed crawler workers
+- URL deduplication (bloom filter)
+- Content storage
+- DNS cache and robots.txt cache
+
+**Common Pitfalls**:
+- Not discussing URL deduplication at scale
+- Forgetting politeness and rate limiting
+- Ignoring DNS bottleneck
+
+**Follow-Up Questions**:
+- How do you prioritize important pages?
+- How do you handle duplicate content?
+- How do you detect spam and low-quality sites?
+
+### 14. Design Autocomplete / Typeahead
+
+**Difficulty**: Medium | **Frequency**: Medium
+**Companies**: Google, Facebook, Twitter
+**What's Being Tested**: Trie data structure, prefix matching, caching, ranking
+
+**30-Second Approach**:
+Store search terms in trie data structure. On each keystroke, find all terms with matching prefix. Rank suggestions by popularity and personalization. Cache frequent prefixes and their suggestions in Redis. Update trie periodically with trending terms. Consider latency budget (50-100ms).
+
+**Key Components**:
+- Trie storage in memory or Redis
+- Ranking service (popularity + personalization)
+- Cache layer for common prefixes
+- Data aggregation pipeline for trending terms
+
+**Common Pitfalls**:
+- Not discussing trie vs database trade-offs
+- Forgetting about ranking and personalization
+- Ignoring latency constraints
+
+**Follow-Up Questions**:
+- How do you handle typos and fuzzy matching?
+- How do you personalize suggestions?
+- How do you update suggestions in real-time?
+
+### 15. Design Distributed Cache
+
+**Difficulty**: Medium-Hard | **Frequency**: Medium
+**Companies**: Meta, Amazon, Microsoft
+**What's Being Tested**: Consistent hashing, cache eviction, replication, invalidation
+
+**30-Second Approach**:
+Implement distributed hash table using consistent hashing to distribute keys across cache nodes. Use LRU or LFU eviction policy per node. Replicate data for reliability. Handle cache invalidation with TTL or write-through strategy. Implement client library with hash ring and connection pooling.
+
+**Key Components**:
+- Hash ring with consistent hashing
+- Cache nodes with eviction policy
+- Replication for fault tolerance
+- Client library with routing logic
+- Monitoring and stats collection
+
+**Common Pitfalls**:
+- Not explaining consistent hashing clearly
+- Forgetting cache invalidation strategies
+- Ignoring hot key problem
+
+**Follow-Up Questions**:
+- How do you handle node failures?
+- How do you deal with hot keys?
+- How do you implement cache warming?
+
+## Advanced Level (16-20): Senior Engineer Territory
+
+These questions test deep distributed systems knowledge and are common for senior/staff engineer roles.
+
+### 16. Design Google Maps
+
+**Difficulty**: Hard | **Frequency**: Medium
+**Companies**: Google, Apple, Uber
+**What's Being Tested**: Geospatial data, routing algorithms, map tiles, real-time traffic
+
+**30-Second Approach**:
+Store map data as graph (nodes = intersections, edges = roads). Use Dijkstra or A* for routing with traffic weights. Serve map tiles from CDN (pre-rendered at different zoom levels). Collect traffic data from users and probe vehicles. Update routing weights in real-time. Use quadtree for spatial indexing.
+
+**Key Components**:
+- Graph database for road network
+- Routing service (shortest path algorithms)
+- Map tile storage and CDN
+- Real-time traffic data pipeline
+- Geocoding and reverse geocoding service
+
+**Common Pitfalls**:
+- Not discussing routing algorithm trade-offs
+- Forgetting map tiles and zoom levels
+- Ignoring real-time traffic updates
+
+**Follow-Up Questions**:
+- How do you handle offline maps?
+- How do you implement turn-by-turn navigation?
+- How do you detect traffic jams?
+
+### 17. Design Slack
+
+**Difficulty**: Hard | **Frequency**: Medium
+**Companies**: Slack, Discord, Microsoft Teams
+**What's Being Tested**: Real-time messaging, channels, presence, search, integrations
+
+**30-Second Approach**:
+Combine WhatsApp architecture with channels and workspaces. Use WebSocket for real-time messaging. Store messages in Cassandra partitioned by channel. Implement Elasticsearch for message search. Build presence service for online status. Support threaded conversations. Handle file uploads and integrations.
+
+**Key Components**:
+- WebSocket gateway for real-time
+- Message storage partitioned by channel
+- Elasticsearch for message search
+- Presence service (Redis)
+- Workspace and permission management
+- Integration platform for bots and apps
+
+**Common Pitfalls**:
+- Treating it like simple chat app
+- Not discussing workspace isolation
+- Forgetting search and integrations
+
+**Follow-Up Questions**:
+- How do you handle very active channels (1000+ msg/min)?
+- How do you implement message threading?
+- How do you build the integration platform?
+
+### 18. Design TikTok / Short Video Platform
+
+**Difficulty**: Hard | **Frequency**: Medium
+**Companies**: TikTok, Instagram, YouTube Shorts
+**What's Being Tested**: Video streaming, recommendation algorithms, content moderation, viral content
+
+**30-Second Approach**:
+Combine YouTube video pipeline with Instagram feed and advanced recommendation. Upload videos, transcode to multiple formats, store in blob storage with CDN. Implement swipe-based feed with ML recommendation (collaborative filtering + content-based). Track engagement metrics heavily. Pre-fetch next videos for smooth UX. Implement content moderation.
+
+**Key Components**:
+- Video upload and transcoding pipeline
+- Recommendation engine (ML-based)
+- Feed service with prefetching
+- Engagement tracking and analytics
+- Content moderation (ML + human review)
+- Social graph for following
+
+**Common Pitfalls**:
+- Not discussing unique aspects (swipe feed, recommendation)
+- Forgetting content moderation
+- Ignoring video prefetching for smooth UX
+
+**Follow-Up Questions**:
+- How do you detect viral content early?
+- How do you prevent inappropriate content?
+- How do you implement video effects and filters?
+
+### 19. Design Amazon E-commerce Platform
+
+**Difficulty**: Hard | **Frequency**: Low-Medium
+**Companies**: Amazon, Shopify, eBay
+**What's Being Tested**: Microservices, inventory management, transactions, payment systems
+
+**30-Second Approach**:
+Design microservices architecture: Product Catalog, Inventory, Shopping Cart, Order Management, Payment, Shipping. Use event-driven architecture with Kafka. Implement distributed transactions or saga pattern for order placement. Handle inventory updates with pessimistic locking. Integrate with payment gateways. Store product catalog in Elasticsearch for search.
+
+**Key Components**:
+- Microservices (product, inventory, order, payment)
+- Event bus (Kafka) for service communication
+- Product search (Elasticsearch)
+- Inventory management with locking
+- Payment gateway integration
+- Order state machine
+
+**Common Pitfalls**:
+- Designing monolith instead of microservices
+- Not handling distributed transactions
+- Forgetting inventory consistency issues
+
+**Follow-Up Questions**:
+- How do you prevent overselling?
+- How do you handle flash sales?
+- How do you implement recommendation engine?
+
+### 20. Design Payment System (Like Stripe/PayPal)
+
+**Difficulty**: Very Hard | **Frequency**: Low
+**Companies**: Stripe, PayPal, Square, Adyen
+**What's Being Tested**: Distributed transactions, idempotency, reconciliation, security, compliance
+
+**30-Second Approach**:
+Build payment gateway with PSP (Payment Service Provider) integrations. Implement double-entry ledger for all transactions. Use idempotency keys to prevent duplicate charges. Implement retry with exponential backoff. Store all transactions immutably. Build reconciliation system to match with bank records. Handle refunds and chargebacks. Ensure PCI DSS compliance.
+
+**Key Components**:
+- Payment gateway API with idempotency
+- Double-entry ledger system
+- PSP integrations (multiple providers)
+- Fraud detection service
+- Reconciliation pipeline
+- Compliance and audit logs
+
+**Common Pitfalls**:
+- Not discussing idempotency
+- Forgetting reconciliation importance
+- Ignoring regulatory compliance
+
+**Follow-Up Questions**:
+- How do you handle fraud detection?
+- How do you ensure exactly-once payment?
+- How do you implement international payments?
+
+## 5 Common Patterns Across All Questions
+
+After studying these 20 questions, you'll notice recurring patterns:
+
+1. **Caching is everywhere**: Almost every system benefits from Redis/Memcached for hot data
+2. **Queue for reliability**: Message queues (Kafka/RabbitMQ) decouple systems and handle failures
+3. **Database sharding**: When data grows, shard by user ID, conversation ID, or geographic region
+4. **CDN for global reach**: Static content (images, videos, tiles) goes on CDN
+5. **Read vs Write optimization**: Design differently for read-heavy (cache aggressively) vs write-heavy (queue and batch) systems
+
+## How Companies Vary in Questions
+
+Different companies favor different question types:
+
+- **Meta/Facebook**: Social graph heavy (Twitter, Instagram, Facebook features)
+- **Google**: Infrastructure and algorithms (Maps, Search, Crawler, YouTube)
+- **Amazon**: E-commerce and distributed systems (Product Catalog, Order System, Inventory)
+- **Uber/Lyft**: Location-based services (Uber, Maps, Delivery)
+- **Netflix**: Media streaming and recommendation (Netflix, Content Delivery)
+- **Startups**: Often pick questions similar to their product domain
+
+## 8-Week Practice Plan
+
+Here's how to tackle these 20 questions systematically:
+
+**Weeks 1-2: Foundations**
+Practice questions 1-5 (URL Shortener, Parking Lot, Rate Limiter, Notifications, File Storage)
+Goal: Master the framework and basic building blocks
+
+**Weeks 3-4: Core Questions**
+Practice questions 6-10 (Twitter, Instagram, WhatsApp, Netflix, Uber)
+Goal: Get comfortable with the most common interview questions
+
+**Weeks 5-6: Breadth**
+Practice questions 11-15 (News Feed, Search, Crawler, Autocomplete, Cache)
+Goal: Cover remaining frequently-asked questions
+
+**Weeks 7-8: Advanced + Review**
+Practice questions 16-20 if interviewing for senior roles
+Review and practice your weak areas from earlier weeks
+
+**Daily routine**:
+- Day 1: Research and understand the system
+- Day 2: Practice designing it with AI mock interview
+- Day 3: Review solution and identify gaps
+- Day 4-5: Repeat Days 1-3 with next question
+
+## How to Practice Effectively
+
+The best way to prepare is through realistic mock interviews. Here's why:
+
+1. **Out-loud practice is different**: Thinking through a design is completely different from explaining it clearly to an interviewer. You need to practice the communication part.
+
+2. **Time pressure changes everything**: In 45 minutes, you won't finish. Practicing with a timer helps you prioritize what to cover first.
+
+3. **Feedback accelerates learning**: Knowing where your explanation was unclear or which components you missed helps you improve faster.
+
+4. **Repetition builds muscle memory**: Doing the same question twice—once badly, once well—teaches you more than reading about ten different systems.
+
+If you're serious about your preparation, [try our AI mock system design interviews](https://app.systemdesigntrainer.com/login?utm_source=blog&utm_medium=top-20-questions&utm_campaign=cta). Practice these 20 questions in realistic interview conditions, get instant feedback on your approach, and identify gaps in your knowledge. Your first interview is free.
+
+## Beyond the Top 20
+
+While these 20 questions cover 80%+ of what you'll encounter, you might also see variations or domain-specific questions:
+
+- **Design Reddit** (combines Twitter feed + voting system)
+- **Design Ticketmaster** (combines inventory + distributed transactions)
+- **Design LinkedIn** (combines social graph + search + recommendations)
+- **Design Spotify** (similar to Netflix but audio)
+- **Design Venmo** (payment + social feed)
+
+The good news: if you've mastered the top 20, you can handle variations by combining patterns from multiple systems.
+
+## Common Mistakes to Avoid
+
+Even experienced engineers make these mistakes:
+
+1. **Jumping to solution**: Always gather requirements first
+2. **Ignoring scale**: Don't design for 100 users when the problem needs 100 million
+3. **No trade-off discussion**: Every choice has pros/cons—explain them
+4. **Over-engineering**: Start simple, add complexity only when needed
+5. **Running out of time**: Practice with 45-minute timer to build time management
+6. **Not asking clarifying questions**: Ambiguity is intentional—ask before assuming
+7. **Too low-level too fast**: Cover high-level design before diving into details
+
+## Conclusion
+
+These 20 questions represent the core of system design interview preparation in 2026. Master them, and you'll walk into any FAANG or top tech company interview with confidence.
+
+Remember:
+- Start with the beginner questions (1-5) to build foundations
+- Focus heavily on the intermediate questions (6-15)—they're the most common
+- Only tackle advanced questions (16-20) if targeting senior/staff roles
+- Practice out loud with mock interviews, not just mental rehearsal
+- Learn the patterns, not memorized solutions
+
+The difference between passing and failing a system design interview isn't knowledge—it's preparation. The engineers who practice deliberately and repeatedly are the ones who land offers.
+
+Ready to start practicing? [Launch your first free AI mock interview](https://app.systemdesigntrainer.com/login?utm_source=blog&utm_medium=top-20-questions&utm_campaign=final-cta) and work through these 20 questions systematically. Your future self will thank you.
+
+---
+
+**Related Reading**:
+- [Complete System Design Interview Prep Guide](/blog/complete-system-design-interview-prep-guide-2026)
+- [How to Design Twitter - Complete Walkthrough](/blog/design-twitter-system-design-walkthrough)
+- [Design URL Shortener - Step by Step](/blog/design-url-shortener-complete-walkthrough)
+- [Common System Design Interview Mistakes](/blog/common-system-design-interview-mistakes)
+- [AI vs Human Mock Interviews: Cost Comparison](/blog/system-design-interview-cost-ai-vs-human)
