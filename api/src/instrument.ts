@@ -9,5 +9,29 @@ if (process.env.NODE_ENV === 'production') {
       Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
     ],
     enableLogs: true,
+    beforeSend(event, hint) {
+      // Filter out client abort errors that aren't actionable
+      const error = hint.originalException;
+
+      if (error && typeof error === 'object') {
+        if ('code' in error && error.code === 'ECONNABORTED') {
+          return null;
+        }
+
+        if ('type' in error && error.type === 'request.aborted') {
+          return null;
+        }
+
+        if (
+          'message' in error &&
+          typeof error.message === 'string' &&
+          error.message.toLowerCase().includes('request aborted')
+        ) {
+          return null;
+        }
+      }
+
+      return event;
+    },
   });
 }
