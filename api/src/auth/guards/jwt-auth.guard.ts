@@ -32,7 +32,6 @@ export class JwtAuthGuard implements CanActivate {
     const token = this.extractToken(request);
 
     if (!token) {
-      this.logger.warn('Authentication failed: No token provided');
       throw new UnauthorizedException('No token provided');
     }
 
