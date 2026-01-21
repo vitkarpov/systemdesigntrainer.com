@@ -9,28 +9,10 @@ import * as Sentry from '@sentry/nestjs';
  * to single-line JSON strings, making logs easier to parse and search in
  * production logging systems.
  *
- * Also integrates with Sentry:
- * - All logs are sent as breadcrumbs for debugging context
- * - Errors are captured as exceptions in Sentry
+ * Also integrates with Sentry by sending all logs as messages to Sentry.
  */
 @Injectable()
 export class CustomLoggerService extends ConsoleLogger {
-  /**
-   * Send log to Sentry as a breadcrumb
-   */
-  private addSentryBreadcrumb(
-    level: 'log' | 'debug' | 'info' | 'warning' | 'error',
-    message: string,
-    data?: Record<string, any>,
-  ): void {
-    Sentry.addBreadcrumb({
-      category: 'console',
-      level,
-      message,
-      data,
-    });
-  }
-
   /**
    * Format log arguments to inline JSON strings
    */
@@ -92,8 +74,11 @@ export class CustomLoggerService extends ConsoleLogger {
       super.log(this.formatLogMessage(message), context);
     }
 
-    // Send to Sentry as breadcrumb
-    this.addSentryBreadcrumb('info', formattedMessage, data);
+    // Send to Sentry as a log message
+    Sentry.captureMessage(formattedMessage, {
+      level: 'info',
+      extra: data,
+    });
   }
 
   /**
@@ -118,10 +103,7 @@ export class CustomLoggerService extends ConsoleLogger {
       super.error(this.formatLogMessage(message), stackOrContext, context);
     }
 
-    // Send to Sentry as breadcrumb
-    this.addSentryBreadcrumb('error', formattedMessage, data);
-
-    // Also capture errors as exceptions in Sentry
+    // Capture errors in Sentry
     if (message instanceof Error) {
       Sentry.captureException(message, { extra: data });
     } else {
@@ -151,8 +133,11 @@ export class CustomLoggerService extends ConsoleLogger {
       super.warn(this.formatLogMessage(message), context);
     }
 
-    // Send to Sentry as breadcrumb
-    this.addSentryBreadcrumb('warning', formattedMessage, data);
+    // Send to Sentry as a log message
+    Sentry.captureMessage(formattedMessage, {
+      level: 'warning',
+      extra: data,
+    });
   }
 
   /**
@@ -174,8 +159,11 @@ export class CustomLoggerService extends ConsoleLogger {
       super.debug(this.formatLogMessage(message), context);
     }
 
-    // Send to Sentry as breadcrumb
-    this.addSentryBreadcrumb('debug', formattedMessage, data);
+    // Send to Sentry as a log message
+    Sentry.captureMessage(formattedMessage, {
+      level: 'debug',
+      extra: data,
+    });
   }
 
   /**
@@ -197,7 +185,10 @@ export class CustomLoggerService extends ConsoleLogger {
       super.verbose(this.formatLogMessage(message), context);
     }
 
-    // Send to Sentry as breadcrumb
-    this.addSentryBreadcrumb('log', formattedMessage, data);
+    // Send to Sentry as a log message
+    Sentry.captureMessage(formattedMessage, {
+      level: 'log',
+      extra: data,
+    });
   }
 }
