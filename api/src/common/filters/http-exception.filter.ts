@@ -3,6 +3,7 @@ import {
   Catch,
   ArgumentsHost,
   HttpStatus,
+  HttpException,
   Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
@@ -25,14 +26,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
   }
 
   catch(exception: any, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+
     // Check if this is a client abort error that should be ignored
     if (this.isClientAbortError(exception)) {
       // Log at debug level for visibility in development, but don't send to Sentry
       this.logger.debug(`Client aborted request: ${exception.code}`);
-
-      // Send a proper HTTP response
-      const ctx = host.switchToHttp();
-      const response = ctx.getResponse<Response>();
 
       // Only send response if headers haven't been sent yet
       if (!response.headersSent) {
@@ -45,8 +45,34 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return;
     }
 
-    // For all other errors, delegate to Sentry's global filter
+    // Handle HttpExceptions (NestJS built-in exceptions)
+    if (exception instanceof HttpException) {
+      const status = exception.getStatus();
+      const exceptionResponse = exception.getResponse();
+
+      // Send the proper HTTP response
+      if (!response.headersSent) {
+        response.status(status).json(exceptionResponse);
+      }
+
+      // Also log to Sentry for server errors (5xx)
+      if (status >= 500) {
+        this.sentryFilter.catch(exception, host);
+      }
+
+      return;
+    }
+
+    // For all other errors, log to Sentry and send 500 response
     this.sentryFilter.catch(exception, host);
+
+    // Send generic 500 error if response not yet sent
+    if (!response.headersSent) {
+      response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error',
+      });
+    }
   }
 
   /**
