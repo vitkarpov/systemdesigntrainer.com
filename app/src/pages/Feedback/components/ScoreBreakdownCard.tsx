@@ -19,7 +19,7 @@ export function ScoreBreakdownCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Score Breakdown</CardTitle>
+        <CardTitle className="font-bold">Score Breakdown</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <ScoreItem
