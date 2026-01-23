@@ -19,15 +19,15 @@ export function NextStepsCard({ steps }: NextStepsCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Next Steps</CardTitle>
+        <CardTitle className="font-bold">Next Steps</CardTitle>
         <CardDescription>
           Recommended actions to improve your skills
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {steps.map((step, idx) => (
-          <div key={idx} className="p-4 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground">{step.description}</p>
+          <div key={idx} className="p-4 bg-muted/40 rounded-lg border border-border/30">
+            <p className="text-sm font-medium text-foreground leading-relaxed">{step.description}</p>
           </div>
         ))}
       </CardContent>

@@ -39,14 +39,14 @@ export function FeedbackItemsCard({ items, type }: FeedbackItemsCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 font-bold">
           <span className={iconColor}>{icon}</span> {title}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {filteredItems.map((item, idx) => (
-          <div key={idx} className={`${bgColor} p-4 rounded-lg`}>
-            <p className="text-sm text-muted-foreground">{item.description}</p>
+          <div key={idx} className={`${bgColor} p-4 rounded-lg border border-border/30`}>
+            <p className="text-sm font-medium text-foreground leading-relaxed">{item.description}</p>
           </div>
         ))}
       </CardContent>
