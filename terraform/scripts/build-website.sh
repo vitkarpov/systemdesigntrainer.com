@@ -103,6 +103,7 @@ aws s3 sync . s3://"$BUCKET_NAME"/ \
   --include "*.html" \
   --cache-control "no-cache, no-store, must-revalidate" \
   --metadata-directive REPLACE \
+  --delete \
   --region "$AWS_REGION"
 
 # Upload CSS/JS with 1-year cache
@@ -112,6 +113,7 @@ aws s3 sync . s3://"$BUCKET_NAME"/ \
   --include "*.js" \
   --cache-control "public, max-age=31536000, immutable" \
   --metadata-directive REPLACE \
+  --delete \
   --region "$AWS_REGION"
 
 # Upload images with 1-year cache
@@ -125,6 +127,7 @@ aws s3 sync . s3://"$BUCKET_NAME"/ \
   --include "*.ico" \
   --cache-control "public, max-age=31536000, immutable" \
   --metadata-directive REPLACE \
+  --delete \
   --region "$AWS_REGION"
 
 # Upload any remaining files
