@@ -80,6 +80,37 @@ export function useConversationStream({
         });
 
         if (!response.ok) {
+          // Handle 429 (rate limit) errors specially - show notification instead of throwing
+          if (response.status === 429) {
+            let errorMessage = "Too many requests. Please wait a moment and try again.";
+
+            // Try to extract error message from response
+            try {
+              const contentType = response.headers.get("content-type");
+              if (contentType?.includes("application/json")) {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+              } else {
+                const errorText = await response.text();
+                if (errorText) {
+                  errorMessage = errorText;
+                }
+              }
+            } catch (parseError) {
+              // Use default message if parsing fails
+              console.error("Failed to parse 429 error response:", parseError);
+            }
+
+            useStreamingStore.getState().errorStreaming(sessionId);
+
+            if (onError) {
+              onError(new Error(errorMessage));
+            }
+
+            return; // Don't throw, just return to avoid ErrorBoundary
+          }
+
+          // For other HTTP errors, throw as before
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
