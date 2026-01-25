@@ -22,7 +22,7 @@ import { Throttle } from '@nestjs/throttler';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { Observable, from, concat, of } from 'rxjs';
-import { switchMap, catchError, finalize } from 'rxjs/operators';
+import { switchMap, catchError } from 'rxjs/operators';
 import { Request } from 'express';
 import {
   ApiTags,
@@ -41,7 +41,6 @@ import { RedFlagService } from '../services/red-flag.service';
 import { FeedbackService } from '../services/feedback.service';
 import { DiagramService } from '../services/diagram.service';
 import { ConversationSagaService } from '../services/conversation-saga.service';
-import { StreamingLimiterService } from '../services/streaming-limiter.service';
 import { AiService } from '../../ai/services/ai.service';
 import { PromptService } from '../../ai/services/prompt.service';
 import { PaymentGuardService } from '../../auth/services/payment-guard.service';
@@ -87,7 +86,6 @@ export class SessionsController {
     private feedbackService: FeedbackService,
     private diagramService: DiagramService,
     private conversationSaga: ConversationSagaService,
-    private streamLimiter: StreamingLimiterService,
     private aiService: AiService,
     private promptService: PromptService,
     private paymentGuard: PaymentGuardService,
@@ -119,24 +117,6 @@ export class SessionsController {
     const timestamp =
       session.updatedAt?.getTime() || session.createdAt?.getTime() || 0;
     return `"${timestamp}"`;
-  }
-
-  /**
-   * GET /sessions/metrics/streaming
-   * Get streaming concurrency metrics
-   */
-  @Get('metrics/streaming')
-  @ApiOperation({ summary: 'Get streaming concurrency metrics' })
-  @ApiResponse({
-    status: 200,
-    description: 'Streaming metrics retrieved',
-  })
-  async getStreamingMetrics() {
-    const metrics = await this.streamLimiter.getMetrics();
-    return {
-      success: true,
-      data: metrics,
-    };
   }
 
   /**
@@ -521,9 +501,6 @@ export class SessionsController {
       (async () => {
         await this.verifySessionOwnership(id, user.id);
 
-        // Acquire stream slot (throws if limits exceeded)
-        await this.streamLimiter.acquireStreamSlot(user.id);
-
         const session = await this.sessionService.getSession(id);
         const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
 
@@ -674,7 +651,6 @@ export class SessionsController {
       }),
       catchError((error) => {
         // Early failure before streaming started
-        // NOTE: Don't release slot here - finalize() handles cleanup in all cases
         const errorEvent: MessageEvent = {
           type: 'error',
           data: JSON.stringify({
@@ -682,10 +658,6 @@ export class SessionsController {
           }),
         };
         return of(errorEvent);
-      }),
-      finalize(() => {
-        // Always release stream slot when stream completes or errors
-        this.streamLimiter.releaseStreamSlot(user.id);
       }),
     );
   }

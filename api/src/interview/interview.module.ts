@@ -11,7 +11,6 @@ import { FeedbackNaiveService } from './services/feedback-naive.service';
 import { FeedbackAiService } from './services/feedback-ai.service';
 import { DiagramService } from './services/diagram.service';
 import { ConversationSagaService } from './services/conversation-saga.service';
-import { StreamingLimiterService } from './services/streaming-limiter.service';
 import { PhaseTransitionSchedulerService } from './services/phase-transition-scheduler.service';
 import { FeedbackProcessor } from './processors/feedback.processor';
 import { PhaseTransitionProcessor } from './processors/phase-transition.processor';
@@ -62,7 +61,6 @@ import { EmailModule } from '../email/email.module';
     FeedbackService,
     DiagramService,
     ConversationSagaService,
-    StreamingLimiterService,
     PhaseTransitionSchedulerService,
     FeedbackProcessor,
     PhaseTransitionProcessor,

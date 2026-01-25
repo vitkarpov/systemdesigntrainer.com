@@ -4,13 +4,11 @@ import type {
   AdminOperationResponse,
   AddCreditsPayload,
   GenerateFeedbackPayload,
-  ResetStreamCountersPayload,
 } from './types/operations.types';
 
 // Import operation handlers
 import { addCredits } from './operations/add-credits';
 import { generateFeedback } from './operations/generate-feedback';
-import { resetStreamCounters } from './operations/reset-stream-counters';
 
 /**
  * Main Lambda handler that routes to different admin operations
@@ -50,13 +48,6 @@ export async function handler(
         result = await generateFeedback(
           db,
           event.payload as GenerateFeedbackPayload,
-        );
-        break;
-
-      case 'reset-stream-counters':
-        result = await resetStreamCounters(
-          db,
-          event.payload as ResetStreamCountersPayload,
         );
         break;
 
