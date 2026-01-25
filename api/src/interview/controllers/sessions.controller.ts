@@ -892,6 +892,11 @@ export class SessionsController {
       };
     }
 
+    const session = await this.sessionService.getSession(id);
+    if (session.status === 'in_progress') {
+      await this.sessionService.completeSession(id);
+    }
+
     // Enqueue feedback generation job
     await this.feedbackQueue.add(
       'generate',
