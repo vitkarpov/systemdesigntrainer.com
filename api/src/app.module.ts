@@ -34,11 +34,5 @@ import { PaymentsModule } from './payments/payments.module';
     ]),
   ],
   controllers: [AppController],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-  ],
 })
 export class AppModule {}
