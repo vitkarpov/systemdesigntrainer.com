@@ -1,0 +1,13 @@
+{
+  "name": "lambda-admin",
+  "version": "1.0.0",
+  "description": "Lambda admin function for SD-SIM",
+  "private": true,
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.0.0",
+    "bull": "^4.16.5",
+    "drizzle-orm": "^0.45.1",
+    "ioredis": "^5.8.2",
+    "pg": "^8.16.3"
+  }
+}

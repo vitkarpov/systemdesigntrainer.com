@@ -93,3 +93,52 @@ export type GenerateFeedbackEvent = AdminOperationEvent<GenerateFeedbackPayload>
 export type GenerateFeedbackResponse = AdminOperationResponse<GenerateFeedbackData> & {
   operation: 'generate-feedback';
 };
+
+/**
+ * Reset Stream Counters Operation Types
+ */
+export interface ResetStreamCountersPayload {
+  /** Whether to actually fix the counters (dry-run if false) */
+  fix?: boolean;
+  /** Optional specific user ID to reset (otherwise resets all) */
+  userId?: number;
+}
+
+export interface StreamCounterInfo {
+  /** User ID */
+  userId: string;
+  /** Current counter value */
+  count: number;
+  /** TTL in seconds (-1 if no expiry) */
+  ttl: number;
+  /** Whether this counter is negative */
+  isNegative: boolean;
+  /** Whether this counter is suspicious (> max allowed) */
+  isSuspicious: boolean;
+  /** Whether this counter was reset */
+  wasReset?: boolean;
+}
+
+export interface ResetStreamCountersData {
+  /** Total number of counters found */
+  totalCounters: number;
+  /** Number of counters with issues */
+  issuesFound: number;
+  /** Number of counters that were reset */
+  countersReset: number;
+  /** Details of all counters */
+  counters: StreamCounterInfo[];
+  /** Whether this was a dry run */
+  dryRun: boolean;
+}
+
+/**
+ * Type-safe operation events
+ */
+export type ResetStreamCountersEvent = AdminOperationEvent<ResetStreamCountersPayload> & {
+  operation: 'reset-stream-counters';
+};
+
+export type ResetStreamCountersResponse = AdminOperationResponse<ResetStreamCountersData> & {
+  operation: 'reset-stream-counters';
+};
