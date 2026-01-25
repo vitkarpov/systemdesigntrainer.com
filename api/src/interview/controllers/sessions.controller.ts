@@ -15,13 +15,14 @@ import {
   Req,
   Res,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { Observable, from, concat, of } from 'rxjs';
-import { switchMap, catchError, finalize } from 'rxjs/operators';
+import { switchMap, catchError } from 'rxjs/operators';
 import { Request } from 'express';
 import {
   ApiTags,
@@ -40,7 +41,6 @@ import { RedFlagService } from '../services/red-flag.service';
 import { FeedbackService } from '../services/feedback.service';
 import { DiagramService } from '../services/diagram.service';
 import { ConversationSagaService } from '../services/conversation-saga.service';
-import { StreamingLimiterService } from '../services/streaming-limiter.service';
 import { AiService } from '../../ai/services/ai.service';
 import { PromptService } from '../../ai/services/prompt.service';
 import { PaymentGuardService } from '../../auth/services/payment-guard.service';
@@ -68,6 +68,7 @@ import {
 import { InterviewPhase, MessageRole } from '../types/session.types';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../../db/schema/users.schema';
+import { UserThrottlerGuard } from '../guards/user-throttler.guard';
 
 @ApiTags('sessions')
 @ApiBearerAuth()
@@ -85,7 +86,6 @@ export class SessionsController {
     private feedbackService: FeedbackService,
     private diagramService: DiagramService,
     private conversationSaga: ConversationSagaService,
-    private streamLimiter: StreamingLimiterService,
     private aiService: AiService,
     private promptService: PromptService,
     private paymentGuard: PaymentGuardService,
@@ -117,24 +117,6 @@ export class SessionsController {
     const timestamp =
       session.updatedAt?.getTime() || session.createdAt?.getTime() || 0;
     return `"${timestamp}"`;
-  }
-
-  /**
-   * GET /sessions/metrics/streaming
-   * Get streaming concurrency metrics
-   */
-  @Get('metrics/streaming')
-  @ApiOperation({ summary: 'Get streaming concurrency metrics' })
-  @ApiResponse({
-    status: 200,
-    description: 'Streaming metrics retrieved',
-  })
-  async getStreamingMetrics() {
-    const metrics = await this.streamLimiter.getMetrics();
-    return {
-      success: true,
-      data: metrics,
-    };
   }
 
   /**
@@ -185,7 +167,8 @@ export class SessionsController {
    * Create a new interview session
    */
   @Post()
-  @Throttle({ default: { limit: 20, ttl: 60000 } }) // 20 requests per minute
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { limit: 1, ttl: 60000 } }) // 1 request per minute
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new interview session' })
   @ApiResponse({
@@ -483,7 +466,8 @@ export class SessionsController {
    * - 'diagramData' cookie: Optional diagram data as JSON string
    */
   @Sse(':id/conversation')
-  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 conversations per minute
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } }) // 20 messages per minute per user
   @ApiOperation({
     summary: 'Handle conversation turn with streaming (saga pattern)',
   })
@@ -516,9 +500,6 @@ export class SessionsController {
     const preparation$ = from(
       (async () => {
         await this.verifySessionOwnership(id, user.id);
-
-        // Acquire stream slot (throws if limits exceeded)
-        await this.streamLimiter.acquireStreamSlot(user.id);
 
         const session = await this.sessionService.getSession(id);
         const elapsedSeconds = this.sessionService.getElapsedSeconds(session);
@@ -670,9 +651,6 @@ export class SessionsController {
       }),
       catchError((error) => {
         // Early failure before streaming started
-        // Release stream slot on error
-        this.streamLimiter.releaseStreamSlot(user.id);
-
         const errorEvent: MessageEvent = {
           type: 'error',
           data: JSON.stringify({
@@ -680,10 +658,6 @@ export class SessionsController {
           }),
         };
         return of(errorEvent);
-      }),
-      finalize(() => {
-        // Always release stream slot when stream completes or errors
-        this.streamLimiter.releaseStreamSlot(user.id);
       }),
     );
   }

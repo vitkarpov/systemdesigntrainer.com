@@ -11,12 +11,12 @@ import { FeedbackNaiveService } from './services/feedback-naive.service';
 import { FeedbackAiService } from './services/feedback-ai.service';
 import { DiagramService } from './services/diagram.service';
 import { ConversationSagaService } from './services/conversation-saga.service';
-import { StreamingLimiterService } from './services/streaming-limiter.service';
 import { PhaseTransitionSchedulerService } from './services/phase-transition-scheduler.service';
 import { FeedbackProcessor } from './processors/feedback.processor';
 import { PhaseTransitionProcessor } from './processors/phase-transition.processor';
 import { SessionsController } from './controllers/sessions.controller';
 import { CasesController } from './controllers/cases.controller';
+import { UserThrottlerGuard } from './guards/user-throttler.guard';
 import { DatabaseModule } from '../../db/db.module';
 import { AiModule } from '../ai/ai.module';
 import { AuthModule } from '../auth/auth.module';
@@ -61,10 +61,10 @@ import { EmailModule } from '../email/email.module';
     FeedbackService,
     DiagramService,
     ConversationSagaService,
-    StreamingLimiterService,
     PhaseTransitionSchedulerService,
     FeedbackProcessor,
     PhaseTransitionProcessor,
+    UserThrottlerGuard,
   ],
   exports: [
     InterviewSessionService,

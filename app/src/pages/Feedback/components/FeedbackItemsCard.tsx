@@ -45,8 +45,13 @@ export function FeedbackItemsCard({ items, type }: FeedbackItemsCardProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {filteredItems.map((item, idx) => (
-          <div key={idx} className={`${bgColor} p-4 rounded-lg border border-border/30`}>
-            <p className="text-sm font-medium text-foreground leading-relaxed">{item.description}</p>
+          <div
+            key={idx}
+            className={`${bgColor} p-4 rounded-lg border border-border/30`}
+          >
+            <p className="text-sm font-medium text-foreground leading-relaxed">
+              {item.description}
+            </p>
           </div>
         ))}
       </CardContent>

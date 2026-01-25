@@ -26,8 +26,13 @@ export function NextStepsCard({ steps }: NextStepsCardProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {steps.map((step, idx) => (
-          <div key={idx} className="p-4 bg-muted/40 rounded-lg border border-border/30">
-            <p className="text-sm font-medium text-foreground leading-relaxed">{step.description}</p>
+          <div
+            key={idx}
+            className="p-4 bg-muted/40 rounded-lg border border-border/30"
+          >
+            <p className="text-sm font-medium text-foreground leading-relaxed">
+              {step.description}
+            </p>
           </div>
         ))}
       </CardContent>
