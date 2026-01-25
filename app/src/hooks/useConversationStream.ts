@@ -82,7 +82,8 @@ export function useConversationStream({
         if (!response.ok) {
           // Handle 429 (rate limit) errors specially - show notification instead of throwing
           if (response.status === 429) {
-            let errorMessage = "Too many requests. Please wait a moment and try again.";
+            let errorMessage =
+              "Too many requests. Please wait a moment and try again.";
 
             // Try to extract error message from response
             try {

@@ -17,7 +17,9 @@ export function OverallScoreCard({ score }: OverallScoreCardProps) {
             {score}
           </div>
           <div>
-            <div className="text-2xl font-bold text-foreground">{getScoreLabel(score)}</div>
+            <div className="text-2xl font-bold text-foreground">
+              {getScoreLabel(score)}
+            </div>
             <div className="text-sm text-muted-foreground/70">out of 100</div>
           </div>
         </div>
