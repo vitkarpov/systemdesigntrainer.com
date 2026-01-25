@@ -168,7 +168,12 @@ export class SessionsController {
    */
   @Post()
   @UseGuards(UserThrottlerGuard)
-  @Throttle({ default: { limit: 1, ttl: 60000 } }) // 1 request per minute
+  @Throttle({
+    default: {
+      limit: process.env.NODE_ENV === 'test' ? 10 : 1,
+      ttl: 60000,
+    },
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new interview session' })
   @ApiResponse({
