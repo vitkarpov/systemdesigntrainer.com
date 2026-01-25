@@ -483,7 +483,7 @@ export class SessionsController {
    * - 'diagramData' cookie: Optional diagram data as JSON string
    */
   @Sse(':id/conversation')
-  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 conversations per minute
+  @Throttle({ default: { limit: 200, ttl: 60000 } }) // 200 conversations per minute
   @ApiOperation({
     summary: 'Handle conversation turn with streaming (saga pattern)',
   })
@@ -670,9 +670,7 @@ export class SessionsController {
       }),
       catchError((error) => {
         // Early failure before streaming started
-        // Release stream slot on error
-        this.streamLimiter.releaseStreamSlot(user.id);
-
+        // NOTE: Don't release slot here - finalize() handles cleanup in all cases
         const errorEvent: MessageEvent = {
           type: 'error',
           data: JSON.stringify({

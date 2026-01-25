@@ -1,6 +1,5 @@
 import {
   Injectable,
-  ServiceUnavailableException,
   HttpException,
   HttpStatus,
   Inject,
@@ -14,10 +13,9 @@ import { REDIS_CONNECTION } from '../../redis/redis.module';
  * StreamingLimiterService
  *
  * Manages concurrent stream limits to prevent resource exhaustion.
- * Tracks both global stream count and per-user stream count using Redis.
+ * Tracks per-user stream count using Redis.
  *
  * Limits:
- * - Global: Max 50 concurrent streams across all users
  * - Per-user: Max 2 concurrent streams per user
  *
  * This prevents:
@@ -27,13 +25,11 @@ import { REDIS_CONNECTION } from '../../redis/redis.module';
  *
  * Redis Keys:
  * - stream:user:{userId} - Counter for active streams per user (TTL: 5 minutes)
- * - stream:global - Counter for total active streams (TTL: 5 minutes)
  */
 @Injectable()
 export class StreamingLimiterService implements OnModuleDestroy {
   private readonly logger = new Logger(StreamingLimiterService.name);
   private readonly MAX_CONCURRENT_STREAMS_PER_USER = 2;
-  private readonly MAX_GLOBAL_STREAMS = 50;
   private readonly STREAM_TTL = 300; // 5 minutes in seconds
 
   constructor(@Inject(REDIS_CONNECTION) private readonly redis: Redis) {}
@@ -48,7 +44,6 @@ export class StreamingLimiterService implements OnModuleDestroy {
    */
   async acquireStreamSlot(userId: number): Promise<void> {
     const userKey = `stream:user:${userId}`;
-    const globalKey = 'stream:global';
 
     // Check and increment user count atomically
     const userCount = await this.redis.incr(userKey);
@@ -68,26 +63,8 @@ export class StreamingLimiterService implements OnModuleDestroy {
       );
     }
 
-    // Check and increment global count
-    const globalCount = await this.redis.incr(globalKey);
-
-    // Set expiration on first increment
-    if (globalCount === 1) {
-      await this.redis.expire(globalKey, this.STREAM_TTL);
-    }
-
-    // Check global limit
-    if (globalCount > this.MAX_GLOBAL_STREAMS) {
-      // Roll back both increments
-      await this.redis.decr(globalKey);
-      await this.redis.decr(userKey);
-      throw new ServiceUnavailableException(
-        'Server is at capacity. Please try again in a moment.',
-      );
-    }
-
     this.logger.log(
-      `Slot acquired for user ${userId}. User streams: ${userCount}, Global: ${globalCount}`,
+      `Slot acquired for user ${userId}. User streams: ${userCount}`,
     );
   }
 
@@ -96,38 +73,43 @@ export class StreamingLimiterService implements OnModuleDestroy {
    */
   async releaseStreamSlot(userId: number): Promise<void> {
     const userKey = `stream:user:${userId}`;
-    const globalKey = 'stream:global';
 
-    // Decrement counters
-    const userCount = await this.redis.decr(userKey);
-    const globalCount = await this.redis.decr(globalKey);
+    // Get current count before decrementing
+    const currentCount = await this.redis.get(userKey);
+    const count = currentCount ? parseInt(currentCount, 10) : 0;
 
-    this.logger.log(
-      `Slot released for user ${userId}. User streams: ${Math.max(0, userCount)}, Global: ${Math.max(0, globalCount)}`,
-    );
+    // Only decrement if counter is positive (prevents negative counts from double-release bugs)
+    if (count > 0) {
+      const userCount = await this.redis.decr(userKey);
+      this.logger.log(
+        `Slot released for user ${userId}. User streams: ${userCount}`,
+      );
+    } else {
+      this.logger.warn(
+        `Attempted to release slot for user ${userId} but counter is already at ${count}. Possible double-release.`,
+      );
+    }
   }
 
   /**
    * Get current stream metrics
    */
   async getMetrics() {
-    const globalKey = 'stream:global';
-    const globalStreams = parseInt(
-      (await this.redis.get(globalKey)) || '0',
-      10,
-    );
-
     // Count active users by scanning for user stream keys
     const keys = await this.redis.keys('stream:user:*');
     const activeUsers = keys.length;
 
+    // Calculate total streams across all users
+    let totalStreams = 0;
+    for (const key of keys) {
+      const count = await this.redis.get(key);
+      totalStreams += count ? parseInt(count, 10) : 0;
+    }
+
     return {
-      globalStreams,
-      maxGlobalStreams: this.MAX_GLOBAL_STREAMS,
+      totalStreams,
       activeUsers,
-      utilizationPercent: Math.round(
-        (globalStreams / this.MAX_GLOBAL_STREAMS) * 100,
-      ),
+      maxStreamsPerUser: this.MAX_CONCURRENT_STREAMS_PER_USER,
     };
   }
 
