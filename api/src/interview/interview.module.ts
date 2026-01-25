@@ -17,6 +17,7 @@ import { FeedbackProcessor } from './processors/feedback.processor';
 import { PhaseTransitionProcessor } from './processors/phase-transition.processor';
 import { SessionsController } from './controllers/sessions.controller';
 import { CasesController } from './controllers/cases.controller';
+import { UserThrottlerGuard } from './guards/user-throttler.guard';
 import { DatabaseModule } from '../../db/db.module';
 import { AiModule } from '../ai/ai.module';
 import { AuthModule } from '../auth/auth.module';
@@ -65,6 +66,7 @@ import { EmailModule } from '../email/email.module';
     PhaseTransitionSchedulerService,
     FeedbackProcessor,
     PhaseTransitionProcessor,
+    UserThrottlerGuard,
   ],
   exports: [
     InterviewSessionService,

@@ -15,6 +15,7 @@ import {
   Req,
   Res,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
@@ -68,6 +69,7 @@ import {
 import { InterviewPhase, MessageRole } from '../types/session.types';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../../db/schema/users.schema';
+import { UserThrottlerGuard } from '../guards/user-throttler.guard';
 
 @ApiTags('sessions')
 @ApiBearerAuth()
@@ -185,7 +187,8 @@ export class SessionsController {
    * Create a new interview session
    */
   @Post()
-  @Throttle({ default: { limit: 20, ttl: 60000 } }) // 20 requests per minute
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { limit: 1, ttl: 60000 } }) // 1 request per minute
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new interview session' })
   @ApiResponse({
@@ -483,7 +486,8 @@ export class SessionsController {
    * - 'diagramData' cookie: Optional diagram data as JSON string
    */
   @Sse(':id/conversation')
-  @Throttle({ default: { limit: 200, ttl: 60000 } }) // 200 conversations per minute
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } }) // 20 messages per minute per user
   @ApiOperation({
     summary: 'Handle conversation turn with streaming (saga pattern)',
   })
