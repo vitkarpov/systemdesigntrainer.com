@@ -95,7 +95,7 @@ variable "ecs_min_count" {
 variable "ecs_max_count" {
   description = "Maximum number of ECS tasks"
   type        = number
-  default     = 3
+  default     = 1
 }
 
 variable "ecs_target_cpu_utilization" {

@@ -37,3 +37,8 @@ output "frontend_url" {
   description = "Full URL of the frontend application"
   value       = "https://app.${var.domain_name}"
 }
+
+output "response_headers_policy_id" {
+  description = "ID of the CloudFront response headers policy"
+  value       = aws_cloudfront_response_headers_policy.security_headers.id
+}
