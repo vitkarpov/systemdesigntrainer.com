@@ -42,6 +42,51 @@ resource "aws_cloudfront_origin_access_control" "frontend" {
 }
 
 # ==================================
+# CloudFront Response Headers Policy
+# ==================================
+
+resource "aws_cloudfront_response_headers_policy" "security_headers" {
+  name    = "${var.project_name}-${var.environment}-security-headers"
+  comment = "Security headers policy to prevent clickjacking and other attacks"
+
+  security_headers_config {
+    # Prevent clickjacking by blocking iframe embedding
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+
+    # Modern alternative to X-Frame-Options
+    content_security_policy {
+      content_security_policy = "frame-ancestors 'none'"
+      override                = true
+    }
+
+    # Additional security headers
+    content_type_options {
+      override = true
+    }
+
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = true
+      override                   = true
+    }
+
+    xss_protection {
+      mode_block = true
+      protection = true
+      override   = true
+    }
+  }
+}
+
+# ==================================
 # CloudFront Distribution
 # ==================================
 
@@ -76,6 +121,8 @@ resource "aws_cloudfront_distribution" "frontend" {
     default_ttl = 0
     max_ttl     = 0
 
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
+
     forwarded_values {
       query_string = false
       cookies {
@@ -96,6 +143,8 @@ resource "aws_cloudfront_distribution" "frontend" {
     min_ttl     = 31536000 # 1 year
     default_ttl = 31536000
     max_ttl     = 31536000
+
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
 
     forwarded_values {
       query_string = false
