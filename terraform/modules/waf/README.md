@@ -69,31 +69,64 @@ The following API endpoints are allowed through the WAF:
 ### CloudWatch Logs
 - Log Group: `aws-waf-logs-{project}-{env}-api` (e.g., `aws-waf-logs-sd-sim-production-api`)
 - Retention: Configurable (default 7 days)
+- Sampling: By default, only blocked requests are logged to reduce costs
 
 ### View Blocked Requests
 ```bash
 # Get log group name from terraform
 LOG_GROUP=$(cd terraform && terraform output -raw waf_log_group)
 
-# View blocked requests
+# View blocked requests (if logging is enabled)
 aws logs filter-log-events \
   --log-group-name "$LOG_GROUP" \
   --filter-pattern '{ $.action = "BLOCK" }'
 
 # Or use the full log group name directly
 # Example: aws-waf-logs-sd-sim-production-api
+
+# Note: With log sampling enabled (default), only blocked requests are logged
+# Set enable_log_sampling = false to log all requests
 ```
 
 ## Usage
 
+### Basic Usage
 ```hcl
 module "waf" {
   source = "./modules/waf"
 
-  project_name       = var.project_name
-  environment        = var.environment
-  alb_arn           = module.alb.alb_arn
-  log_retention_days = 7  # Optional, defaults to 7 days
+  project_name = var.project_name
+  environment  = var.environment
+  alb_arn      = module.alb.alb_arn
+}
+```
+
+### With Cost Optimization Options
+```hcl
+module "waf" {
+  source = "./modules/waf"
+
+  project_name = var.project_name
+  environment  = var.environment
+  alb_arn      = module.alb.alb_arn
+
+  # Cost optimization options
+  enable_log_sampling = true  # Only log blocked requests (default: true)
+  log_retention_days  = 7     # Days to retain logs (default: 7)
+  enable_logging      = true  # Disable entirely to save costs (default: true)
+}
+```
+
+### Maximum Cost Savings
+```hcl
+module "waf" {
+  source = "./modules/waf"
+
+  project_name = var.project_name
+  environment  = var.environment
+  alb_arn      = module.alb.alb_arn
+
+  enable_logging = false  # Disable all logging for maximum savings
 }
 ```
 
@@ -146,7 +179,42 @@ curl $API_URL/not-whitelisted
 
 ## Cost Considerations
 
+### Base AWS WAF Costs
 - Web ACL: $5.00/month
-- Rules: $1.00/month per rule
+- Rules: $1.00/month per rule (1 rule = $1.00/month)
 - Requests: $0.60 per 1 million requests
-- Logs: CloudWatch Logs pricing applies
+- **Estimated Base Cost: ~$6/month + usage**
+
+### CloudWatch Logs Costs
+Logging can be expensive at scale. This module includes cost optimization features:
+
+1. **Log Sampling** (enabled by default)
+   - Only logs blocked requests (not allowed requests)
+   - Reduces log volume by ~50-90% depending on traffic
+   - Set `enable_log_sampling = false` to log all requests
+
+2. **Disable Logging** (for maximum savings)
+   - Set `enable_logging = false` to completely disable CloudWatch logs
+   - Saves all CloudWatch Logs ingestion and storage costs
+   - CloudWatch metrics will still be available
+
+3. **Sampled Requests** (disabled by default)
+   - Disabled to reduce storage costs
+   - Re-enable during debugging if needed
+
+### Cost Optimization Tips
+
+Based on [AWS WAF Cost Optimization Best Practices](https://docs.aws.amazon.com/prescriptive-guidance/latest/bot-control/optimizing-costs.html):
+
+- ✅ **Simple custom rules** - This module uses only basic path matching (cheapest option)
+- ✅ **No managed rule groups** - Avoiding Bot Control ($10+/month) and ATP ($15+/month)
+- ✅ **Whitelist approach** - Blocks unwanted traffic early
+- ✅ **Log sampling** - Reduces CloudWatch costs by 50-90%
+- ✅ **Short retention** - 7 days default (configurable)
+
+**Comparison with Managed Rules:**
+| Configuration | Monthly Cost |
+|---------------|--------------|
+| Current setup (custom rules) | $6 + $0.60/M requests |
+| With Bot Control | $16 + $1.60/M requests |
+| With Bot Control + ATP | $26 + $5.60/M requests |

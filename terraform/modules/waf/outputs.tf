@@ -14,6 +14,6 @@ output "web_acl_capacity" {
 }
 
 output "log_group_name" {
-  description = "Name of the CloudWatch Log Group for WAF logs"
-  value       = aws_cloudwatch_log_group.waf_logs.name
+  description = "Name of the CloudWatch Log Group for WAF logs (null if logging disabled)"
+  value       = var.enable_logging ? aws_cloudwatch_log_group.waf_logs[0].name : null
 }
