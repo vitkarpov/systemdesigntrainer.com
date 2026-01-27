@@ -55,23 +55,31 @@ terraform output waf_log_group
 
 ### 4. Test the WAF
 
+Get your API URL:
+
+```bash
+cd terraform
+API_URL=$(terraform output -raw api_url)
+echo "API URL: $API_URL"
+```
+
 Run the automated test script:
 
 ```bash
 cd terraform/scripts
-./test-waf.sh https://api.systemdesigntrainer.com
+./test-waf.sh $API_URL
 ```
 
 Or test manually:
 
 ```bash
 # Should succeed (200 OK)
-curl https://api.systemdesigntrainer.com/health
+curl $API_URL/health
 
 # Should be blocked (403 Forbidden)
-curl https://api.systemdesigntrainer.com/admin
-curl https://api.systemdesigntrainer.com/.env
-curl https://api.systemdesigntrainer.com/wp-admin
+curl $API_URL/admin
+curl $API_URL/.env
+curl $API_URL/wp-admin
 ```
 
 ## Monitoring
@@ -168,7 +176,8 @@ When you add new API endpoints, update the WAF whitelist:
 4. **Test the new endpoint:**
 
    ```bash
-   curl https://api.systemdesigntrainer.com/new-feature
+   API_URL=$(terraform output -raw api_url)
+   curl $API_URL/new-feature
    # Should NOT return 403
    ```
 

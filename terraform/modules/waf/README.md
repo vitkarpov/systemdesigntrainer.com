@@ -63,18 +63,25 @@ The following API endpoints are allowed through the WAF:
 ## Monitoring
 
 ### CloudWatch Metrics
-- `{project}-{env}-api-waf` - Overall WAF metrics
-- `{project}-{env}-allowed-endpoints` - Metrics for allowed endpoints
+- `{project}-{env}-api-waf` - Overall WAF metrics (e.g., `sd-sim-production-api-waf`)
+- `{project}-{env}-allowed-endpoints` - Metrics for allowed endpoints (e.g., `sd-sim-production-allowed-endpoints`)
 
 ### CloudWatch Logs
-- Log Group: `aws-waf-logs-{project}-{env}-api`
+- Log Group: `aws-waf-logs-{project}-{env}-api` (e.g., `aws-waf-logs-sd-sim-production-api`)
 - Retention: Configurable (default 7 days)
 
 ### View Blocked Requests
 ```bash
+# Get log group name from terraform
+LOG_GROUP=$(cd terraform && terraform output -raw waf_log_group)
+
+# View blocked requests
 aws logs filter-log-events \
-  --log-group-name "aws-waf-logs-{project}-{env}-api" \
+  --log-group-name "$LOG_GROUP" \
   --filter-pattern '{ $.action = "BLOCK" }'
+
+# Or use the full log group name directly
+# Example: aws-waf-logs-sd-sim-production-api
 ```
 
 ## Usage
@@ -86,7 +93,7 @@ module "waf" {
   project_name       = var.project_name
   environment        = var.environment
   alb_arn           = module.alb.alb_arn
-  log_retention_days = 30
+  log_retention_days = 7  # Optional, defaults to 7 days
 }
 ```
 
@@ -122,13 +129,18 @@ After deployment, test the WAF:
 
 ### Test Allowed Endpoint
 ```bash
-curl https://api.yourdomain.com/health
+# Get your API URL from terraform
+API_URL=$(cd terraform && terraform output -raw api_url)
+
+# Test allowed endpoint
+curl $API_URL/health
 # Should return 200 OK
 ```
 
 ### Test Blocked Endpoint
 ```bash
-curl https://api.yourdomain.com/not-whitelisted
+# Test blocked endpoint
+curl $API_URL/not-whitelisted
 # Should return 403 Forbidden
 ```
 
