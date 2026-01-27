@@ -134,6 +134,19 @@ module "alb" {
 }
 
 # ==================================
+# WAF Module (API ALB Protection)
+# ==================================
+
+module "waf" {
+  source = "./modules/waf"
+
+  project_name       = var.project_name
+  environment        = var.environment
+  alb_arn            = module.alb.alb_arn
+  log_retention_days = var.log_retention_days
+}
+
+# ==================================
 # Frontend Module (S3 + CloudFront)
 # ==================================
 
