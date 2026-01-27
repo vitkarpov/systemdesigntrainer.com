@@ -18,3 +18,15 @@ variable "log_retention_days" {
   type        = number
   default     = 7
 }
+
+variable "enable_log_sampling" {
+  description = "Enable log sampling to only log blocked requests (reduces CloudWatch costs)"
+  type        = bool
+  default     = true
+}
+
+variable "enable_logging" {
+  description = "Enable WAF logging to CloudWatch (disable to save costs)"
+  type        = bool
+  default     = true
+}

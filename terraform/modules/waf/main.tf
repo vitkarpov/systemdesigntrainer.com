@@ -103,14 +103,14 @@ resource "aws_wafv2_web_acl" "api_alb" {
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "${var.project_name}-${var.environment}-allowed-endpoints"
-      sampled_requests_enabled   = true
+      sampled_requests_enabled   = false
     }
   }
 
   visibility_config {
     cloudwatch_metrics_enabled = true
     metric_name                = "${var.project_name}-${var.environment}-api-waf"
-    sampled_requests_enabled   = true
+    sampled_requests_enabled   = false
   }
 
   tags = {
@@ -133,6 +133,8 @@ resource "aws_wafv2_web_acl_association" "api_alb" {
 # ==================================
 
 resource "aws_cloudwatch_log_group" "waf_logs" {
+  count = var.enable_logging ? 1 : 0
+
   name              = "aws-waf-logs-${var.project_name}-${var.environment}-api"
   retention_in_days = var.log_retention_days
 
@@ -147,8 +149,10 @@ resource "aws_cloudwatch_log_group" "waf_logs" {
 # ==================================
 
 resource "aws_wafv2_web_acl_logging_configuration" "api_alb" {
+  count = var.enable_logging ? 1 : 0
+
   resource_arn            = aws_wafv2_web_acl.api_alb.arn
-  log_destination_configs = ["${aws_cloudwatch_log_group.waf_logs.arn}:*"]
+  log_destination_configs = ["${aws_cloudwatch_log_group.waf_logs[0].arn}:*"]
 
   redacted_fields {
     single_header {
@@ -159,6 +163,25 @@ resource "aws_wafv2_web_acl_logging_configuration" "api_alb" {
   redacted_fields {
     single_header {
       name = "cookie"
+    }
+  }
+
+  # Log sampling - only log blocked requests to reduce costs
+  dynamic "logging_filter" {
+    for_each = var.enable_log_sampling ? [1] : []
+    content {
+      default_behavior = "DROP"
+
+      filter {
+        behavior    = "KEEP"
+        requirement = "MEETS_ANY"
+
+        condition {
+          action_condition {
+            action = "BLOCK"
+          }
+        }
+      }
     }
   }
 }
