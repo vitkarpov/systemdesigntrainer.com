@@ -9,6 +9,7 @@ import {
   HttpStatus,
   Logger,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -78,14 +79,14 @@ export class PaymentsController {
 
     if (!signature) {
       this.logger.error('Missing stripe-signature header');
-      throw new Error('Missing stripe-signature header');
+      throw new BadRequestException('Missing stripe-signature header');
     }
 
     // Get raw body (NestJS provides this via rawBody)
     const rawBody = request.rawBody;
     if (!rawBody) {
       this.logger.error('Missing raw body for webhook verification');
-      throw new Error('Missing raw body');
+      throw new BadRequestException('Missing raw body');
     }
 
     // Verify webhook signature

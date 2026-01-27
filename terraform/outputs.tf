@@ -112,6 +112,25 @@ output "secrets_arn" {
 }
 
 # ==================================
+# WAF Outputs
+# ==================================
+
+output "waf_web_acl_id" {
+  description = "ID of the WAF Web ACL protecting the API"
+  value       = module.waf.web_acl_id
+}
+
+output "waf_web_acl_arn" {
+  description = "ARN of the WAF Web ACL protecting the API"
+  value       = module.waf.web_acl_arn
+}
+
+output "waf_log_group" {
+  description = "CloudWatch Log Group for WAF logs"
+  value       = module.waf.log_group_name
+}
+
+# ==================================
 # Deployment Instructions
 # ==================================
 
