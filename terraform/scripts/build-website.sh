@@ -97,11 +97,11 @@ fi
 echo "☁️  Uploading website to S3..."
 cd "$WEBSITE_DIR/dist"
 
-# Upload HTML files with no-cache
+# Upload HTML files with 1-day cache for better SEO
 aws s3 sync . s3://"$BUCKET_NAME"/ \
   --exclude "*" \
   --include "*.html" \
-  --cache-control "no-cache, no-store, must-revalidate" \
+  --cache-control "public, max-age=86400" \
   --metadata-directive REPLACE \
   --delete \
   --region "$AWS_REGION"
