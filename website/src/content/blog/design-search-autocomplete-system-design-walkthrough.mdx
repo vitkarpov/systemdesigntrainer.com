@@ -1,0 +1,496 @@
+---
+title: "Design a Search Autocomplete System: Complete Walkthrough"
+description: "Step-by-step guide to designing a typeahead search system — one of the most common system design interview questions at Google, Amazon, and Meta."
+date: "2026-03-13"
+tags:
+  - "search-autocomplete"
+  - "typeahead"
+  - "trie"
+  - "caching"
+  - "system-design-basics"
+---
+
+"Design a search autocomplete system" — also called typeahead, search-as-you-type, or query suggestions — is one of the most frequently asked system design questions at Google, Amazon, and Meta. You've used it thousands of times: start typing in Google Search and five suggestions appear before you finish your sentence.
+
+Why do interviewers love this question?
+- It has a clear product experience everyone understands
+- The data structure at the core (trie) is non-obvious
+- It forces you to think about read-heavy scale, latency requirements, and data freshness trade-offs
+- There's a clean path from naive to production-grade design
+
+This walkthrough shows you **exactly how to approach this in a 45-minute interview**, phase by phase.
+
+## Phase 1: Clarify Requirements (5 minutes)
+
+Don't assume you're building Google Search. Narrow the scope first.
+
+### Functional Requirements
+
+**You:** "Before I start, let me clarify what we're building:
+
+1. Are we building autocomplete for a general search engine, or for a specific product — like an e-commerce site or a document tool?
+2. Should suggestions be based on popular global queries, or personalized to the user's history?
+3. How many suggestions should we show at once?
+4. Do we need to support multiple languages?
+5. Should we handle typos and misspellings?
+6. Are results ranked by popularity, recency, or something else?"
+
+**Interviewer:** "Let's design it like Google Search — global query suggestions, not personalized. Show the top 5 suggestions. English only for now. No typo correction. Rank by query frequency — most searched queries appear first."
+
+**You:** "Got it. So:
+
+```
+Functional Requirements:
+✅ Return top 5 query suggestions as the user types
+✅ Suggestions based on global search frequency
+✅ Prefix matching — suggestions must start with what the user typed
+✅ Ranked by popularity (query frequency)
+❌ No personalization
+❌ No typo correction
+❌ Multi-language not required
+```
+"
+
+### Non-Functional Requirements
+
+**You:** "Now let me understand scale and performance:
+
+1. How many daily active users?
+2. How many search queries per day total?
+3. What's the latency requirement? How fast do suggestions need to appear?
+4. How fresh do suggestions need to be — can we show yesterday's trends, or must it be real-time?
+5. High availability required?"
+
+**Interviewer:** "10 million DAU. Each user types about 10 searches per day, and each search has roughly 5 keystrokes before they select a result. Suggestions must appear under 100ms — any slower and it feels laggy. Freshness can be delayed by up to an hour. High availability is important."
+
+**You:** "Perfect."
+
+```
+Non-Functional Requirements:
+- 10M DAU
+- 10 searches/user/day × 5 keystrokes = 50 autocomplete requests/user/day
+- <100ms response latency (end-to-end)
+- Data freshness: up to 1 hour lag is acceptable
+- High availability
+```
+
+## Phase 2: Capacity Estimation (5 minutes)
+
+**You:** "Let me do some quick math."
+
+### Traffic
+
+```
+Autocomplete requests per day:
+10M users × 50 requests/user = 500M requests/day
+500M ÷ 86,400 seconds = ~5,800 requests/second
+Peak (3x): ~17,500 requests/second
+
+This is a read-heavy system — queries far outnumber writes.
+```
+
+### Data Volume
+
+```
+Assumptions:
+- The internet generates ~1B unique queries per day
+- Average query length: 30 characters
+- Store top 10M most popular queries (the long tail doesn't matter for suggestions)
+
+Storage per query:
+- Query string: 30 bytes
+- Frequency count: 8 bytes
+- Total: ~40 bytes per query
+
+Total storage:
+10M queries × 40 bytes = ~400 MB
+
+This easily fits in memory — a key insight that shapes the design.
+```
+
+**You:** "Two key takeaways from the math: 17,500 requests/second at under 100ms is the hard constraint, and the entire query dataset fits in ~400MB of RAM. This tells me in-memory data structures are viable and should be the primary approach."
+
+## Phase 3: High-Level Design (10 minutes)
+
+**You:** "The system has two distinct parts that we should design separately:
+
+1. **Query service** — answers autocomplete requests in real time (read path)
+2. **Data aggregation service** — counts query frequency and keeps suggestions fresh (write path)
+
+These have completely different requirements and should not be coupled."
+
+### The Data Structure: Trie
+
+**You:** "The core of a typeahead system is the data structure. Let me walk through options:
+
+**Option 1: SQL/NoSQL with LIKE queries**
+```sql
+SELECT query, frequency
+FROM queries
+WHERE query LIKE 'se%'
+ORDER BY frequency DESC
+LIMIT 5;
+```
+- ✅ Simple to implement
+- ❌ `LIKE 'se%'` requires a full prefix scan — O(n) even with indexes
+- ❌ 17,500 requests/second at under 100ms is nearly impossible this way
+
+**Option 2: Trie (Prefix Tree)**
+- A tree where each node represents one character
+- All queries sharing a prefix share the same path from the root
+- Traversing to a node takes O(prefix_length) — extremely fast
+- ✅ O(p) lookup where p = prefix length (never more than ~30)
+- ✅ Entire trie fits in memory (~400MB as calculated)
+- ✅ Optimized specifically for prefix matching
+
+**I'll use a trie.** It's the right tool for prefix-based lookups at this scale."
+
+### How the Trie Works
+
+**You:** "Here's a simplified trie for queries: 'search', 'sea', 'seal', 'season'"
+
+```
+root
+└── s
+    └── e
+        └── a [frequency: 450]
+            ├── r
+            │   └── c
+            │       └── h [frequency: 9200]
+            ├── l [frequency: 310]
+            └── s
+                └── o
+                    └── n [frequency: 780]
+```
+
+**You:** "When a user types 'sea', we traverse root → s → e → a, then collect all descendant nodes with their frequencies. Return the top 5 by frequency.
+
+**The problem:** In the worst case, collecting all descendants of 'a' could traverse millions of nodes — for common prefixes like 's', the traversal is enormous.
+
+**The optimization:** Store the top 5 suggestions directly at each node.
+
+Instead of traversing descendants at query time, pre-compute and cache the top 5 queries at every prefix node during the aggregation step."
+
+```
+root
+└── s [top5: search, season, seal, ...]
+    └── e [top5: search, season, seal, ...]
+        └── a [top5: search, season, seal, ...]
+            ├── r [top5: search, searches, ...]
+            └── s [top5: season, seasonal, ...]
+```
+
+**You:** "Now a lookup is O(p) — traverse to the prefix node, read the pre-computed top 5. Done. No descendant traversal needed."
+
+### High-Level Architecture
+
+```
+[Users]
+   ↓ HTTP/REST
+[CDN + Load Balancer]
+   ↓
+[Autocomplete API Servers]
+   ↓
+[Trie Cache (Redis)]
+   ↓
+[Trie Storage (persistent)]
+
+[Search Logs] → [Log Aggregator] → [Trie Builder] → [Trie Storage]
+```
+
+**You:** "Two separate flows:
+
+**Read path (user types):**
+1. User keystroke triggers request to API server
+2. API server queries Redis for `prefix → top5` mapping
+3. Return results in under 100ms
+
+**Write path (updating popularity):**
+1. Every search query is logged
+2. Log aggregator counts frequency per query (hourly batch)
+3. Trie Builder rebuilds or incrementally updates the trie
+4. New trie loaded into Redis"
+
+### API Design
+
+```
+GET /autocomplete?q=sea&limit=5
+
+Response:
+{
+  "query": "sea",
+  "suggestions": [
+    { "text": "search engine", "frequency": 9200 },
+    { "text": "season", "frequency": 780 },
+    { "text": "sea", "frequency": 450 },
+    { "text": "seal", "frequency": 310 },
+    { "text": "search", "frequency": 290 }
+  ]
+}
+```
+
+## Phase 4: Deep Dive (15 minutes)
+
+**Interviewer:** "Walk me through how you'd serve 17,500 requests/second at under 100ms."
+
+### Caching Strategy
+
+**You:** "The trie is already in-memory on the API servers — that's the first cache layer. But with multiple API servers, we need a shared cache.
+
+**Option 1: Redis with prefix as key**
+```
+Key:   prefix:"sea"
+Value: ["search engine", "season", "sea", "seal", "search"]
+TTL:   1 hour (matches our freshness requirement)
+```
+
+**Option 2: Local in-process cache on each API server**
+- Each server holds the full trie in memory
+- No network hop to Redis
+- ✅ Faster (no network RTT)
+- ❌ Memory intensive, trie updates require reloading all servers
+
+**I'd use both:** Local in-process cache as the primary layer (sub-millisecond), Redis as the backing layer. When a local cache misses (TTL expired), fetch from Redis and repopulate.
+
+With 400MB for the full dataset and typical API servers having 8–16GB RAM, this is entirely practical."
+
+### Optimizing the Client Side
+
+**You:** "Not every keystroke should trigger a server request. Client-side optimizations cut request volume significantly:
+
+1. **Debounce:** Wait 100ms after the last keystroke before sending a request. Fast typers don't trigger a request per character.
+2. **Client-side prefix cache:** Cache responses in the browser. If the user typed 'se' and got results, and now types 'sea' — the 'sea' results are already in the 'se' response payload if we return enough depth.
+3. **Cancel in-flight requests:** If a new keystroke fires before the previous response arrives, cancel the old request.
+
+These three together can reduce server requests by 70% in practice."
+
+### Updating the Trie: Batch vs Real-Time
+
+**Interviewer:** "How do you keep the suggestions up to date?"
+
+**You:** "We said up to 1 hour freshness is acceptable — that makes this much simpler.
+
+**Batch update approach (my recommendation for this requirement):**
+
+1. Every search query writes an event to a log (Kafka topic)
+2. Hourly, a Spark/Flink job aggregates the last 7 days of query logs
+3. Computes frequency per query
+4. Rebuilds the trie with updated frequencies
+5. Serializes trie to storage (S3 or similar)
+6. API servers hot-reload the new trie without downtime
+
+Why 7 days? Recent queries are weighted higher than old ones — 'World Cup' should spike during the tournament and fade after. A rolling 7-day window with time-decay captures trends.
+
+**Why not real-time?** Real-time trie updates require distributed locking or immutable trie swaps. The complexity isn't justified when 1 hour freshness is acceptable.
+
+**If real-time were required:** Use a CRDT-based approach or maintain the trie in a distributed structure like Redis Sorted Sets, which can be updated atomically."
+
+### Handling Popular Prefixes
+
+**Interviewer:** "What happens when everyone searches for the same trending topic at once?"
+
+**You:** "Hot prefixes are a real concern. If 'taylor' suddenly becomes the top search after a major announcement, every user typing 't' gets a different result than they did 10 minutes ago.
+
+**Problems this creates:**
+- Thundering herd: cache miss for 't' triggers a massive trie lookup
+- Stale results: users get old suggestions during the transition window
+
+**Solutions:**
+1. **Pre-warm the cache** for single-character and two-character prefixes (there are only 26 + 676 = 702 of them). These are always hot and should never expire.
+2. **Probabilistic early expiration:** Don't wait for TTL to expire to refresh hot prefixes. Refresh them when they're 80% through their TTL to avoid synchronized expiry.
+3. **Replication:** Serve single-character prefixes from multiple Redis nodes to distribute the read load."
+
+### Trie Partitioning at Scale
+
+**Interviewer:** "What if the trie grows beyond what fits in memory on one machine?"
+
+**You:** "For 10M queries at ~400MB, a single machine is fine. But let me talk about how we'd scale beyond that.
+
+**Sharding the trie by prefix:**
+
+```
+Shard 1: a–f    (all prefixes starting with a through f)
+Shard 2: g–m
+Shard 3: n–s
+Shard 4: t–z
+```
+
+The API server routes each query to the correct shard based on the first character.
+
+**Challenges with prefix-based sharding:**
+- Unequal distribution: 's' and 'c' prefixes are far more common than 'x' and 'z'
+- Solution: Split high-traffic shards further ('sa–sm' and 'sn–sz' as separate shards)
+
+**Alternative: Replicate the full trie across all nodes**
+- If 400MB fits in memory, just replicate it everywhere — no routing needed
+- Simpler operationally, higher memory cost
+- This is what I'd choose at the given scale"
+
+### Filtering Inappropriate Suggestions
+
+**Interviewer:** "How would you prevent offensive or harmful suggestions from appearing?"
+
+**You:** "Two layers:
+
+1. **Blocklist:** Maintain a set of banned query strings. After the trie lookup, filter out any matches against the blocklist before returning. O(1) hash lookup per suggestion — negligible overhead.
+
+2. **Abuse signal in frequency:** Queries that are sudden spikes with no organic history (likely coordinated spam) get filtered by the time-decay weighting in our aggregation. A query that appears 10,000 times in one hour looks suspicious vs. one that accumulated 10,000 searches over 30 days.
+
+For a production system, you'd also add human review for flagged queries and a feedback mechanism for users to report bad suggestions."
+
+## Phase 5: Bottlenecks & Trade-offs (5 minutes)
+
+**You:** "Let me walk through the main trade-offs and remaining risks."
+
+### Trade-off: Trie vs Elasticsearch
+
+**You:** "I chose a custom trie. The alternative is Elasticsearch with prefix queries:
+
+**Elasticsearch:**
+- ✅ Handles typo correction natively (fuzzy search)
+- ✅ Multi-language, stemming, relevance ranking built-in
+- ✅ Operational tooling already exists
+- ❌ Higher latency (~10–50ms per query vs sub-millisecond for in-memory trie)
+- ❌ More operational complexity
+
+**Custom Trie:**
+- ✅ Sub-millisecond lookups
+- ✅ Tiny footprint (400MB in memory)
+- ❌ No typo correction
+- ❌ More custom engineering work
+
+**My choice:** Trie, because the requirement is no typo correction and sub-100ms latency. If typo tolerance were required, I'd switch to Elasticsearch and accept the slightly higher latency — still achievable within 100ms with caching."
+
+### Trade-off: Storage of Top 5 vs On-Demand Traversal
+
+Storing top-5 results at every node is a space vs. time trade-off:
+
+- **On-demand traversal:** Smaller trie, but O(n) at query time for common prefixes
+- **Pre-stored top-5:** Larger trie, but O(p) guaranteed at query time
+
+At 400MB total, storing top-5 at every node adds maybe 2–3x storage overhead — still well under 2GB. Query-time performance is non-negotiable at 17,500 req/sec. Pre-storing is the clear winner.
+
+### Bottleneck: Trie Rebuild Time
+
+**Problem:** Rebuilding the entire trie hourly from 7 days of logs could take minutes. During the rebuild, we're serving stale data.
+
+**Solution:** Blue-green trie swap. Maintain two trie instances (old and new). Build the new trie in the background while serving from the old one. Atomic pointer swap when the new trie is ready. Zero downtime, no stale window.
+
+### Bottleneck: Log Volume
+
+**Problem:** 500M search queries/day = significant log volume for the aggregation pipeline.
+
+**Solution:** Log sampling. For query frequency estimation, we don't need every query — a 10% sample still gives statistically accurate frequencies for popular queries. This cuts aggregation input by 10x. Rare queries (long tail) become invisible, but they'd never surface in top-5 suggestions anyway.
+
+## The Complete Solution
+
+**Final Architecture:**
+
+```
+[Browser]
+  ↓ debounced requests
+[CDN] ← static prefix cache (a–z, aa–zz pre-warmed)
+  ↓ cache miss
+[Load Balancer]
+  ↓
+[API Servers] ← local in-process trie cache
+  ↓ miss
+[Redis Cluster] ← prefix → top5 mapping, 1hr TTL
+  ↓ miss
+[Trie Storage (S3)]
+
+[Search Event Logs]
+  ↓
+[Kafka]
+  ↓
+[Spark Aggregation Job] (hourly, 7-day rolling window)
+  ↓
+[Trie Builder]
+  ↓ atomic swap
+[Redis Cluster] + [API Server Local Cache]
+```
+
+**Read path (user types 'sea'):**
+1. Browser debounces 100ms, sends `GET /autocomplete?q=sea`
+2. API server checks local in-process cache — hit → return in < 1ms
+3. On cache miss: check Redis → return in < 5ms
+4. On Redis miss: load from trie storage → cache in Redis → return
+
+**Write path (hourly update):**
+1. Kafka accumulates all search events
+2. Spark job aggregates last 7 days, applies time-decay weighting
+3. Trie rebuilt with new frequencies, top-5 stored at each node
+4. New trie serialized to S3
+5. Blue-green swap: API servers hot-reload, Redis keys invalidated
+6. All layers serving fresh data within minutes of build completing
+
+**Scale summary:**
+- 17,500 req/sec served from in-process cache with sub-millisecond latency
+- 400MB trie fits comfortably in memory on every API server
+- 1-hour data freshness via hourly Spark aggregation
+- Zero-downtime trie updates via blue-green swap
+
+## Common Follow-up Questions
+
+### Q: "How would you add typo tolerance?"
+
+**You:** "Typo tolerance fundamentally changes the data structure. A trie only matches exact prefixes — it can't match 'gogole' to 'google'.
+
+For typo tolerance, I'd switch to one of:
+
+1. **Elasticsearch fuzzy queries:** Automatically handles edit distance. Simple to add, higher latency.
+2. **Symmetric Delete Spelling Algorithm:** Pre-generate all strings within edit distance 1 of every known query. Store them in the trie alongside the original. Space overhead but maintains trie speed.
+3. **N-gram index:** Break queries into character n-grams, match on n-gram overlap. Good for single-character typos.
+
+For a production search engine, Elasticsearch fuzzy queries with a dedicated autocomplete index are the pragmatic choice."
+
+### Q: "How would you personalize suggestions?"
+
+**You:** "Personalization requires mixing global popularity with the individual user's search history.
+
+Approach:
+1. Keep the global trie as the baseline
+2. Maintain a per-user recent query store (Redis hash, capped at last 100 queries)
+3. At query time, fetch both global top-5 and user's matching past queries
+4. Merge and re-rank: boost queries the user has searched before
+5. Deduplicate and return top 5
+
+The tricky part is not over-personalizing — if a user searches 'pizza' 50 times, 'pizza' shouldn't crowd out everything else. Apply a soft boost, not a hard rank override."
+
+### Q: "How would you support multiple languages?"
+
+**You:** "The trie structure works for any alphabet. The main changes:
+
+1. **Character set:** Trie nodes represent Unicode code points, not just ASCII
+2. **Tokenization:** Languages like Chinese have no spaces — 'prefix' has a different meaning. You'd need language-specific tokenization before inserting into the trie.
+3. **Query routing:** Detect the user's language from browser headers or user settings, route to the appropriate language-specific trie
+4. **Storage:** Separate tries per language, or a single trie with language metadata at each node
+
+For a global product, separate tries per language are simpler to reason about and operate."
+
+## What Makes This Answer Strong
+
+This walkthrough demonstrates:
+
+1. **Identified the right data structure** — explained trie vs SQL, justified the choice with math
+2. **Separated read and write paths** — they have different requirements and shouldn't be coupled
+3. **Calculated that the data fits in memory** — this insight shapes the entire design
+4. **Optimized at multiple layers** — client debouncing, in-process cache, Redis, pre-stored top-5 at nodes
+5. **Addressed data freshness explicitly** — explained why batch is sufficient vs. real-time
+6. **Handled the hot prefix problem** — pre-warming single/double character prefixes
+7. **Named the trade-offs** — trie vs Elasticsearch, on-demand traversal vs pre-stored top-5
+
+## Practice This Problem
+
+Set a 45-minute timer and attempt this problem from scratch:
+
+1. Ask requirements questions — nail down whether typo correction is needed (it changes everything)
+2. Do capacity estimation — the "dataset fits in memory" insight is the key moment
+3. Draw the trie on paper and walk through a lookup for 'se' → 'sea'
+4. Explain why you store top-5 at each node instead of traversing descendants
+5. Walk through both the read path and the hourly write path
+6. Identify at least two trade-offs (trie vs Elasticsearch, batch vs real-time)
+
+The most common mistakes on this problem: jumping to Elasticsearch without justifying it, forgetting the write path entirely, and not doing the capacity math that reveals the dataset fits in memory.
+
+Now go design that autocomplete.
