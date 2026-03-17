@@ -97,6 +97,21 @@ resource "aws_wafv2_web_acl" "api_alb" {
             }
           }
         }
+
+        # API docs endpoints
+        statement {
+          byte_match_statement {
+            positional_constraint = "STARTS_WITH"
+            search_string         = "/api-docs"
+            field_to_match {
+              uri_path {}
+            }
+            text_transformation {
+              priority = 0
+              type     = "NONE"
+            }
+          }
+        }
       }
     }
 

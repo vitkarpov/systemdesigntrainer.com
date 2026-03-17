@@ -3,6 +3,7 @@ import { WorkOS } from '@workos-inc/node';
 import * as jwt from 'jsonwebtoken';
 import { UserService } from './user.service';
 import { User } from '../../../db/schema/users.schema';
+import { OAuthProvider } from '../auth.types';
 
 export interface JwtPayload {
   userId: number;
@@ -60,9 +61,12 @@ export class AuthService {
     this.workos = new WorkOS(apiKey);
   }
 
-  getAuthorizationUrl(state?: string): string {
+  getAuthorizationUrl(
+    provider: OAuthProvider = 'GitHubOAuth',
+    state?: string,
+  ): string {
     const authorizationUrl = this.workos.userManagement.getAuthorizationUrl({
-      provider: 'GitHubOAuth',
+      provider,
       clientId: this.clientId,
       redirectUri: this.redirectUri,
       state: state || '',
