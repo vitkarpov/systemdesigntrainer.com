@@ -23,6 +23,7 @@ import { UserService } from '../services/user.service';
 import { Public } from '../decorators/public.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { User } from '../../../db/schema/users.schema';
+import { OAuthProvider } from '../auth.types';
 import { UserResponseDto } from '../../interview/dto/responses.dto';
 
 @ApiTags('auth')
@@ -38,8 +39,15 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @Get('login')
-  login(@Query('state') state: string, @Res() res: Response) {
-    const authorizationUrl = this.authService.getAuthorizationUrl(state);
+  login(
+    @Query('state') state: string,
+    @Query('provider') provider: OAuthProvider = 'GitHubOAuth',
+    @Res() res: Response,
+  ) {
+    const authorizationUrl = this.authService.getAuthorizationUrl(
+      provider,
+      state,
+    );
     return res.redirect(authorizationUrl);
   }
 

@@ -6,6 +6,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { getApiBaseUrl } from "@/api/client";
 import { posthog } from "@/lib/posthog";
+import type { OAuthProvider } from "@/auth.types";
 
 const API_URL = getApiBaseUrl();
 
@@ -14,7 +15,7 @@ export type User = UserResponseDto;
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: () => void;
+  login: (provider?: OAuthProvider) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -45,8 +46,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const loading = isLoading;
 
-  const login = () => {
-    window.location.href = `${API_URL}/auth/login`;
+  const login = (provider: OAuthProvider = "GitHubOAuth") => {
+    posthog.capture("login_initiated", { provider });
+    window.location.href = `${API_URL}/auth/login?provider=${provider}`;
   };
 
   const logout = () => {
