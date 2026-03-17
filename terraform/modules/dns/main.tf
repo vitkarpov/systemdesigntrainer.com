@@ -128,6 +128,15 @@ resource "aws_route53_record" "api" {
   }
 }
 
+# CNAME record for kohigo.systemdesigntrainer.com → PostHog reverse proxy
+resource "aws_route53_record" "kohigo" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "kohigo.${var.domain_name}"
+  type    = "CNAME"
+  ttl     = 300
+  records = ["c3ad9ff72cbcd446a7c7.cf-prod-eu-proxy.europehog.com"]
+}
+
 # A record for systemdesigntrainer.com (root/apex) → CloudFront (website)
 resource "aws_route53_record" "root" {
   zone_id = aws_route53_zone.main.zone_id
