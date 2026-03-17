@@ -48,7 +48,8 @@ Functional Requirements:
 ✅ Message history, synced across devices
 ✅ Push notifications for offline users
 ⬜ Media (out of scope for now, I'll mention the approach)
-```"
+```
+"
 
 ### Non-Functional Requirements
 
@@ -341,7 +342,8 @@ GET /conversations/{id}/messages?after={message_id}&limit=50
   "has_more": true,
   "next_cursor": "timeuuid..."
 }
-```"
+```
+"
 
 ### Delivery Receipts
 
@@ -380,7 +382,7 @@ For group chats, the sender sees individual receipts per member — same model, 
 
 ### Bottleneck 2: Kafka Fan-out Latency
 
-**Problem:** Using Kafka adds processing lag. Can we still hit <500ms?
+**Problem:** Using Kafka adds processing lag. Can we still hit under 500ms?
 
 **You:** "Yes. Kafka p99 latency is ~10ms for well-tuned clusters. With fast consumers:
 - WebSocket receive: ~1ms
