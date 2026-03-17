@@ -1,0 +1,522 @@
+---
+title: "Design a Chat System Like WhatsApp: System Design Walkthrough"
+description: "Step-by-step guide to designing a real-time chat system in a system design interview. Covers WebSockets, message storage, fan-out, delivery receipts, and push notifications."
+date: "2026-02-15"
+tags:
+  - "chat-system"
+  - "websockets"
+  - "real-time"
+  - "databases"
+  - "system-design-basics"
+---
+
+"Design a chat system like WhatsApp" is one of the most common system design interview questions. It shows up at Meta, Google, Amazon, and virtually every company that touches real-time communication.
+
+Why is it so popular? Because it tests a completely different set of skills than stateless systems:
+- Real-time, bidirectional communication (not just HTTP request-response)
+- Handling online/offline state
+- Efficient message fan-out to millions of users
+- Delivery guarantees and ordering
+
+This walkthrough shows you **exactly how to approach this problem** in a 45-minute interview, covering every phase the interviewer expects you to hit.
+
+## Phase 1: Clarify Requirements (5 minutes)
+
+Never start designing. Start with questions.
+
+### Functional Requirements
+
+**You:** "Before I design anything, let me clarify what we're building.
+
+1. Are we building one-on-one messaging, group messaging, or both?
+2. Do we need to support media — images, videos, files — or just text?
+3. Do users need to see delivery receipts? Like sent, delivered, read?
+4. Do we need online presence indicators — showing when someone was last seen?
+5. Do we need message history that persists across devices?
+6. What about push notifications for offline users?"
+
+**Interviewer:** "Support both 1-on-1 and group chats. Text only for now, maybe mention media. Delivery receipts — yes. Online presence — yes. Message history — yes, sync across devices. Push notifications — yes."
+
+**You:** "Got it. So:
+
+```
+Functional Requirements:
+✅ 1-on-1 messaging
+✅ Group messaging (let's say up to 100 members)
+✅ Delivery receipts: sent → delivered → read
+✅ Online/last seen indicators
+✅ Message history, synced across devices
+✅ Push notifications for offline users
+⬜ Media (out of scope for now, I'll mention the approach)
+```"
+
+### Non-Functional Requirements
+
+**You:** "Now for scale:
+
+1. How many daily active users are we targeting?
+2. What's the average number of messages per user per day?
+3. How long do we retain message history?
+4. What's our latency requirement for message delivery?
+5. Do we need end-to-end encryption?"
+
+**Interviewer:** "50 million DAU. About 40 messages per user per day. Retain messages forever. Delivery should feel instant — under 500ms. Skip encryption for now, but mention it."
+
+**You:** "Perfect."
+
+```
+Non-Functional Requirements:
+- 50M DAU
+- 40 messages/user/day = 2 billion messages/day
+- <500ms message delivery latency
+- High availability — messaging is mission-critical
+- Message history retained indefinitely
+- Eventually consistent (slight delay in sync across devices is fine)
+```
+
+## Phase 2: Capacity Estimation (5 minutes)
+
+**You:** "Let me run some quick numbers."
+
+### Traffic Estimates
+
+```
+Write throughput (messages sent):
+2B messages/day ÷ 86,400 seconds = ~23,000 messages/second
+Peak (3x average) = ~70,000 messages/second
+
+Read throughput:
+Each message is read by at least 1 recipient.
+For group chats (avg 10 members), fan-out multiplies this.
+Estimated read load: ~3–5x writes = ~100,000–350,000 reads/sec
+```
+
+### Storage Estimates
+
+```
+Message size: ~200 bytes average (text + metadata)
+2B messages/day × 200 bytes = 400 GB/day
+
+For 5 years of retention:
+400 GB × 365 × 5 = ~730 TB
+
+This rules out a single relational database.
+We need a distributed storage solution.
+```
+
+### Connections
+
+```
+50M DAU — assume 20% online at peak = 10M concurrent connections
+
+Each connection is a persistent WebSocket.
+This is a key constraint: we need a connection layer
+that can hold 10 million open connections.
+```
+
+**You:** "The big insight here is the connection problem. 10M concurrent WebSocket connections can't fit on a single server. We'll need a dedicated connection tier."
+
+## Phase 3: High-Level Design (10 minutes)
+
+**You:** "Let me start with the core flow and build up."
+
+### The Core Problem: HTTP Doesn't Work Here
+
+**You:** "Standard HTTP is request-response — the client asks, the server responds. For chat, the server needs to push messages to the client the moment they arrive. We have three options:
+
+**Option 1: Polling**
+- Client asks "any new messages?" every N seconds
+- ✅ Simple
+- ❌ High latency, wasteful at scale
+
+**Option 2: Long Polling**
+- Client sends request, server holds it open until a message arrives, then responds
+- ✅ Lower latency than polling
+- ❌ Still HTTP overhead per message, connection churn
+
+**Option 3: WebSockets**
+- Full-duplex, persistent TCP connection between client and server
+- Both sides can send data at any time
+- ✅ Truly real-time, low overhead
+- ❌ More complex, stateful connections
+
+For a chat system, **WebSockets** are the right choice."
+
+### High-Level Architecture
+
+```
+[Mobile/Web Clients]
+       ↕ WebSocket
+[Chat Service (Connection Layer)]
+       ↓
+[Message Queue (Kafka)]
+       ↓
+[Message Service] → [Message DB (Cassandra)]
+       ↓
+[Notification Service] → [APNs / FCM]
+
+Supporting services:
+[Presence Service] → [Presence Store (Redis)]
+[User Service] → [User DB (PostgreSQL)]
+```
+
+### API Design
+
+**You:** "The client communicates via WebSocket events:"
+
+```
+// Client → Server
+{
+  "type": "send_message",
+  "conversation_id": "conv_abc123",
+  "content": "Hey, how's it going?",
+  "client_msg_id": "uuid-for-dedup"
+}
+
+// Server → Client (message delivery)
+{
+  "type": "new_message",
+  "message_id": "msg_xyz789",
+  "conversation_id": "conv_abc123",
+  "sender_id": "user_456",
+  "content": "Hey, how's it going?",
+  "sent_at": 1707984000000
+}
+
+// Server → Client (receipt update)
+{
+  "type": "receipt",
+  "message_id": "msg_xyz789",
+  "status": "delivered",  // or "read"
+  "updated_at": 1707984001000
+}
+```
+
+### Database Schema
+
+**You:** "For messages, we need fast writes and efficient reads by conversation:"
+
+```sql
+-- Messages table (Cassandra)
+CREATE TABLE messages (
+  conversation_id UUID,
+  message_id      TIMEUUID,   -- Time-based UUID for ordering
+  sender_id       UUID,
+  content         TEXT,
+  status          TEXT,       -- sent | delivered | read
+  created_at      TIMESTAMP,
+  PRIMARY KEY (conversation_id, message_id)
+) WITH CLUSTERING ORDER BY (message_id DESC);
+```
+
+**You:** "I'm choosing Cassandra here because:
+- We need fast writes at 70K messages/sec
+- We read messages by conversation — Cassandra's partition key maps perfectly
+- It scales horizontally to handle our 730TB over 5 years
+- Time-based UUIDs give us ordering for free"
+
+## Phase 4: Deep Dive (15 minutes)
+
+**Interviewer:** "Walk me through what happens when User A sends a message to User B."
+
+### Message Flow: 1-on-1 Messaging
+
+**You:** "Let me trace the full path:"
+
+```
+1. User A sends message via WebSocket to Chat Server 1
+
+2. Chat Server 1:
+   - Validates message
+   - Generates message_id (TIMEUUID)
+   - Writes message to Cassandra (status: "sent")
+   - Publishes event to Kafka topic: messages.conversation_id
+
+3. Message Service consumes from Kafka:
+   - Determines recipients (just User B in 1-on-1)
+   - Checks Presence Service: Is User B online?
+
+   If User B is ONLINE:
+   4a. Message Service pushes message to Chat Server 2
+       (where User B's WebSocket lives)
+   4b. Chat Server 2 delivers to User B
+   4c. User B's client sends "delivered" receipt
+   4d. Receipt flows back to User A
+
+   If User B is OFFLINE:
+   4a. Message Service sends push notification via APNs/FCM
+   4b. When User B reconnects, client fetches missed messages
+```
+
+**Interviewer:** "What if User A and User B are connected to different Chat Servers?"
+
+**You:** "That's the key challenge. With 10M connections, you need hundreds of Chat Servers. A message from Server 1 needs to reach User B on Server 5.
+
+There are two approaches:
+
+**Option 1: Direct server-to-server connections**
+- Each Chat Server knows about others via service registry
+- ❌ O(n²) connections as servers scale
+
+**Option 2: Pub/Sub via Redis or Kafka**
+- Each Chat Server subscribes to a channel for each connected user
+- When a message arrives for User B, it's published to User B's channel
+- Chat Server 5 receives it and pushes to User B's WebSocket
+- ✅ Decoupled, scales cleanly
+
+I'd go with **Redis Pub/Sub** for the routing layer — it's fast enough for this use case and operationally simpler than per-user Kafka topics."
+
+### Group Messaging and Fan-out
+
+**Interviewer:** "How does group messaging work at scale?"
+
+**You:** "Groups up to 100 members are manageable with a fan-out-on-write approach:
+
+```
+User A sends message to group (100 members)
+→ Message Service fetches group member list
+→ For each online member: publish to their Redis channel
+→ For each offline member: batch push notification
+
+Fan-out cost: 1 message → 100 deliveries
+At 70K messages/sec with avg 10 members: 700K fan-outs/sec
+```
+
+This is fine for groups up to ~100-500 members.
+
+**For very large groups** (think channels like Telegram's public groups with 100K+ members), fan-out-on-write doesn't scale. Instead you'd switch to **fan-out-on-read**: store one copy of the message, each client fetches it when they open the chat. But the interviewer said 100 members max, so fan-out-on-write is the right choice here."
+
+### Presence Service
+
+**Interviewer:** "How do you track who's online?"
+
+**You:** "Presence is a classic heartbeat problem:
+
+```
+Online detection:
+- Client sends heartbeat ping every 5 seconds
+- Chat Server updates Redis key: presence:{user_id} → timestamp
+- Key TTL: 10 seconds (miss 2 heartbeats = offline)
+
+Last seen:
+- On disconnect or TTL expiry, write last_seen timestamp to DB
+- Fanout last_seen update to contacts who care about this user
+
+Redis schema:
+SET presence:user_456 "online" EX 10
+```
+
+**Scale concern:** 10M concurrent users × heartbeat every 5 seconds = 2M Redis writes/second. That's high.
+
+**Mitigation:**
+- Coarsen the heartbeat (10-30 seconds is acceptable UX)
+- Use Redis Cluster to shard presence data
+- Only push presence updates to users who have the contact's chat open"
+
+### Message History and Sync
+
+**Interviewer:** "How does a user get their message history when they switch devices or reconnect?"
+
+**You:** "Two scenarios:
+
+**New device / first sync:**
+- Client sends: "Give me all conversations, newest first"
+- Server returns conversation list with last message preview
+- Client lazy-loads message history as user opens each chat
+- Paginated: fetch 50 messages at a time, cursor-based
+
+**Reconnect after offline period:**
+- Client tracks last synced `message_id` locally
+- On reconnect: "Give me all messages after message_id X"
+- Server queries Cassandra: `WHERE conversation_id = ? AND message_id > ?`
+- Cassandra's clustering order makes this efficient
+
+```
+// Sync API
+GET /conversations/{id}/messages?after={message_id}&limit=50
+
+// Response
+{
+  "messages": [...],
+  "has_more": true,
+  "next_cursor": "timeuuid..."
+}
+```"
+
+### Delivery Receipts
+
+**You:** "Delivery receipts require tracking state per message per recipient:
+
+```sql
+-- In Cassandra
+CREATE TABLE message_receipts (
+  conversation_id UUID,
+  message_id      TIMEUUID,
+  user_id         UUID,
+  status          TEXT,   -- delivered | read
+  updated_at      TIMESTAMP,
+  PRIMARY KEY (conversation_id, message_id, user_id)
+);
+```
+
+**Flow:**
+1. Message delivered to client → client sends `delivered` receipt
+2. User opens chat → client sends `read` receipt for all visible messages
+3. Receipts flow back to sender via their WebSocket
+
+For group chats, the sender sees individual receipts per member — same model, just more rows."
+
+## Phase 5: Bottlenecks & Trade-offs (5 minutes)
+
+**You:** "Let me walk through the key bottlenecks and the trade-offs I made."
+
+### Bottleneck 1: WebSocket Connection Scaling
+
+**Problem:** 10M connections require hundreds of servers. Any server going down drops thousands of user connections.
+
+**Solution:**
+- Stateless Chat Servers behind a load balancer with sticky sessions (same user reconnects to same server within a session, but any server works for new connections)
+- On server crash, clients reconnect and re-establish WebSocket — transparent to the user with good client retry logic
+
+### Bottleneck 2: Kafka Fan-out Latency
+
+**Problem:** Using Kafka adds processing lag. Can we still hit <500ms?
+
+**You:** "Yes. Kafka p99 latency is ~10ms for well-tuned clusters. With fast consumers:
+- WebSocket receive: ~1ms
+- Kafka publish: ~10ms
+- Consumer processing + delivery: ~20ms
+- Total: ~30ms under normal load
+
+Well within the 500ms budget. The async design also helps with resilience — if delivery is slow, messages aren't lost."
+
+### Bottleneck 3: Cassandra Hot Partitions
+
+**Problem:** Very active conversations create hot partitions — all writes go to one node.
+
+**Solution:**
+- Cassandra distributes partitions by `conversation_id` hash across the ring
+- No single conversation is hot enough to overwhelm a node (capped at 100 members)
+- For truly massive group chats, we'd add a bucket to the partition key: `(conversation_id, bucket)` where bucket = week number
+
+### Trade-off: Why Cassandra Instead of PostgreSQL?
+
+**You:** "I chose Cassandra over PostgreSQL for messages because:
+
+| | Cassandra | PostgreSQL |
+|---|---|---|
+| Write throughput | ~1M writes/sec/cluster | ~50K writes/sec |
+| Horizontal scaling | Native | Complex sharding |
+| Read pattern | Excellent for partition key queries | Better for complex queries |
+| ACID | No (eventual consistency) | Yes |
+
+For chat, our read pattern is simple: "give me messages in conversation X". We don't need JOINs or transactions. Eventual consistency is acceptable — a message showing up 100ms later is fine. Cassandra is the right tool.
+
+I'd still use PostgreSQL for user accounts and conversation metadata where I need strong consistency."
+
+### Security Note
+
+**You:** "I won't deep-dive since it's out of scope, but I'd note:
+- All WebSocket connections over TLS (WSS)
+- End-to-end encryption: Signal Protocol for 1-on-1 chats (keys on device, server never sees plaintext)
+- Rate limiting per user to prevent spam: max 100 messages/minute"
+
+## The Complete Solution
+
+```
+                    [Mobile/Web Clients]
+                           ↕ WSS
+              ┌────────────────────────────┐
+              ↓            ↓              ↓
+        [Chat Srv 1]  [Chat Srv 2]  [Chat Srv N]  (WebSocket tier)
+              └────────────────────────────┘
+                           ↓
+                    [Redis Pub/Sub]          ← routing layer
+                           ↓
+                      [Kafka]               ← async fan-out
+                           ↓
+              ┌────────────────────────────┐
+              ↓                            ↓
+      [Message Service]           [Notification Service]
+              ↓                            ↓
+      [Cassandra Cluster]          [APNs / FCM]
+      (messages + receipts)
+
+Supporting:
+[Presence Service] ←→ [Redis Cluster]
+[User Service]     ←→ [PostgreSQL]
+```
+
+**Message flow summary:**
+1. Client sends message via WebSocket
+2. Chat Server validates + writes to Cassandra
+3. Event published to Kafka
+4. Consumer fans out to recipients via Redis Pub/Sub
+5. Online recipients get real-time delivery; offline get push notification
+6. Delivery/read receipts flow back to sender
+
+**Scale summary:**
+- 70K messages/second → Cassandra handles comfortably
+- 10M concurrent WebSocket connections → hundreds of Chat Servers
+- Presence tracking → Redis Cluster with heartbeat TTL
+- Message history → Cassandra with cursor-based pagination
+
+## Common Follow-up Questions
+
+### Q: "How would you add media support (images, videos)?"
+
+**You:** "Media needs separate treatment:
+
+1. Client requests a **pre-signed S3 upload URL** from the server
+2. Client uploads media directly to S3 (bypasses our servers)
+3. Client sends a message with media metadata: `{ type: "image", s3_key: "..." }`
+4. Recipients download media from S3 via CDN
+
+This keeps our Chat Servers stateless and avoids sending binary data through Kafka. For large videos, use multi-part upload and process thumbnails asynchronously."
+
+### Q: "How would you handle message ordering?"
+
+**You:** "Ordering is tricky in distributed systems. Two approaches:
+
+**TIMEUUID (current approach):** Time-based UUIDs give approximate ordering. Two messages sent within the same millisecond could be ordered arbitrarily — acceptable for most cases.
+
+**Sequence numbers per conversation:** Each conversation has a counter. Every message gets the next sequence number. This guarantees strict ordering but requires coordination — we'd use Redis INCR per conversation as an atomic counter.
+
+I'd start with TIMEUUID and add sequence numbers if ordering bugs appear in production."
+
+### Q: "What if a user sends the same message twice (network retry)?"
+
+**You:** "The client generates a `client_msg_id` UUID before sending. The server deduplicates on this ID:
+
+```sql
+-- Cassandra upsert (idempotent)
+INSERT INTO messages (..., client_msg_id)
+VALUES (...)
+IF NOT EXISTS;
+```
+
+If the same `client_msg_id` arrives twice, the second write is a no-op. The client can safely retry without creating duplicate messages."
+
+## What Makes This Answer Strong
+
+1. **Identified the right protocol** — explained why WebSockets beat polling without being asked
+2. **Addressed the connection scaling problem** — 10M concurrent connections is the key constraint; naming it early signals senior-level thinking
+3. **Justified database choice** — explained why Cassandra, not just that you chose it
+4. **Handled the distributed routing problem** — didn't hand-wave "servers talk to each other"
+5. **Covered offline users** — push notifications are easy to forget but interviewers notice
+6. **Mentioned trade-offs** — fan-out-on-write vs fan-out-on-read for group size thresholds
+7. **Discussed delivery guarantees** — at-least-once delivery with client-side dedup
+
+## Practice This Problem
+
+Set a 45-minute timer and work through this yourself:
+
+1. Ask requirements questions out loud
+2. Write capacity estimates on paper
+3. Draw the architecture — don't skip the routing layer
+4. Explain the message flow step by step
+5. Discuss one trade-off you'd make differently and why
+
+The difference between a pass and a fail on this question is usually the connection routing problem. Most candidates say "users connect to a server and get messages" without explaining how servers coordinate. Make sure you address it.
+
+Now go practice it under pressure.
