@@ -65,6 +65,11 @@
     @apply text-black dark:text-white;
     @apply decoration-black/50 dark:decoration-white/50;
   }
+
+  article .not-prose a:hover {
+    @apply text-purple-600;
+    text-decoration: none;
+  }
 }
 
 @layer utilities {
