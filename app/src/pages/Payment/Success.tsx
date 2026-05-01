@@ -35,10 +35,22 @@ export default function PaymentSuccess() {
     const tier = sessionStorage.getItem("pending_purchase_tier");
     if (tier) {
       sessionStorage.removeItem("pending_purchase_tier");
+      const value = TIER_VALUES[tier] ?? 0;
+      const transactionId = `${tier}_${Date.now()}`;
+
+      // GA4 purchase event
       window.gtag?.("event", "purchase", {
-        transaction_id: `${tier}_${Date.now()}`,
-        value: TIER_VALUES[tier] ?? 0,
+        transaction_id: transactionId,
+        value,
         currency: "USD",
+      });
+
+      // Google Ads conversion event
+      window.gtag?.("event", "conversion", {
+        send_to: "AW-18132565338/ULj3CMaK8qOcENr6o82D",
+        value,
+        currency: "USD",
+        transaction_id: transactionId,
       });
     }
   }, [queryClient]);
