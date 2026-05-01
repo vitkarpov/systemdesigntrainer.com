@@ -12,15 +12,35 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+const TIER_VALUES: Record<string, number> = {
+  THREE_INTERVIEWS: 9,
+  FIVE_INTERVIEWS: 12,
+  UNLIMITED: 49,
+};
+
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+  }
+}
+
 export default function PaymentSuccess() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Invalidate queries to refetch updated interview count
     queryClient.invalidateQueries({ queryKey: ["/auth/user"] });
     queryClient.invalidateQueries({ queryKey: ["/sessions/dashboard"] });
-    console.log("Payment successful! Refreshing user data...");
+
+    const tier = sessionStorage.getItem("pending_purchase_tier");
+    if (tier) {
+      sessionStorage.removeItem("pending_purchase_tier");
+      window.gtag?.("event", "purchase", {
+        transaction_id: `${tier}_${Date.now()}`,
+        value: TIER_VALUES[tier] ?? 0,
+        currency: "USD",
+      });
+    }
   }, [queryClient]);
 
   return (

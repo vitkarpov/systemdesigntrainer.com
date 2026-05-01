@@ -120,6 +120,7 @@ export default function Pricing() {
 
       // Redirect to Stripe Checkout
       if (data.url) {
+        sessionStorage.setItem("pending_purchase_tier", productTier);
         window.location.href = data.url;
       } else {
         throw new Error("No checkout URL returned");
