@@ -47,7 +47,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const loading = isLoading;
 
   const login = (provider: OAuthProvider = "GitHubOAuth") => {
-    posthog.capture("login_initiated", { provider });
+    try {
+      posthog.capture("login_initiated", { provider });
+    } catch {
+      // Storage blocked — analytics unavailable
+    }
     window.location.href = `${API_URL}/auth/login?provider=${provider}`;
   };
 
@@ -60,15 +64,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Identify user with PostHog when authenticated
   useEffect(() => {
-    if (user) {
-      posthog.identify(String(user.id), {
-        email: user.email,
-        name: user.name,
-        subscriptionStatus: user.subscriptionStatus,
-        interviewsRemaining: user.interviewsRemaining,
-      });
-    } else {
-      posthog.reset();
+    try {
+      if (user) {
+        posthog.identify(String(user.id), {
+          email: user.email,
+          name: user.name,
+          subscriptionStatus: user.subscriptionStatus,
+          interviewsRemaining: user.interviewsRemaining,
+        });
+      } else {
+        posthog.reset();
+      }
+    } catch {
+      // Storage blocked — analytics unavailable
     }
   }, [user]);
 
