@@ -5,6 +5,12 @@
 
 **Practice real system design interviews under pressure — before the real one.**
 
+## 🔗 Links
+
+- **Website**: [systemdesigntrainer.com](https://systemdesigntrainer.com)
+- **App**: [app.systemdesigntrainer.com](https://app.systemdesigntrainer.com)
+- **API**: [api.systemdesigntrainer.com](https://api.systemdesigntrainer.com)
+
 A B2C SaaS platform that helps mid-to-senior software engineers prepare for system design interviews at top tech companies by simulating realistic 45-minute interview sessions with AI-powered interviewers.
 
 ## 🎯 The Problem
