@@ -13,7 +13,7 @@ output "hosted_zone_id" {
 }
 
 # ==================================
-# URLs
+# Frontend (App) Outputs
 # ==================================
 
 output "frontend_url" {
@@ -21,43 +21,10 @@ output "frontend_url" {
   value       = module.frontend.frontend_url
 }
 
-output "api_url" {
-  description = "Backend API URL"
-  value       = "https://${module.dns.api_fqdn}"
-}
-
-output "alb_dns_name" {
-  description = "ALB DNS name (before Route53 setup)"
-  value       = module.alb.alb_dns_name
-}
-
 output "cloudfront_domain_name" {
-  description = "CloudFront domain name (before Route53 setup)"
+  description = "CloudFront domain name for the app"
   value       = module.frontend.cloudfront_domain_name
 }
-
-# ==================================
-# Container Outputs
-# ==================================
-
-output "ecr_repository_url" {
-  description = "ECR repository URL for pushing Docker images"
-  value       = module.container.ecr_repository_url
-}
-
-output "ecs_cluster_name" {
-  description = "ECS cluster name"
-  value       = module.container.ecs_cluster_name
-}
-
-output "ecs_service_name" {
-  description = "ECS service name"
-  value       = module.container.ecs_service_name
-}
-
-# ==================================
-# Frontend Outputs
-# ==================================
 
 output "s3_bucket_name" {
   description = "S3 bucket name for frontend assets"
@@ -89,49 +56,7 @@ output "website_cloudfront_distribution_id" {
 }
 
 # ==================================
-# Database Outputs
-# ==================================
-
-output "rds_endpoint" {
-  description = "RDS PostgreSQL endpoint"
-  value       = module.storage.rds_endpoint
-}
-
-output "redis_endpoint" {
-  description = "Redis endpoint"
-  value       = module.storage.redis_connection_string
-}
-
-# ==================================
-# Secrets Outputs
-# ==================================
-
-output "secrets_arn" {
-  description = "ARN of Secrets Manager secret"
-  value       = module.secrets.secret_arn
-}
-
-# ==================================
-# WAF Outputs
-# ==================================
-
-output "waf_web_acl_id" {
-  description = "ID of the WAF Web ACL protecting the API"
-  value       = module.waf.web_acl_id
-}
-
-output "waf_web_acl_arn" {
-  description = "ARN of the WAF Web ACL protecting the API"
-  value       = module.waf.web_acl_arn
-}
-
-output "waf_log_group" {
-  description = "CloudWatch Log Group for WAF logs"
-  value       = module.waf.log_group_name
-}
-
-# ==================================
-# Deployment Instructions
+# Deployment Instructions (static sites only)
 # ==================================
 
 output "deployment_instructions" {
@@ -139,53 +64,29 @@ output "deployment_instructions" {
   value       = <<-EOT
 
     ╔════════════════════════════════════════════════════════════════════╗
-    ║  System Design Interview Simulator - AWS Deployment Complete!     ║
+    ║  System Design Trainer — static hosting (app + website)            ║
     ╚════════════════════════════════════════════════════════════════════╝
 
-    🎯 Next Steps:
+    The API, Lambda, and all backend infrastructure have been retired.
+    Only the static app and website remain.
 
-    1. CONFIGURE DNS (CRITICAL):
-       Update nameservers in your domain registrar for systemdesigntrainer.com:
+    DNS nameservers (configure at your registrar for ${var.domain_name}):
        ${join("\n       ", module.dns.hosted_zone_nameservers)}
 
-       Wait 5-60 minutes for DNS propagation.
-
-    2. BUILD & PUSH BACKEND:
-       cd api
-       docker build -t sd-sim-backend .
-       aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${module.container.ecr_repository_url}
-       docker tag sd-sim-backend:latest ${module.container.ecr_repository_url}:latest
-       docker push ${module.container.ecr_repository_url}:latest
-
-    3. DEPLOY BACKEND:
-       aws ecs update-service --cluster ${module.container.ecs_cluster_name} --service ${module.container.ecs_service_name} --force-new-deployment --region ${var.aws_region}
-
-       Monitor: aws logs tail /ecs/${var.project_name}-${var.environment}-backend --follow --region ${var.aws_region}
-
-    4. BUILD & DEPLOY FRONTEND:
+    DEPLOY APP:
        cd app
-       VITE_API_URL=${module.dns.api_fqdn} npm run build
+       npm run build
        aws s3 sync dist/ s3://${module.frontend.s3_bucket_name}/ --delete
        aws cloudfront create-invalidation --distribution-id ${module.frontend.cloudfront_distribution_id} --paths "/*"
 
-    5. DEPLOY WEBSITE:
+    DEPLOY WEBSITE:
        cd website
        aws s3 sync ./ s3://${module.landing.s3_bucket_name}/ --delete
        aws cloudfront create-invalidation --distribution-id ${module.landing.cloudfront_distribution_id} --paths "/*"
 
-    6. CONFIGURE EXTERNAL SERVICES:
-       - WorkOS: Add redirect URI: https://${module.dns.api_fqdn}/auth/callback
-       - Stripe: Add webhook: https://${module.dns.api_fqdn}/payments/webhook
-
-    7. VERIFY:
-       - Backend: https://${module.dns.api_fqdn}/health
-       - Frontend: https://${module.dns.app_fqdn}
+    VERIFY:
+       - App:     https://${module.dns.app_fqdn}
        - Website: ${module.landing.website_url}
-
-    📚 Documentation:
-       - Deployment scripts: terraform/scripts/
-       - Module READMEs: terraform/modules/*/README.md
-       - Plan: ~/.claude/plans/pure-dazzling-metcalfe.md
 
   EOT
 }

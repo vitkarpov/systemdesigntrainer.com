@@ -23,16 +23,6 @@ variable "cloudfront_zone_id" {
   type        = string
 }
 
-variable "alb_dns_name" {
-  description = "ALB DNS name for api subdomain"
-  type        = string
-}
-
-variable "alb_zone_id" {
-  description = "ALB hosted zone ID"
-  type        = string
-}
-
 variable "website_cloudfront_domain_name" {
   description = "CloudFront distribution domain name for root domain website (optional - can be same as app)"
   type        = string

@@ -57,48 +57,6 @@ resource "aws_acm_certificate_validation" "cloudfront" {
 }
 
 # ==================================
-# ACM Certificate for ALB (Regional)
-# ==================================
-
-resource "aws_acm_certificate" "alb" {
-  domain_name               = "*.${var.domain_name}"
-  subject_alternative_names = [var.domain_name]
-  validation_method         = "DNS"
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  tags = {
-    Name = "${var.project_name}-${var.environment}-alb-cert"
-  }
-}
-
-# DNS validation records for ALB certificate
-resource "aws_route53_record" "alb_validation" {
-  for_each = {
-    for dvo in aws_acm_certificate.alb.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      type   = dvo.resource_record_type
-      record = dvo.resource_record_value
-    }
-  }
-
-  zone_id = aws_route53_zone.main.zone_id
-  name    = each.value.name
-  type    = each.value.type
-  records = [each.value.record]
-  ttl     = 60
-
-  allow_overwrite = true
-}
-
-resource "aws_acm_certificate_validation" "alb" {
-  certificate_arn         = aws_acm_certificate.alb.arn
-  validation_record_fqdns = [for record in aws_route53_record.alb_validation : record.fqdn]
-}
-
-# ==================================
 # DNS Records
 # ==================================
 
@@ -112,19 +70,6 @@ resource "aws_route53_record" "app" {
     name                   = var.cloudfront_domain_name
     zone_id                = var.cloudfront_zone_id
     evaluate_target_health = false
-  }
-}
-
-# A record for api.systemdesigntrainer.com → ALB
-resource "aws_route53_record" "api" {
-  zone_id = aws_route53_zone.main.zone_id
-  name    = "api.${var.domain_name}"
-  type    = "A"
-
-  alias {
-    name                   = var.alb_dns_name
-    zone_id                = var.alb_zone_id
-    evaluate_target_health = true
   }
 }
 
