@@ -125,6 +125,37 @@ resource "aws_iam_role_policy_attachment" "lambda_secrets" {
   policy_arn = aws_iam_policy.lambda_secrets.arn
 }
 
+# Custom policy for sending email via SES
+resource "aws_iam_policy" "lambda_ses" {
+  name        = "${var.project_name}-${var.environment}-lambda-ses"
+  description = "Allow Lambda to send emails via SES"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ses:SendEmail",
+          "ses:SendRawEmail"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-lambda-ses-policy"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_ses" {
+  role       = aws_iam_role.lambda.name
+  policy_arn = aws_iam_policy.lambda_ses.arn
+}
+
 # Lambda Security Group
 resource "aws_security_group" "lambda" {
   name        = "${var.project_name}-${var.environment}-lambda-admin"
@@ -225,6 +256,7 @@ resource "aws_lambda_function" "admin" {
       REDIS_HOST             = var.redis_endpoint
       REDIS_PORT             = tostring(var.redis_port)
       NODE_ENV               = var.environment
+      AWS_SES_FROM_EMAIL     = var.ses_from_email
     }
   }
 
@@ -232,7 +264,8 @@ resource "aws_lambda_function" "admin" {
     aws_cloudwatch_log_group.lambda,
     aws_iam_role_policy_attachment.lambda_basic,
     aws_iam_role_policy_attachment.lambda_vpc,
-    aws_iam_role_policy_attachment.lambda_secrets
+    aws_iam_role_policy_attachment.lambda_secrets,
+    aws_iam_role_policy_attachment.lambda_ses
   ]
 
   tags = {

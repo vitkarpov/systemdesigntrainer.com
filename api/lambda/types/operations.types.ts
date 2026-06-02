@@ -93,3 +93,52 @@ export type GenerateFeedbackEvent = AdminOperationEvent<GenerateFeedbackPayload>
 export type GenerateFeedbackResponse = AdminOperationResponse<GenerateFeedbackData> & {
   operation: 'generate-feedback';
 };
+
+/**
+ * Send Farewell Email Operation Types
+ *
+ * Sends a one-off thank-you / service-retirement email to every registered user.
+ */
+export interface SendFarewellEmailPayload {
+  /** If true, count recipients and log without actually sending (default: false) */
+  dryRun?: boolean;
+  /** Number of emails to send per batch (default: 10) */
+  batchSize?: number;
+  /** Delay in milliseconds between batches to respect SES rate limits (default: 1000) */
+  delayMs?: number;
+  /** Optional cap on the number of users to email (useful for testing) */
+  limit?: number;
+  /**
+   * If set, send a single email to this address instead of querying the user
+   * table. Use for a safe live test before a full send. Takes precedence over limit.
+   */
+  testEmail?: string;
+}
+
+export interface SendFarewellEmailData {
+  /** Total number of users considered (with a non-null email) */
+  totalUsers: number;
+  /** Number of emails successfully sent (or counted, in dry-run mode) */
+  sent: number;
+  /** Number of users skipped (e.g. missing email) */
+  skipped: number;
+  /** Number of emails that failed to send */
+  failed: number;
+  /** Whether the operation ran in dry-run mode */
+  dryRun: boolean;
+  /** Details of any failures */
+  failures: Array<{ email: string; error: string }>;
+}
+
+/**
+ * Type-safe operation events
+ */
+export type SendFarewellEmailEvent =
+  AdminOperationEvent<SendFarewellEmailPayload> & {
+    operation: 'send-farewell-email';
+  };
+
+export type SendFarewellEmailResponse =
+  AdminOperationResponse<SendFarewellEmailData> & {
+    operation: 'send-farewell-email';
+  };

@@ -24,7 +24,10 @@ resource "aws_db_subnet_group" "main" {
 resource "aws_db_instance" "postgresql" {
   identifier     = "${var.project_name}-${var.environment}-postgres"
   engine         = "postgres"
-  engine_version = "17.6"
+  # Match the running minor version. RDS auto-applies minor upgrades
+  # (auto_minor_version_upgrade defaults to true), so this is ignored below
+  # to avoid drift / accidental downgrade attempts.
+  engine_version = "17.9"
 
   # Instance configuration
   instance_class        = var.rds_instance_class
@@ -68,7 +71,8 @@ resource "aws_db_instance" "postgresql" {
 
   lifecycle {
     ignore_changes = [
-      final_snapshot_identifier # Ignore timestamp changes
+      final_snapshot_identifier, # Ignore timestamp changes
+      engine_version             # RDS auto-applies minor version upgrades; don't fight them
     ]
   }
 }

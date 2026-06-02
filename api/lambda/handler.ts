@@ -4,11 +4,13 @@ import type {
   AdminOperationResponse,
   AddCreditsPayload,
   GenerateFeedbackPayload,
+  SendFarewellEmailPayload,
 } from './types/operations.types';
 
 // Import operation handlers
 import { addCredits } from './operations/add-credits';
 import { generateFeedback } from './operations/generate-feedback';
+import { sendFarewellEmail } from './operations/send-farewell-email';
 
 /**
  * Main Lambda handler that routes to different admin operations
@@ -48,6 +50,13 @@ export async function handler(
         result = await generateFeedback(
           db,
           event.payload as GenerateFeedbackPayload,
+        );
+        break;
+
+      case 'send-farewell-email':
+        result = await sendFarewellEmail(
+          db,
+          event.payload as SendFarewellEmailPayload,
         );
         break;
 

@@ -85,3 +85,10 @@ variable "log_retention_days" {
   type        = number
   default     = 7
 }
+
+# Email (SES)
+variable "ses_from_email" {
+  description = "Verified SES sender address used for outbound emails"
+  type        = string
+  default     = "noreply@systemdesigntrainer.com"
+}
