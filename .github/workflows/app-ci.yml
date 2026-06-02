@@ -1,16 +1,8 @@
 name: App CI
 
+# CI disabled — project retired. Manual-only trigger.
 on:
-  pull_request:
-    paths:
-      - 'app/**'
-      - '.github/workflows/app-ci.yml'
-  push:
-    branches:
-      - main
-    paths:
-      - 'app/**'
-      - '.github/workflows/app-ci.yml'
+  workflow_dispatch:
 
 jobs:
   test-and-build:
