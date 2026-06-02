@@ -5,6 +5,7 @@
   "private": true,
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.0.0",
+    "@aws-sdk/client-ses": "^3.970.0",
     "bull": "^4.16.5",
     "drizzle-orm": "^0.45.1",
     "ioredis": "^5.8.2",
