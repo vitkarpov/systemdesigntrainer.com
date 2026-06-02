@@ -110,7 +110,10 @@ describe("BaseNode", () => {
       expect(nodeContainer.className).toContain("border-border");
       expect(nodeContainer.className).toContain("border-primary");
       expect(nodeContainer.className).toContain("shadow-lg");
-      expect(nodeContainer.className).toContain("scale-105");
+      expect(nodeContainer.className).toContain("scale-150");
+      expect(
+        screen.getByRole("button", { name: /edit component name/i }),
+      ).toBeInTheDocument();
     });
 
     it("should apply default styling when not selected", () => {
@@ -122,6 +125,9 @@ describe("BaseNode", () => {
       expect(nodeContainer.className).toContain("border-border");
       expect(nodeContainer.className).toContain("hover:border-primary/50");
       expect(nodeContainer.className).toContain("hover:shadow-md");
+      expect(
+        screen.queryByRole("button", { name: /edit component name/i }),
+      ).not.toBeInTheDocument();
     });
   });
 
